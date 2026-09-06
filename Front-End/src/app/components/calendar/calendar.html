@@ -1,0 +1,263 @@
+<div class="body-calendar">
+
+    @let currentUser = this.userService.userLogged();
+
+    <div class="bd-left">
+        <div class="month-left">
+            <h1 [innerHTML]="currentMonthCal?.monthString"></h1>
+        </div>
+
+        <div class="calendar-left">
+            @for (day of this.calendarService.getDaysOfWeek() ; track day) {
+            <div class="days-string" [innerHTML]="day"></div>
+            }
+
+            @for (dayObject of currentMonthCal?.daysInMonth; track $index) {
+            <div [innerHTML]="dayObject.dayNumber" [ngClass]="{
+             'current-days-number': dayObject.isToday,
+             'days-number': !dayObject.isToday,
+             'weekend-color': dayObject.isWeekend,
+             'has-appointment': (dayObject.appointments && dayObject.appointments.length > 0),
+             'is-selected': this.calendarService.selectedDay === +dayObject.dayNumber
+                }" (click)="this.selectDay(dayObject)">
+
+                @if (dayObject.appointments && dayObject.appointments.length > 0) {
+                <span class="appointment-dot"></span>
+                }
+            </div>
+            }
+        </div>
+
+        <div class="reminders-left">
+            <div class="calendar-list-container">
+                <div class="event-module">
+                    <h2 class="module-header">
+                        <span class="icon-calendar">🗓️</span>
+                        Resumen Semanal
+                    </h2>
+                    @if (currentAppointments && currentAppointments.length === 0) {
+                    <p class="no-events">No hay citas esta semana.</p>
+                    }
+                    @else if (currentAppointments) {
+                    @for (appt of currentAppointments; track appt.dateTime) {
+                    <div class="event-item">
+                        <div class="event-tt">
+                            <span class="dot" [ngClass]="getStatusColor(appt.status)"></span>
+                            <span class="event-name">{{ formatFullDateTime(appt.dateTime) }}</span>
+                        </div>
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bd-right">
+
+        <div class="header-right">
+            <button (click)="changeMonth(false)" class="nav-button-main ripple">
+                <i class="arrow left"></i>
+            </button>
+
+            <div class="header-info">
+                <h1>{{currentMonthCal?.monthString}}</h1>
+                <p class="subtitle-week">
+                    @if (periodSelected) {
+                    {{periodSelected.startDay}} - {{periodSelected.endDay}}
+                    } @else {
+                    Cargando semana...
+                    }
+                </p>
+            </div>
+
+            <button (click)="changeMonth(true)" class="nav-button-main ripple">
+                <i class="arrow right"></i>
+            </button>
+        </div>
+
+        @if (currentUser?.isAdmin) {
+        <div class="admin-toolbar">
+            <button type="button" class="btn-block-range" (click)="openBlockRangeModal()">
+                🔒 Bloquear / desbloquear rango de horas
+            </button>
+        </div>
+        }
+
+        @if(currentUser) {
+        <div class="calendar-wrapper">
+            <div class="calendar-right">
+                <table>
+                    <thead>
+                        <tr class="header">
+                            <th class="th-head th-time-col sticky-col">Hora</th>
+
+                            @for (daySt of this.calendarService.getFullDaysOfWeek(); track $index) {
+                            <th class="th-head" [innerHTML]="daySt"></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for ( hour of hours; track $index) {
+                        @let indHour = $index;
+
+                        <tr>
+                            <th class="hour-cl th-h sticky-col" [innerHTML]="hour"></th>
+
+                            @for (daySt of this.calendarService.getFullDaysOfWeek(); track $index) {
+                            @let indDay = $index;
+                            @let appointment = appointmentsMap[indHour][indDay];
+                            @let blocked = isBlocked(hour, indDay);
+
+                            <td class="th-body" [ngClass]="appointment ? getStatusColor(appointment.status) : (blocked ? 'blocked-cell' : '')">
+
+                                @if (appointment) {
+                                    @if (currentUser?.isAdmin) {
+                                    <button type="button" class="cell-content cell-clickable"
+                                        (click)="openProcedureModal(appointment)"
+                                        title="Ver detalle / procedimiento / cancelar">
+                                        <span class="event-name">{{ appointment.patientName }}</span>
+                                        <span class="cell-status">{{ statusLabel(appointment.status) }}</span>
+                                    </button>
+                                    } @else {
+                                    <div class="cell-content">
+                                        <span class="event-name">{{ appointment.patientName }}</span>
+                                    </div>
+                                    }
+                                }
+                                @else if (blocked) {
+                                    @if (currentUser?.isAdmin) {
+                                    <button type="button" class="cell-blocked-btn" (click)="toggleBlockSlot(hour, indDay)"
+                                        title="Hora bloqueada — clic para desbloquear">
+                                        <span>🔒 Bloqueada</span>
+                                    </button>
+                                    } @else {
+                                    <div class="cell-content cell-unavailable">
+                                        <span>No disponible</span>
+                                    </div>
+                                    }
+                                }
+                                @else {
+                                    @if (currentUser?.isAdmin) {
+                                    <button type="button" class="btn-block" (click)="toggleBlockSlot(hour, indDay)"
+                                        title="Bloquear esta hora">
+                                        <span>Bloquear</span>
+                                    </button>
+                                    } @else {
+                                    <button class="btn-schedule"
+                                        (click)="scheduleAppointment(hour, getDayObjectForColumn(indDay))">
+                                        <span>+</span>
+                                    </button>
+                                    }
+                                }
+                            </td>
+                            }
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        } @else {
+        <p class="bd-right-message">Por favor, inicie sesión.</p>
+        }
+    </div>
+
+    <!-- ===== MODAL: REGISTRAR PROCEDIMIENTO ===== -->
+    @if (showProcedureModal && selectedAppointment) {
+    <div class="proc-modal-overlay" (click)="closeProcedureModal()"></div>
+    <div class="proc-modal" role="dialog" aria-modal="true">
+        <div class="proc-modal-header">
+            <div>
+                <h2>Registrar procedimiento</h2>
+                <p class="proc-modal-sub">
+                    <strong>{{ selectedAppointment.patientName }}</strong>
+                    · {{ formatFullDateTime(selectedAppointment.dateTime) }}
+                </p>
+                <p class="proc-modal-status">
+                    Estado: <strong>{{ statusLabel(selectedAppointment.status) }}</strong>
+                </p>
+                @if (selectedAppointment.reason) {
+                <p class="proc-modal-reason">Motivo de la cita: {{ selectedAppointment.reason }}</p>
+                }
+                @if (isCancellable(selectedAppointment.status)) {
+                <button type="button" class="proc-cancel-appt" (click)="cancelSelectedAppointment()">
+                    Cancelar esta cita (no pagada)
+                </button>
+                }
+            </div>
+            <button type="button" class="proc-modal-close" (click)="closeProcedureModal()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="proc-modal-body">
+            <form class="proc-form" (ngSubmit)="saveProcedure()">
+                <div class="proc-row">
+                    <div class="proc-field">
+                        <label for="proc-fecha">Fecha</label>
+                        <input id="proc-fecha" name="proc-fecha" type="date" [(ngModel)]="procForm.fecha">
+                    </div>
+                    <div class="proc-field">
+                        <label for="proc-dentista">Dentista</label>
+                        <input id="proc-dentista" name="proc-dentista" type="text" [(ngModel)]="procForm.dentista"
+                            placeholder="Ej. Dra. López" required>
+                    </div>
+                </div>
+
+                <div class="proc-field">
+                    <label for="proc-procs">Procedimientos realizados</label>
+                    <input id="proc-procs" name="proc-procs" type="text" [(ngModel)]="procForm.procedimientos"
+                        placeholder="Separa con comas. Ej: Limpieza, Resina">
+                    <small>Separa cada procedimiento con una coma.</small>
+                </div>
+
+                <div class="proc-field">
+                    <label for="proc-desc">Descripción de lo realizado</label>
+                    <textarea id="proc-desc" name="proc-desc" rows="3" [(ngModel)]="procForm.descripcion"
+                        placeholder="Describe el tratamiento realizado en la cita..." required></textarea>
+                </div>
+
+                <div class="proc-field">
+                    <label for="proc-indic">Indicaciones <span class="proc-opt">(opcional)</span></label>
+                    <textarea id="proc-indic" name="proc-indic" rows="2" [(ngModel)]="procForm.indicaciones"
+                        placeholder="Recomendaciones, cuidados, próxima cita..."></textarea>
+                </div>
+
+                <div class="proc-field proc-field-costo">
+                    <label for="proc-costo">Costo <span class="proc-opt">(opcional)</span></label>
+                    <input id="proc-costo" name="proc-costo" type="number" min="0" step="0.01" [(ngModel)]="procForm.costo"
+                        placeholder="0.00">
+                </div>
+
+                <div class="proc-actions">
+                    <button type="button" class="proc-btn-cancel" (click)="closeProcedureModal()">Cancelar</button>
+                    <button type="submit" class="proc-btn-save" [disabled]="savingProcedure">
+                        {{ savingProcedure ? 'Guardando...' : 'Guardar procedimiento' }}
+                    </button>
+                </div>
+            </form>
+
+            <!-- Historial del paciente -->
+            <div class="proc-history">
+                <h3>Historial del paciente</h3>
+                @if (loadingHistory) {
+                <p class="proc-history-msg">Cargando historial...</p>
+                } @else if (patientHistory.length === 0) {
+                <p class="proc-history-msg">Sin procedimientos previos.</p>
+                } @else {
+                <div class="proc-history-list">
+                    @for (proc of patientHistory; track proc._id) {
+                    <article class="proc-history-card">
+                        <div class="proc-history-head">
+                            <span class="proc-history-date">{{ proc.fecha | date:'dd MMM yyyy':'UTC' }}</span>
+                            <span class="proc-history-dentist">{{ proc.dentista }}</span>
+                        </div>
+                        <p class="proc-history-desc">{{ proc.descripcion }}</p>
+                    </article>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>
