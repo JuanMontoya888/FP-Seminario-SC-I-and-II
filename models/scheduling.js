@@ -34,6 +34,13 @@ const appointmentSchema = new Schema({
         type: String,
         default: null
     },
+    // Duración estimada de la cita, usada para el chequeo de solapamiento
+    // de horarios (detección de conflictos).
+    durationMinutes: {
+        type: Number,
+        default: 30,
+        min: [1, 'La duración mínima es de 1 minuto']
+    },
     specialty: {
         type: String,
         default: null,
