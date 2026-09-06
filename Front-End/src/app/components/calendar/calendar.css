@@ -1,0 +1,747 @@
+/* ================= LAYOUT GLOBAL ================= */
+.body-calendar {
+    display: flex;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    /* Fondo gris claro suave */
+    min-height: 100vh;
+    gap: 1.5rem;
+}
+
+.bd-left {
+    flex: 0 0 300px;
+    /* Ancho fijo para sidebar */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.bd-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    /* Importante para bordes redondeados */
+    min-width: 0;
+    /* Previene desbordamiento en flex items */
+}
+
+/* ================= HEADER PRINCIPAL (BD-RIGHT) ================= */
+.header-right {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    /* Estira los hijos a lo alto */
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    height: 70px;
+    /* Altura fija para el header */
+}
+
+.header-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+.header-info h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: #333;
+    text-transform: capitalize;
+}
+
+.subtitle-week {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+}
+
+/* Botones de navegación grandes */
+.nav-button-main {
+    background: transparent;
+    border: none;
+    width: 60px;
+    /* Zona de toque amplia */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-right: 1px solid #f0f0f0;
+}
+
+.nav-button-main:last-child {
+    border-right: none;
+    border-left: 1px solid #f0f0f0;
+}
+
+.nav-button-main:hover {
+    background-color: #f5f5f5;
+}
+
+/* Flechas CSS puras */
+.arrow {
+    border: solid #555;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 4px;
+}
+
+.arrow.right {
+    transform: rotate(-45deg);
+}
+
+.arrow.left {
+    transform: rotate(135deg);
+}
+
+/* ================= CALENDARIO MINI (BD-LEFT) ================= */
+.month-left h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--color-btn);
+    text-transform: capitalize;
+}
+
+.calendar-left {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.days-string {
+    font-size: 0.75rem;
+    color: #999;
+    text-align: center;
+    font-weight: 600;
+}
+
+.days-number {
+    text-align: center;
+    cursor: pointer;
+    padding: 8px 0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.days-number:hover {
+    background-color: #f0f0f0;
+}
+
+.current-days-number,
+.is-selected {
+    background: var(--color-btn, #007bff);
+    color: white;
+    font-weight: bold;
+    border-radius: 4px;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.appointment-dot {
+    height: 4px;
+    width: 4px;
+    background-color: #ff5252;
+    border-radius: 50%;
+    display: block;
+    margin: 2px auto 0;
+}
+
+/* ================= TABLA PRINCIPAL Y STICKY ================= */
+.calendar-wrapper {
+    flex: 1;
+    overflow: hidden;
+    /* Contiene el scroll */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-right {
+    overflow: auto;
+    /* Scroll en ambas direcciones si es necesario */
+    flex: 1;
+    scroll-behavior: smooth;
+}
+
+table {
+    border-collapse: separate;
+    /* Necesario para sticky */
+    border-spacing: 0;
+    width: 100%;
+    min-width: 600px;
+    /* Asegura que la tabla no se aplaste en móvil */
+}
+
+th,
+td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid #eee;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+/* La columna de la HORA fija */
+.sticky-col {
+    position: -webkit-sticky;
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 10;
+    border-right: 2px solid #e0e0e0;
+    /* Borde más fuerte para separar */
+    color: #555;
+    font-weight: 600;
+    width: 60px;
+    min-width: 60px;
+}
+
+.th-head {
+    background-color: #fcfcfc;
+    color: #666;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    /* Z-index menor que la columna de hora */
+    border-bottom: 2px solid #e0e0e0;
+}
+
+/* Cruce de cabecera y primera columna (Esquina superior izquierda) */
+.th-head.sticky-col {
+    z-index: 20;
+    /* El más alto para que tape todo al scrollear */
+}
+
+/* ================= BOTÓN AGENDAR ================= */
+.btn-schedule {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-schedule span {
+    font-size: 1.5rem;
+    color: #ddd;
+    font-weight: 300;
+    transition: color 0.2s;
+}
+
+.btn-schedule:hover span {
+    color: var(--color-btn, #007bff);
+}
+
+/* ================= COLORES ESTADO ================= */
+.green {
+    background: #e8f5e9;
+    border-left: 3px solid #66bb6a;
+    color: #2e7d32;
+}
+
+.yellow {
+    background: #fffde7;
+    border-left: 3px solid #ffee58;
+    color: #f9a825;
+}
+
+.blue {
+    background: #e3f2fd;
+    border-left: 3px solid #42a5f5;
+    color: #1565c0;
+}
+
+.red {
+    background: #ffebee;
+    border-left: 3px solid #ef5350;
+    color: #c62828;
+}
+
+.cell-content {
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* Tablet y Móvil */
+@media (max-width: 1024px) {
+    .body-calendar {
+        flex-direction: column;
+        padding: 0;
+        /* Aprovechar todo el ancho */
+        gap: 0;
+    }
+
+    .bd-left {
+        display: none;
+        /* Ocultamos el sidebar completamente */
+    }
+
+    .bd-right {
+        border-radius: 0;
+        /* Quitar bordes redondeados en móvil */
+        height: 100vh;
+        box-shadow: none;
+    }
+
+    .header-right {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        /* Que quede por encima de la tabla */
+    }
+
+    /* En móvil, la tabla debe tener un min-width para forzar scroll horizontal */
+    table {
+        min-width: 120%;
+        /* Forzar ancho para que se pueda hacer scroll */
+    }
+
+    /* Ajustar tamaño de fuente */
+    .th-head,
+    .hour-cl,
+    td {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ================= ESTILO SCROLLBAR ================= */
+
+/* Hace la barra más fina y sutil */
+.calendar-right::-webkit-scrollbar {
+    height: 6px;
+    /* Altura para scroll horizontal */
+    width: 6px;
+    /* Ancho para scroll vertical */
+}
+
+.calendar-right::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.calendar-right::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 10px;
+}
+
+.calendar-right::-webkit-scrollbar-thumb:hover {
+    background: #bdbdbd;
+}
+
+/* ===== CELDA DE CITA CLICKEABLE (ADMIN) ===== */
+.cell-clickable {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px;
+    font: inherit;
+    color: inherit;
+    transition: transform 0.15s ease;
+}
+
+.cell-clickable:hover {
+    transform: scale(1.03);
+}
+
+.cell-hint {
+    font-size: 0.62rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+}
+
+.cell-clickable:hover .cell-hint {
+    opacity: 0.85;
+}
+
+/* Estado de la cita (solo lo ve el admin) */
+.cell-status {
+    font-size: 0.6rem;
+    font-weight: 600;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+/* Celda bloqueada por el admin */
+.blocked-cell {
+    background: repeating-linear-gradient(
+        45deg,
+        #f0f0f0,
+        #f0f0f0 6px,
+        #e4e4e4 6px,
+        #e4e4e4 12px
+    );
+}
+
+.cell-blocked-btn {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.cell-unavailable {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Botón "Bloquear" en celdas libres (admin) — discreto, se ve al pasar el cursor */
+.btn-block {
+    width: 100%;
+    height: 100%;
+    border: 1px dashed transparent;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #c94040;
+    opacity: 0;
+    border-radius: 6px;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.th-body:hover .btn-block {
+    opacity: 0.8;
+    border-color: #e3b3b3;
+}
+
+/* Barra de herramientas del admin */
+.admin-toolbar {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 12px;
+}
+
+.btn-block-range {
+    background: #fff;
+    color: #457b9d;
+    border: 1.5px solid #cfe0e8;
+    border-radius: 50px;
+    padding: 0.55em 1.3em;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-block-range:hover {
+    background: #eef4fb;
+    border-color: #457b9d;
+}
+
+/* Estado y botón cancelar en el modal */
+.proc-modal-status {
+    margin: 4px 0 0;
+    color: #374151;
+    font-size: 0.88rem;
+}
+
+.proc-cancel-appt {
+    margin-top: 12px;
+    background: #fff;
+    color: #c94040;
+    border: 1.5px solid #e3b3b3;
+    border-radius: 8px;
+    padding: 0.5em 1em;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.proc-cancel-appt:hover {
+    background: #fdeaea;
+}
+
+/* ===== MODAL DE PROCEDIMIENTO ===== */
+.proc-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    animation: proc-fade 0.2s ease;
+}
+
+@keyframes proc-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.proc-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(720px, 94vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    z-index: 1001;
+    animation: proc-pop 0.22s ease;
+}
+
+@keyframes proc-pop {
+    from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.proc-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid #eef0f2;
+}
+
+.proc-modal-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: #1f2937;
+}
+
+.proc-modal-sub {
+    margin: 0;
+    color: #457b9d;
+    font-size: 0.92rem;
+}
+
+.proc-modal-reason {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.proc-modal-close {
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+}
+
+.proc-modal-close:hover {
+    background: #e5e7eb;
+}
+
+.proc-modal-body {
+    padding: 20px 24px 26px;
+}
+
+.proc-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.proc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.proc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.proc-field label {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.proc-opt {
+    font-weight: 400;
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+.proc-field input,
+.proc-field textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    padding: 0.6em 0.8em;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: #1f2937;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.proc-field input:focus,
+.proc-field textarea:focus {
+    outline: none;
+    border-color: #457b9d;
+    box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.15);
+}
+
+.proc-field textarea {
+    resize: vertical;
+}
+
+.proc-field small {
+    color: #9ca3af;
+    font-size: 0.76rem;
+}
+
+.proc-field-costo {
+    max-width: 180px;
+}
+
+.proc-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.proc-btn-cancel,
+.proc-btn-save {
+    border: none;
+    border-radius: 50px;
+    padding: 0.7em 1.4em;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.proc-btn-cancel {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.proc-btn-cancel:hover {
+    background: #e5e7eb;
+}
+
+.proc-btn-save {
+    background: #457b9d;
+    color: #fff;
+}
+
+.proc-btn-save:hover:not(:disabled) {
+    background: #1d3557;
+}
+
+.proc-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Historial dentro del modal */
+.proc-history {
+    margin-top: 22px;
+    border-top: 1px solid #eef0f2;
+    padding-top: 16px;
+}
+
+.proc-history h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: #1f2937;
+}
+
+.proc-history-msg {
+    color: #9ca3af;
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.proc-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.proc-history-card {
+    border-left: 3px solid #457b9d;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.proc-history-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+}
+
+.proc-history-date {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #1f2937;
+}
+
+.proc-history-dentist {
+    font-size: 0.76rem;
+    color: #6b7280;
+}
+
+.proc-history-desc {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: #374151;
+    margin: 0;
+}
+
+@media (max-width: 520px) {
+    .proc-row {
+        grid-template-columns: 1fr;
+    }
+}
