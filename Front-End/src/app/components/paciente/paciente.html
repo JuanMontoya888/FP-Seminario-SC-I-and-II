@@ -1,0 +1,82 @@
+<div class="container">
+  <header class="main-heading">
+    <h1>Mi Cuenta</h1>
+  </header>
+
+  <div class="profile-card">
+    <div class="card-header">
+      <div class="avatar-circle">
+        {{ userName?.charAt(0) }}
+      </div>
+      <h2 class="user-name">{{ userName || 'Cargando...' }}</h2>
+      <p class="user-email">{{ userEmail }}</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <nav class="card-menu">
+      <button class="menu-item" (click)="navigate()">
+        <div class="icon-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span>Mi perfil</span>
+        </div>
+        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+      <button class="menu-item">
+        <div class="icon-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Mi historial</span>
+        </div>
+        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ÚLTIMOS PROCEDIMIENTOS / CONSULTAS -->
+  <section class="procedures-section">
+    <h3 class="procedures-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+      Mis últimos procedimientos
+    </h3>
+
+    @if (loadingProcedures) {
+      <p class="procedures-msg">Cargando tus procedimientos...</p>
+    } @else if (proceduresError) {
+      <p class="procedures-msg error">No pudimos cargar tus procedimientos en este momento. Intenta más tarde.</p>
+    } @else if (procedures.length === 0) {
+      <p class="procedures-msg">Aún no tienes procedimientos registrados. Aparecerán aquí después de tus consultas.</p>
+    } @else {
+      <div class="procedures-list">
+        @for (proc of procedures; track proc._id) {
+          <article class="procedure-card">
+            <div class="procedure-card-head">
+              <span class="procedure-date">{{ proc.fecha | date:'dd MMM yyyy':'UTC' }}</span>
+              <span class="procedure-dentist">{{ proc.dentista }}</span>
+            </div>
+
+            @if (proc.procedimientos && proc.procedimientos.length > 0) {
+              <div class="procedure-tags">
+                @for (p of proc.procedimientos; track p) {
+                  <span class="procedure-tag">{{ p }}</span>
+                }
+              </div>
+            }
+
+            <p class="procedure-desc">{{ proc.descripcion }}</p>
+
+            @if (proc.indicaciones) {
+              <p class="procedure-indic"><strong>Indicaciones:</strong> {{ proc.indicaciones }}</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>
