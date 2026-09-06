@@ -1,0 +1,51 @@
+# ============================================================
+# VARIABLES DE ENTORNO - DESARROLLO LOCAL
+# Este archivo está en .gitignore y NO debe subirse a git.
+# ⚠️ Las credenciales de abajo estaban expuestas en el código:
+#    ROTA la contraseña de Mongo y el JWT_SECRET cuando puedas.
+# ============================================================
+
+# Cadena de conexión a MongoDB Atlas
+MONGODB_URI=mongodb+srv://thalberto04_db_user:gKi9XhsI1E5oaO0G@dental-one.9lvmct8.mongodb.net/?appName=Dental-One
+
+# Secreto para firmar los tokens JWT (sesiones)
+JWT_SECRET=nocequevergudap0neRLaf00ck*inNetayacAlLeseALVcachetes23323
+
+# Token de acceso de Mercado Pago.
+# Para PRUEBAS usa el access token de PRUEBA (empieza con TEST-...).
+# Para PRODUCCIÓN usa el de producción (empieza con APP_USR-...).
+MP_ACCESS_TOKEN=APP_USR-663304607769346-050823-cc86e1d75bef2c20c10964bfa4e42f23-3387439025
+
+# URL base del front-end para las URLs de retorno de Mercado Pago.
+# Local: http://localhost:4200  ·  Prod: https://dentalone.mx
+FRONTEND_URL=http://localhost:4200
+
+# URL PÚBLICA del webhook de Mercado Pago.
+# Local: tu URL de ngrok + /mercado-pago/webhook
+#   ej: https://a1b2-34-56-78.ngrok-free.app/mercado-pago/webhook
+# Prod: https://tu-backend.com/mercado-pago/webhook
+# Si la dejas vacía, el pago funciona pero la cita NO se confirma sola.
+MP_NOTIFICATION_URL=https://viva-unended-incompactly.ngrok-free.dev/mercado-pago/webhook
+
+# --- Correo (Gmail) para enviar confirmaciones de cita ---
+# EMAIL_USER: la cuenta de Gmail que envía (ej. dentalone@gmail.com)
+# EMAIL_PASS: una "Contraseña de aplicación" de Google (16 caracteres),
+#   NO tu contraseña normal. Se genera en:
+#   Cuenta de Google → Seguridad → Verificación en 2 pasos → Contraseñas de aplicaciones.
+# Si las dejas vacías, NO se enviarán correos.
+EMAIL_USER=montoya.martinez.juan.cb284@gmail.com
+EMAIL_PASS=jbkg lczo ibvj qtlu
+
+# --- Google Calendar (opcional) ---
+# Ruta al JSON de la cuenta de servicio. Por defecto busca Back-End/google-calendar-prueba.json
+# GOOGLE_CALENDAR_KEYFILE=
+# ID del calendario donde se crean los eventos (compártelo con el email de la cuenta de servicio)
+# GOOGLE_CALENDAR_ID=
+
+# Puerto del servidor (opcional, por defecto 3000)
+PORT=3000
+
+# Origen permitido para CORS.
+# Déjalo VACÍO en local (permite todo, incluido http://localhost:4200).
+# En PRODUCCIÓN ponlo con tu dominio, p. ej.: https://dentalone.mx
+CORS_ORIGIN=
