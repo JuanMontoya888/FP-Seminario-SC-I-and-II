@@ -1,361 +1,371 @@
+const path = require('path');
+const fs = require('fs');
+const User = require('../models/users');
 const Appointment = require('../models/scheduling');
 const BlockedSlot = require('../models/blockedSlot');
-const User = require('../models/users');
+const { google } = require('googleapis');
 const { enviarCorreoSMTP } = require('../services/mailer');
 const emailTemplates = require('../services/emailTemplates');
-const { enviarWhatsapp } = require('../services/whatsapp');
 
-// Duración por defecto (minutos) para citas que, por algún motivo, no
-// traigan `durationMinutes` cargado (p.ej. documentos antiguos en Mongo).
-const DEFAULT_APPOINTMENT_DURATION_MINUTES = 30;
 
-function getDuration(appointment) {
-    return appointment.durationMinutes || DEFAULT_APPOINTMENT_DURATION_MINUTES;
+// =================================================================================
+// CONFIGURACIÓN DE GOOGLE CALENDAR
+// =================================================================================
+// Ruta ABSOLUTA al archivo de credenciales (configurable por env var).
+// Si el archivo no existe, la integración se desactiva sin romper la creación de citas.
+const keyFilePath = process.env.GOOGLE_CALENDAR_KEYFILE
+    || path.join(__dirname, '..', 'google-calendar-prueba.json');
+const GOOGLE_ENABLED = fs.existsSync(keyFilePath);
+const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID
+    || '40e6ec70fd4ef4b7c0703080621d41963c106526d7a02a9026149384e3105910@group.calendar.google.com';
+
+let calendar = null;
+if (GOOGLE_ENABLED) {
+    const auth = new google.auth.GoogleAuth({
+        keyFile: keyFilePath,
+        scopes: ['https://www.googleapis.com/auth/calendar'],
+    });
+    calendar = google.calendar({ version: 'v3', auth });
+} else {
+    console.warn('⚠️  Google Calendar deshabilitado: no se encontró el archivo de credenciales en', keyFilePath);
 }
 
-function toDateOnlyString(dateTime) {
-    return new Date(dateTime).toISOString().split('T')[0];
-}
+// =================================================================================
+// CONTROLADORES
+// =================================================================================
 
-// ==========================================
-// CDONE-35: Crear cita con detección de conflictos
-// ==========================================
 const createAppointment = async (req, res) => {
     try {
-        const {
-            dateTime,
-            hour,
-            durationMinutes,
-            patientName,
-            patientId,
-            email,
-            phone,
-            specialty,
-            providerName,
-            reason,
-            notes,
+        const userId = req.user.id;
+
+        let {
+            dateTime, hour, durationMinutes, patientName, patientId,
+            contactNumber, email, reason, providerName, status, notes
         } = req.body;
 
-        if (!dateTime || !hour || !patientName) {
-            return res.status(400).json({ msg: 'Faltan datos obligatorios: dateTime, hour y patientName son requeridos.' });
+        let finalPatientId = patientId;
+        if (!finalPatientId && email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) finalPatientId = existingUser._id;
         }
 
-        // Resolver a qué paciente (User) pertenece la cita.
-        // Solo un admin puede agendar/reasignar la cita a nombre de otro
-        // usuario (patientId o email de otra cuenta); un usuario normal
-        // solo puede agendar para sí mismo.
-        let patient = req.user.id;
-        if (req.user.role === 'admin') {
-            if (patientId) {
-                const target = await User.findById(patientId);
-                if (!target) {
-                    return res.status(400).json({ msg: 'Paciente no encontrado.' });
-                }
-                patient = target._id;
-            } else if (email) {
-                const existingUser = await User.findOne({ email });
-                if (existingUser) {
-                    patient = existingUser._id;
-                }
-            }
-        } else if (patientId && String(patientId) !== String(req.user.id)) {
-            return res.status(403).json({ msg: 'No autorizado a agendar citas para otro usuario.' });
-        }
-
-        const dateOnlyString = toDateOnlyString(dateTime);
-        const duration = durationMinutes || DEFAULT_APPOINTMENT_DURATION_MINUTES;
+        // 🛡️ BLOQUE DE VALIDACIÓN DE HORARIO
+        const dateOnlyString = new Date(dateTime).toISOString().split('T')[0];
         const newStart = new Date(`${dateOnlyString}T${hour}:00`);
-        const newEnd = new Date(newStart.getTime() + duration * 60000);
+        const newEnd = new Date(newStart.getTime() + durationMinutes * 60000);
 
-        // 1. ¿El horario está bloqueado por el admin?
-        const blocked = await BlockedSlot.findOne({ date: dateOnlyString, hour });
-        if (blocked) {
-            return res.status(409).json({ msg: 'Ese horario no está disponible, por favor elige otro.' });
+        // 🚫 ¿Esa hora está bloqueada por el administrador?
+        const bloqueado = await BlockedSlot.findOne({ date: dateOnlyString, hour });
+        if (bloqueado) {
+            return res.status(409).json({
+                msg: 'Ese horario no está disponible. Por favor selecciona otro.'
+            });
         }
 
-        // 2. Detección de conflictos: buscar citas del mismo especialista
-        // ese día (que no estén canceladas) y verificar solapamiento.
-        const startOfDay = new Date(`${dateOnlyString}T00:00:00`);
-        const endOfDay = new Date(`${dateOnlyString}T23:59:59`);
+        const startOfDay = new Date(dateOnlyString);
+        const endOfDay = new Date(dateOnlyString);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const existingAppointments = await Appointment.find({
-            providerName,
-            status: { $ne: 'cancelled' },
-            dateTime: { $gte: startOfDay, $lte: endOfDay },
+            providerName: providerName,
+            status: { $ne: 'Canceled' },
+            dateTime: { $gte: startOfDay, $lte: endOfDay }
         });
 
-        const conflict = existingAppointments.find((app) => {
-            const appStart = new Date(app.dateTime);
-            const appEnd = new Date(appStart.getTime() + getDuration(app) * 60000);
-            return newStart < appEnd && newEnd > appStart;
+        const conflict = existingAppointments.find(app => {
+            const appDateStr = new Date(app.dateTime).toISOString().split('T')[0];
+            const appStart = new Date(`${appDateStr}T${app.hour}:00`);
+            const appEnd = new Date(appStart.getTime() + app.durationMinutes * 60000);
+            return (newStart < appEnd && newEnd > appStart);
         });
 
         if (conflict) {
             return res.status(409).json({
-                msg: `El especialista ${providerName || ''} ya tiene una cita ocupada a las ${hour}, por favor elige otro horario.`,
+                msg: `El especialista ${providerName} ya tiene una cita ocupada a las ${conflict.hour}. Por favor selecciona otro horario.`
             });
         }
 
-        // 3. Crear la cita
-        const appointment = new Appointment({
-            patient,
-            patientName,
-            email,
-            phone,
-            dateTime,
-            dateOnlyString,
-            hour,
-            durationMinutes: duration,
-            specialty,
-            providerName,
-            reason,
-            notes,
-            createdBy: req.user.id,
+        // 3. Crear la instancia del modelo
+        const newAppointment = new Appointment({
+            user: userId, dateTime, hour, durationMinutes, patientName,
+            patientId: finalPatientId, contactNumber, email, reason,
+            providerName, status: status || 'Scheduled', notes
         });
 
-        await appointment.save();
+        await newAppointment.save();
 
-        // 4. Notificaciones (no bloquean la respuesta si fallan)
+        // 5. Correo de confirmación al paciente (no rompe la cita si falla)
         if (email) {
             try {
                 await enviarCorreoSMTP({
                     to: email,
-                    subject: 'Confirmación de tu cita - Dental One',
+                    subject: 'Tu cita en Dental One',
                     html: emailTemplates.citaConfirmada({
                         patientName,
                         dateOnlyString,
                         hour,
                         providerName,
-                        reason,
-                    }),
+                        reason
+                    })
                 });
             } catch (mailError) {
-                console.error('Error enviando correo de confirmación:', mailError);
+                console.error('Error enviando correo de confirmación de cita:', mailError);
             }
         }
 
-        if (phone) {
+        // 6. Integración Google Calendar (solo si hay credenciales)
+        if (GOOGLE_ENABLED && calendar) {
             try {
-                await enviarWhatsapp({
-                    to: phone,
-                    body: `Hola ${patientName}, tu cita en Dental One quedó agendada para el ${dateOnlyString} a las ${hour} hrs con ${providerName || 'el especialista'}.`,
+                const event = {
+                    summary: `Cita: ${patientName}`,
+                    description: `Motivo: ${reason}\nDoctor: ${providerName}\nNotas: ${notes || 'Ninguna'}`,
+                    start: {
+                        dateTime: newStart.toISOString(),
+                        timeZone: 'America/Mexico_City',
+                    },
+                    end: {
+                        dateTime: newEnd.toISOString(),
+                        timeZone: 'America/Mexico_City',
+                    },
+                };
+
+                await calendar.events.insert({
+                    calendarId: CALENDAR_ID,
+                    resource: event,
                 });
-            } catch (waError) {
-                console.error('Error enviando WhatsApp de confirmación:', waError);
+                console.log('Evento creado en Google Calendar');
+            } catch (googleError) {
+                console.error('Error creando evento en Google:', googleError);
             }
         }
 
-        return res.status(201).json({ msg: 'Cita agendada correctamente.', appointment });
-    } catch (error) {
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ msg: error.message });
+        res.status(201).json({
+            msg: 'Cita registrada exitosamente.',
+            appointment: newAppointment
+        });
+
+    } catch (err) {
+        console.error('Error al registrar la cita:', err);
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(val => val.message);
+            return res.status(400).json({ msg: 'Error de validación', errors: messages });
         }
-        console.error('Error en createAppointment:', error);
-        return res.status(500).json({ msg: 'Error al agendar la cita.' });
+        res.status(500).json({ msg: 'Error interno del servidor.' });
     }
 };
 
 const getUserAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ patient: req.user.id }).sort({ dateTime: 1 });
-        return res.status(200).json(appointments);
-    } catch (error) {
-        console.error('Error en getUserAppointments:', error);
-        return res.status(500).json({ msg: 'Error al obtener las citas.' });
+        const userId = req.user.id;
+        const appointments = await Appointment.find({ user: userId });
+        res.json(appointments);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor al obtener citas');
     }
 };
 
 const getAllAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({}).sort({ dateTime: 1 });
-        return res.status(200).json(appointments);
-    } catch (error) {
-        console.error('Error en getAllAppointments:', error);
-        return res.status(500).json({ msg: 'Error al obtener las citas.' });
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ msg: 'Acceso denegado. Se requieren permisos de administrador.' });
+        }
+        const appointments = await Appointment.find({});
+        res.json(appointments);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error al obtener citas globales');
     }
 };
 
 // ==========================================
-// CDONE-20: Disponibilidad de horarios
+// Cancelar una cita (SOLO admin). Las pagadas (Confirmed) o completadas
+// no se cancelan desde aquí; solo las no pagadas.
 // ==========================================
-const getAvailability = async (req, res) => {
-    try {
-        const isAdmin = req.user.role === 'admin';
-
-        const appointments = await Appointment.find({ status: { $ne: 'cancelled' } })
-            .select('dateTime hour durationMinutes patient');
-
-        const occupied = appointments.map((app) => ({
-            dateTime: app.dateTime,
-            hour: app.hour,
-            durationMinutes: getDuration(app),
-            mine: isAdmin ? false : String(app.patient) === String(req.user.id),
-        }));
-
-        const blockedSlots = await BlockedSlot.find({}).select('date hour reason');
-        const blocked = blockedSlots.map((slot) => ({
-            date: slot.date,
-            hour: slot.hour,
-            reason: slot.reason,
-        }));
-
-        return res.status(200).json({ occupied, blocked });
-    } catch (error) {
-        console.error('Error en getAvailability:', error);
-        return res.status(500).json({ msg: 'Error al obtener la disponibilidad.' });
-    }
-};
-
 const cancelAppointment = async (req, res) => {
     try {
-        const { id } = req.params;
-        const appointment = await Appointment.findById(id);
-
+        const appointment = await Appointment.findById(req.params.id);
         if (!appointment) {
             return res.status(404).json({ msg: 'Cita no encontrada.' });
         }
 
-        if (['confirmed', 'completed'].includes(appointment.status)) {
-            return res.status(400).json({ msg: 'No se puede cancelar una cita confirmada o completada.' });
+        if (['Confirmed', 'Completed'].includes(appointment.status)) {
+            return res.status(400).json({ msg: 'No se puede cancelar una cita ya pagada o completada desde aquí.' });
         }
 
-        appointment.status = 'cancelled';
+        appointment.status = 'Canceled';
         await appointment.save();
 
+        // Enviar correo de cancelación al paciente (no bloquea la operación si falla)
         if (appointment.email) {
             try {
+                const dateOnlyString = new Date(appointment.dateTime).toISOString().split('T')[0];
                 await enviarCorreoSMTP({
                     to: appointment.email,
                     subject: 'Cita cancelada - Dental One',
                     html: emailTemplates.citaCancelada({
                         patientName: appointment.patientName,
-                        dateOnlyString: appointment.dateOnlyString,
+                        dateOnlyString,
                         hour: appointment.hour,
-                        reason: appointment.reason,
-                    }),
+                        reason: appointment.reason
+                    })
                 });
-            } catch (mailError) {
-                console.error('Error enviando correo de cancelación:', mailError);
+            } catch (mailErr) {
+                console.error('Error enviando correo de cancelación:', mailErr);
             }
         }
 
-        if (appointment.phone) {
-            try {
-                await enviarWhatsapp({
-                    to: appointment.phone,
-                    body: `Hola ${appointment.patientName}, tu cita en Dental One del ${appointment.dateOnlyString} a las ${appointment.hour} hrs fue cancelada.`,
-                });
-            } catch (waError) {
-                console.error('Error enviando WhatsApp de cancelación:', waError);
-            }
-        }
-
-        return res.status(200).json({ msg: 'Cita cancelada correctamente.', appointment });
-    } catch (error) {
-        console.error('Error en cancelAppointment:', error);
-        return res.status(500).json({ msg: 'Error al cancelar la cita.' });
+        res.json({ msg: 'Cita cancelada.', appointment });
+    } catch (err) {
+        console.error('Error al cancelar la cita:', err);
+        res.status(500).json({ msg: 'Error al cancelar la cita.' });
     }
 };
 
-// ---------- Helpers de horario para bloqueo por rango ----------
-function toMinutes(hhmm) {
-    const [h, m] = hhmm.split(':').map(Number);
-    return h * 60 + m;
-}
+// ==========================================
+// Disponibilidad: horas ocupadas (ANÓNIMAS para no-admin) + horas bloqueadas.
+// La usa el calendario del paciente para mostrar "Ocupado"/"No disponible".
+// ==========================================
+const getAvailability = async (req, res) => {
+    try {
+        const isAdmin = req.user.role === 'admin';
 
-function toHHMM(minutes) {
-    const h = String(Math.floor(minutes / 60)).padStart(2, '0');
-    const m = String(minutes % 60).padStart(2, '0');
-    return `${h}:${m}`;
-}
+        // Citas activas (no canceladas)
+        const appointments = await Appointment.find({ status: { $ne: 'Canceled' } })
+            .select('dateTime hour durationMinutes user');
 
-function buildSlots(startHour, endHour, stepMinutes = 30) {
-    const slots = [];
-    let current = toMinutes(startHour);
-    const end = toMinutes(endHour);
-    while (current < end) {
-        slots.push(toHHMM(current));
-        current += stepMinutes;
+        const occupied = appointments.map(a => ({
+            dateTime: a.dateTime,
+            hour: a.hour,
+            durationMinutes: a.durationMinutes,
+            // 'mine' permite que el paciente distinga sus propias citas
+            mine: isAdmin ? false : String(a.user) === String(req.user.id)
+        }));
+
+        const blocked = await BlockedSlot.find({}).select('date hour reason');
+
+        res.json({
+            occupied,
+            blocked: blocked.map(b => ({ date: b.date, hour: b.hour, reason: b.reason }))
+        });
+    } catch (err) {
+        console.error('Error al obtener disponibilidad:', err);
+        res.status(500).json({ msg: 'Error al obtener la disponibilidad.' });
     }
-    return slots;
-}
+};
 
+// ==========================================
+// Bloquear una hora (SOLO admin)
+// ==========================================
 const blockSlot = async (req, res) => {
     try {
         const { date, hour, reason } = req.body;
         if (!date || !hour) {
-            return res.status(400).json({ msg: 'Faltan datos: date y hour son requeridos.' });
+            return res.status(400).json({ msg: 'Se requieren fecha y hora.' });
         }
 
+        // upsert para evitar duplicados
         const slot = await BlockedSlot.findOneAndUpdate(
             { date, hour },
-            { date, hour, reason, createdBy: req.user.id },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
+            { date, hour, reason: reason || '', createdBy: req.user.id },
+            { new: true, upsert: true }
         );
 
-        return res.status(200).json({ msg: 'Horario bloqueado.', slot });
-    } catch (error) {
-        console.error('Error en blockSlot:', error);
-        return res.status(500).json({ msg: 'Error al bloquear el horario.' });
+        res.status(201).json({ msg: 'Hora bloqueada.', slot });
+    } catch (err) {
+        console.error('Error al bloquear la hora:', err);
+        res.status(500).json({ msg: 'Error al bloquear la hora.' });
     }
 };
 
+// ==========================================
+// Desbloquear una hora (SOLO admin)
+// ==========================================
 const unblockSlot = async (req, res) => {
     try {
         const { date, hour } = req.body;
         if (!date || !hour) {
-            return res.status(400).json({ msg: 'Faltan datos: date y hour son requeridos.' });
+            return res.status(400).json({ msg: 'Se requieren fecha y hora.' });
         }
 
-        await BlockedSlot.deleteOne({ date, hour });
-        return res.status(200).json({ msg: 'Horario desbloqueado.' });
-    } catch (error) {
-        console.error('Error en unblockSlot:', error);
-        return res.status(500).json({ msg: 'Error al desbloquear el horario.' });
+        await BlockedSlot.findOneAndDelete({ date, hour });
+        res.json({ msg: 'Hora desbloqueada.' });
+    } catch (err) {
+        console.error('Error al desbloquear la hora:', err);
+        res.status(500).json({ msg: 'Error al desbloquear la hora.' });
     }
 };
 
+// Helpers para rangos de horas (slots de 30 min)
+const toMinutes = (h) => {
+    const [hh, mm] = String(h).split(':').map(Number);
+    return hh * 60 + mm;
+};
+const toHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+// Genera los slots de 30 min desde startHour (incluido) hasta endHour (excluido)
+const buildSlots = (startHour, endHour) => {
+    const start = toMinutes(startHour);
+    const end = toMinutes(endHour);
+    const slots = [];
+    for (let m = start; m < end; m += 30) slots.push(toHHMM(m));
+    return slots;
+};
+
+// ==========================================
+// Bloquear un RANGO de horas en una fecha (SOLO admin)
+// ==========================================
 const blockRange = async (req, res) => {
     try {
         const { date, startHour, endHour, reason } = req.body;
         if (!date || !startHour || !endHour) {
-            return res.status(400).json({ msg: 'Faltan datos: date, startHour y endHour son requeridos.' });
+            return res.status(400).json({ msg: 'Se requieren fecha, hora inicial y hora final.' });
+        }
+        if (toMinutes(endHour) <= toMinutes(startHour)) {
+            return res.status(400).json({ msg: 'La hora final debe ser mayor que la inicial.' });
         }
 
         const slots = buildSlots(startHour, endHour);
-        const ops = slots.map((hour) => ({
-            updateOne: {
-                filter: { date, hour },
-                update: { date, hour, reason, createdBy: req.user.id },
-                upsert: true,
-            },
-        }));
-
-        if (ops.length > 0) {
-            await BlockedSlot.bulkWrite(ops);
+        if (slots.length === 0) {
+            return res.status(400).json({ msg: 'El rango no incluye ninguna hora.' });
         }
 
-        return res.status(200).json({ msg: 'Rango de horarios bloqueado.', slots });
-    } catch (error) {
-        console.error('Error en blockRange:', error);
-        return res.status(500).json({ msg: 'Error al bloquear el rango de horarios.' });
+        const ops = slots.map(hour => ({
+            updateOne: {
+                filter: { date, hour },
+                update: { date, hour, reason: reason || '', createdBy: req.user.id },
+                upsert: true
+            }
+        }));
+        await BlockedSlot.bulkWrite(ops);
+
+        res.status(201).json({ msg: `Se bloquearon ${slots.length} horas.`, count: slots.length, slots });
+    } catch (err) {
+        console.error('Error al bloquear el rango:', err);
+        res.status(500).json({ msg: 'Error al bloquear el rango de horas.' });
     }
 };
 
+// ==========================================
+// Desbloquear un RANGO de horas en una fecha (SOLO admin)
+// ==========================================
 const unblockRange = async (req, res) => {
     try {
         const { date, startHour, endHour } = req.body;
         if (!date || !startHour || !endHour) {
-            return res.status(400).json({ msg: 'Faltan datos: date, startHour y endHour son requeridos.' });
+            return res.status(400).json({ msg: 'Se requieren fecha, hora inicial y hora final.' });
+        }
+        if (toMinutes(endHour) <= toMinutes(startHour)) {
+            return res.status(400).json({ msg: 'La hora final debe ser mayor que la inicial.' });
         }
 
         const slots = buildSlots(startHour, endHour);
-        await BlockedSlot.deleteMany({ date, hour: { $in: slots } });
+        const result = await BlockedSlot.deleteMany({ date, hour: { $in: slots } });
 
-        return res.status(200).json({ msg: 'Rango de horarios desbloqueado.', slots });
-    } catch (error) {
-        console.error('Error en unblockRange:', error);
-        return res.status(500).json({ msg: 'Error al desbloquear el rango de horarios.' });
+        res.json({ msg: `Se desbloquearon ${result.deletedCount} horas.`, count: result.deletedCount });
+    } catch (err) {
+        console.error('Error al desbloquear el rango:', err);
+        res.status(500).json({ msg: 'Error al desbloquear el rango de horas.' });
     }
 };
 
@@ -363,10 +373,10 @@ module.exports = {
     createAppointment,
     getUserAppointments,
     getAllAppointments,
-    getAvailability,
     cancelAppointment,
+    getAvailability,
     blockSlot,
     unblockSlot,
     blockRange,
-    unblockRange,
+    unblockRange
 };
