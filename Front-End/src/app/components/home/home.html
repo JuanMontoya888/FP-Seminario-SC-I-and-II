@@ -1,0 +1,147 @@
+
+  <header>
+      <p class="header-phrase">The Only One.</p>
+      <img src="clinica-consultorio.jpg" class="dienteInicio" alt="Consultorio Dental One">
+  </header>
+
+  <hr class="divider">
+
+  <!-- SECCIÓN INNOVACIÓN -->
+  <div class="inovation">
+      <div class="text_inovation">
+          <div class="text_inovation_header">
+              <h1>Innovación</h1>
+              <p>En Dental One, estamos convencidos que la innovación y la actualización constante es de vital importancia para brindarte el servicio de calidad que tú y tu familia merecen.</p>
+          </div>
+          <div class="kindalist">
+              <hr class="divider">
+              <hr class="divider">
+              <p>✦ Atención personalizada y sin tiempos de espera</p>
+              <hr class="divider">
+              <p>✦ Escáner intraoral 3D para mayor precisión</p>
+              <hr class="divider">
+              <p>✦ Diseño de sonrisa digital personalizado</p>
+              <hr class="divider">
+              <p>✦ Esterilización certificada y ambiente seguro</p>
+          </div>
+
+          @if(!userIsLogged){
+              <p class="cita-hint">Si deseas una cita, puedes agendarla aquí</p>
+              <div class="serviciosBtn">
+                  <a routerLink="/log-in">Iniciar Sesión</a>
+              </div>
+          }
+      </div>
+      <div class="image_inovation">
+          <img src="innovacion-tecnologia.jpg" alt="Tecnología dental de alta gama">
+      </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECCIÓN SERVICIOS -->
+  <div class="servicios">
+      <div class="leftNote">
+          <p>Servicios</p>
+      </div>
+      <div class="servSlogan">
+          <h2>Sonrisas saludables, experiencias inolvidables</h2>
+          <p>Para que luzcas una nueva sonrisa ponemos a tu disposición tecnología de alta gama, acompañada de un trato humano y empático para que pases por un proceso rápido, sencillo y cómodo.</p>
+          <p class="servSlogan-sub">El mejorar tu sonrisa aumenta tu confianza, mejora tu autoestima y favorece tu imagen personal.</p>
+      </div>
+      <hr class="divider">
+      <div class="serviceCards">
+          <section class="simpleCard">
+              <p class="serviceName">Odontología Integral</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Odontología Estética</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Ortopedia Dentofacial</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Ortodoncia</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Endodoncia</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Prótesis</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Implantes Dentales</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Periodoncia</p>
+          </section>
+          <section class="simpleCard">
+              <p class="serviceName">Cirugía Maxilofacial</p>
+          </section>
+      </div>
+      <div class="serviciosBtn">
+          <a routerLink="/services">Ver todos los servicios</a>
+      </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECCIÓN NOSOTROS -->
+  <div class="servicios">
+      <div class="leftNote">
+          <p>Nosotros</p>
+      </div>
+      <div class="servSlogan">
+          <h2>Nuestro Equipo</h2>
+          <p>Un grupo de especialistas apasionados por la salud bucal, comprometidos con tu bienestar y tu sonrisa.</p>
+      </div>
+      <div class="nosotros">
+          <div class="image_inovation">
+              <img src="equipo-dental.jpg" alt="Equipo de especialistas">
+          </div>
+          <div class="textoNosotros">
+              <p>Somos una clínica dental fundada con la misión de brindar atención odontológica de calidad, accesible y con calidez humana. Nuestro equipo está formado por especialistas certificados en cada área, comprometidos con mantenerse a la vanguardia de la odontología moderna.</p>
+              <p>Creemos que una buena salud bucal transforma vidas, y trabajamos cada día para que cada paciente salga de nuestra clínica con una sonrisa segura y saludable.</p>
+          </div>
+      </div>
+      <div class="serviciosBtn">
+          <a routerLink="/about-us">Conócenos</a>
+      </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECCIÓN CTA / CITA -->
+  <div class="servicios ctaSection">
+      <div class="servSlogan">
+          <h2>¿Listo para transformar tu sonrisa?</h2>
+          <p>Agenda tu cita hoy y recibe una valoración inicial sin costo.</p>
+      </div>
+      <div class="serviciosBtn">
+          <a routerLink="/appointment">Agendar Cita</a>
+      </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECCIÓN UBICACIÓN -->
+  <div class="servicios">
+      <div class="leftNote">
+          <p>Ubicación</p>
+      </div>
+      <div class="servSlogan">
+          <h2>¡Encuéntranos!</h2>
+          <p>Visítanos en nuestra clínica, con horarios flexibles para adaptarnos a tu agenda.</p>
+      </div>
+
+      <iframe
+        class="mapaH"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3701.489090190472!2d-102.3091007!3d21.915741399999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8429eefd81b8a51f%3A0xc9ea36d5d5af73a6!2sDental%20One%20Aguascalientes!5e0!3m2!1sen!2smx!4v1778640527456!5m2!1sen!2smx"
+        width="100%"
+        height="450"
+        style="border:0; border-radius: 12px;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+</div>

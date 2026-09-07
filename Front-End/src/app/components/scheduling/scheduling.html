@@ -1,0 +1,133 @@
+@if (isFormReady) {
+<div class="body-formulario">
+    <div class="formulario-container">
+        <!-- Encabezado de Progreso -->
+        <div class="progressForm">
+            <p>Información General</p>
+            <hr>
+            <p class="currentForm">Programar Cita</p>
+        </div>
+
+        <div class="formulario-card">
+            <p class="aviso-formulario">
+                Complete los campos habilitados. Los detalles del servicio se calcularán automáticamente.
+            </p>
+
+            <form [formGroup]="schedulForm" class="generalForm">
+
+                <!-- SECCIÓN 1: Selección de Fecha y Tratamiento -->
+                <h3 class="section-title">Selección de Fecha y Tratamiento</h3>
+                
+                <div class="form-grid">
+                    <!-- Ocupa 2 columnas en pantallas grandes -->
+                    <div class="general-label-input col-span-2">
+                        <label class="custom-field one">
+                            <select formControlName="reason" required (change)="changeValue($event)">
+                                <option value="" disabled selected></option> 
+                                @for (item of reasonSchedule; track $index) {
+                                    <option [value]="item.reason">{{ item.reason }}</option>
+                                }
+                            </select>
+                            <span class="placeholder">Tratamiento / Razón *</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="date" formControlName="dateTime" required>
+                            <span class="placeholder">Fecha Deseada *</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <select formControlName="hour" required>
+                                <option value="" disabled selected></option>
+                                @for (slot of availableHours; track $index) {
+                                    <option [value]="slot">{{ slot }}</option>
+                                }
+                            </select>
+                            <span class="placeholder">Hora *</span>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- SECCIÓN 2: Datos del Paciente -->
+                <h3 class="section-title">Datos del Paciente</h3>
+
+                <div class="form-grid">
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="patientName" readonly>
+                            <span class="placeholder">Paciente</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="contactNumber">
+                            <span class="placeholder">Teléfono Móvil</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="email" formControlName="email">
+                            <span class="placeholder">Correo Electrónico</span>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- SECCIÓN 3: Detalles del Servicio -->
+                <h3 class="section-title">Detalles del Servicio</h3>
+
+                <div class="service-details-box form-grid">
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="providerName" readonly required>
+                            <span class="placeholder">Especialista Asignado</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="durationMinutes" readonly required>
+                            <span class="placeholder">Duración (min)</span>
+                        </label>
+                    </div>
+
+                    <div class="status-container">
+                        <p class="status-label">Estado Inicial:</p>
+                        <div class="radio-inputs readonly-status">
+                            @for(status of scheduleStatus; track status.value; let i = $index){
+                            <label [for]="'status-' + i" class="radio">
+                                <input type="radio" formControlName="status" [id]="'status-' + i" [value]="status.value">
+                                <span class="name">{{status.value}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: Notas -->
+                <div class="form-grid full-width" style="margin-top: 15px;">
+                    <div class="general-label-input col-span-full">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="notes">
+                            <span class="placeholder">Notas Adicionales (Opcional)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" (click)="submitSchedule()" class="btn-primary" [disabled]="schedulForm.invalid">
+                    Confirmar Cita
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+}

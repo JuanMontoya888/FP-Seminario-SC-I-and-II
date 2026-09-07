@@ -1,0 +1,83 @@
+/* Contenedor Principal (Reemplaza al body) */
+.servicios {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #ffffff;
+    padding: 40px 20px;
+    margin: 0;
+    color: #000000;
+    /* CENTRADO: Alinea el texto a la izquierda, pero el margen auto centrará el contenido de bloque */
+    text-align: left; 
+}
+
+/* Título Principal */
+.seccion-titulo {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    /* CENTRADO: Limita el ancho y centra el bloque (opcional si es necesario) */
+    max-width: 1000px; 
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left; /* Alineación a la izquierda como en el diseño original */
+}
+
+/* Contenedor de las Tarjetas */
+.servicios-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 20px; 
+    max-width: 1000px; /* Limita el ancho del contenedor principal */
+    /* CENTRADO: Centra horizontalmente el bloque de la cuadrícula */
+    margin: 0 auto; 
+    text-align: left; 
+}
+
+/* Estilo de la Tarjeta */
+.servicio-tarjeta {
+    background-color: #f0f0f0; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); 
+    cursor: pointer;
+}
+
+/* Área de "Imagen" (simulada con color de fondo) */
+.tarjeta-imagen {
+    height: 180px;
+    background: linear-gradient(135deg, #a8dadc, #457b9d);
+    background-size: cover;
+    background-position: center;
+}
+
+
+/* Contenido de la Tarjeta */
+.tarjeta-contenido {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tarjeta-titulo {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.tarjeta-fecha {
+    font-size: 0.9rem;
+    color: #888888;
+    font-weight: 400;
+}
+
+/* Adaptación para pantallas más pequeñas (móviles) */
+@media (max-width: 768px) {
+    .servicios-grid {
+        grid-template-columns: 1fr; /* Una sola columna en móvil */
+    }
+    .seccion-titulo {
+        font-size: 2.5rem;
+    }
+}

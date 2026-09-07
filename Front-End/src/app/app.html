@@ -1,0 +1,11 @@
+<div class="loader-overlay" [class.escondido]="!cargando">
+   <div class="spinner"></div>
+   <p>Cargando...</p>
+</div>
+<div class="contenido-web" [class.visible]="!cargando">
+    <app-nav-bar></app-nav-bar>
+    <div class="body-main">
+        <router-outlet></router-outlet>
+        <app-footer></app-footer>
+    </div>
+</div>

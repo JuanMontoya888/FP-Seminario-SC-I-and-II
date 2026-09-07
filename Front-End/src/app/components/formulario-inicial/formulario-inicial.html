@@ -1,0 +1,262 @@
+<div class="body-formulario">
+    <div class="formulario-container">
+        <div class="progressForm">
+            <p class="currentForm">Información General</p> 
+            <hr>
+            <p>Historia Clínica</p>
+        </div>
+        <div class="formulario-card">
+           
+            <p class="aviso-formulario">La siguiente informacion es de carácter 
+                confidencial para integrar su archivo personal
+            </p>
+            <form [formGroup] = "generalForm" class="generalForm" (ngSubmit)="onSubmit()">
+                <div class="lineStyle">
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="nombre" required>
+                            <span class="placeholder">Nombre</span>
+                        </label>
+                        @if (generalForm.get('nombre')?.invalid && (generalForm.get('nombre')?.dirty || generalForm.get('nombre')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('nombre')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Name is required
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="general-label-input">
+                        <label  class="custom-field one">
+                            <input type="text" formControlName="apep" required>
+                            <span class="placeholder">Apellido Paterno</span>
+                        </label>
+                        
+                        @if (generalForm.get('apep')?.invalid && (generalForm.get('apep')?.dirty || generalForm.get('apep')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('apep')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Apellido paterno is required
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="apem" required>
+                            <span class="placeholder">Apellido Materno</span>
+                        </label>
+                        
+                        @if (generalForm.get('apem')?.invalid && (generalForm.get('apem')?.dirty || generalForm.get('apem')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('apem')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Apellido materno is required
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="lineStyle">
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="tel" formControlName="estatura" required>
+                            <span class="placeholder">Estatura</span>
+                        </label>
+                        @if (generalForm.get('estatura')?.invalid && (generalForm.get('estatura')?.dirty ||generalForm.get('estatura')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('estatura')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Estatura is required
+                                    </div>
+                                }
+                                @if(generalForm.get('estatura')?.hasError('pattern')){
+                                    <div class="alert-dialog">
+                                        No se admiten letras
+                                    </div>
+                                }
+                            </div>
+                        }
+                        
+                    </div>
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="tel" formControlName="peso" required>
+                            <span class="placeholder">Peso(Kg)</span>
+                        </label>
+                        @if (generalForm.get('peso')?.invalid && (generalForm.get('peso')?.dirty ||generalForm.get('peso')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('peso')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Peso is required
+                                    </div>
+                                }
+                                 @if(generalForm.get('peso')?.hasError('pattern')){
+                                    <div class="alert-dialog">
+                                        Peso is a number
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="date" formControlName="nacimiento">
+                            <span class="placeholder">Fecha de Nacimiento</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="lineStyle">
+                    <div class="select">
+                        <p>Genero</p>
+                        <div class="radio-inputsG">    
+                            @for(gen of genero; track gen.value; let i = $index){
+                                <label [for]="'radioG-' + i" class="radioG">
+                                    <input type="radio" 
+                                        name="genero" 
+                                        [id]="'radioG-' + i" 
+                                        [value]="gen.value"
+                                        formControlName = "genero">
+                                    <span class="nameG" >{{gen.value}}</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="lineStyle">
+                    <div class="select">
+                        <p>Escolaridad</p>
+                        <div class="radio-inputs">    
+                            @for(escolaridad of escolaridades; track escolaridad.value; let i = $index){
+                                <label [for]="'radio-' + i" class="radio">
+                                    <input type="radio" 
+                                        name="escolaridad" 
+                                        [id]="'radio-' + i" 
+                                        [value]="escolaridad.value"
+                                        formControlName = "escolaridad">
+                                    <span class="name" >{{escolaridad.value}}</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="select">
+                        <p>Estado Civil</p>
+                        <div class="radio-inputsEC">
+                            @for(edo of civil; track edo.value; let i = $index){
+                                <label [for]="'radioEC-' + i" class="radioEC">
+                                    <input type="radio" name="edoCivil" formControlName = "edoCivil" [id]="'radioEC-' + i" [value]="edo.value">
+                                    <span class="nameEC">{{edo.value}}</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="lineStyle">
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="text" formControlName="direccion" required>
+                            <span class="placeholder">Dirección</span>
+                        </label>
+                        
+                        @if (generalForm.get('direccion')?.invalid && (generalForm.get('direccion')?.dirty || generalForm.get('direccion')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('direccion')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Direccion is required
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="tel" formControlName="cp" required>
+                            <span class="placeholder">C.P.</span>
+                        </label>
+                       
+                        @if (generalForm.get('cp')?.invalid && (generalForm.get('cp')?.dirty || generalForm.get('cp')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('cp')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Codigo Postal is required
+                                    </div>
+                                }
+                                @if(generalForm.get('cp')?.hasError('pattern')){
+                                    <div class="alert-dialog">
+                                        Codigo Postal tiene 5 digitos
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                    </div>
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="tel" formControlName="telCasa">
+                            <span class="placeholder">Telefono Casa(opcional)</span>
+                        </label>
+                        @if (generalForm.get('telCasa')?.invalid && (generalForm.get('telCasa')?.dirty || generalForm.get('telCasa')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('telCasa')?.hasError('pattern')){
+                                    <div class="alert-dialog">
+                                        Debe de tener 10 dígitos
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                    </div>
+                </div>
+                <div class="lineStyle">
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="tel" formControlName="numcel" required>
+                            <span class="placeholder">Número Celular</span>
+                        </label>
+                        @if (generalForm.get('numcel')?.invalid && (generalForm.get('numcel')?.dirty || generalForm.get('numcel')?.touched)) {
+                            <div class="alert">
+                                @if(generalForm.get('numcel')?.hasError('pattern')){
+                                    <div class="alert-dialog">
+                                        Debe de tener 10 dígitos
+                                    </div>
+                                }
+                                @if(generalForm.get('numcel')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Numero is required
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="general-label-input">
+                        <label for="" class="custom-field one">
+                            <input type="email" formControlName="email" required>
+                            <span class="placeholder">Email</span>
+                        </label>
+                        @if (generalForm.get('email')?.invalid && (generalForm.get('email')?.dirty || generalForm.get('email')?.touched )) {
+                            <div class="alert">
+                                @if(generalForm.get('email')?.hasError('required')){
+                                    <div class="alert-dialog">
+                                        Email is required
+                                    </div>
+                                }
+                                 @if(generalForm.get('email')?.hasError('email')){
+                                    <div class="alert-dialog">
+                                        Email is wrong
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    
+                </div>
+                <button type="submit" class="btn">Continuar</button>
+            </form>
+
+        </div>
+    </div>
+   
+</div>

@@ -1,0 +1,12 @@
+.mapa{
+    margin-bottom: 3em;
+    height: 500px;
+    width: 100%;
+}
+@media(max-width: 799px){
+    .mapa{
+        height: 400px;
+        width: 80%;
+       
+    }
+}

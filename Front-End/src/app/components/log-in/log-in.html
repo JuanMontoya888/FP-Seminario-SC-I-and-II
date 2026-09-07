@@ -1,0 +1,32 @@
+<div class="body-log-in">
+    <div class="login-container">
+        <div class="login-card">
+            <h1 class="text-center">Iniciar Sesión</h1>
+
+            <form [formGroup]="loginForm" (ngSubmit)="logIn()" class="form">
+                <label for="username">Email</label>
+                <input type="email" formControlName="username">
+
+                <label for="password">Contraseña</label>
+                <div class="password-wrapper">
+                    <input [type]="showPassword ? 'text' : 'password'" formControlName="password">
+                    <span class="password-toggle" (click)="togglePasswordVisibility()">
+                        {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+                    </span>
+                </div>
+                <p class="forgot-password" (click)="onForgotPassword()" style="cursor: pointer; color: #009ee3; text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 14px;">
+                    ¿Olvidaste tu contraseña?
+                </p>
+
+                <button type="submit" class="submit-button">Sign-in</button>
+                
+                <div id="google-button-container" class="google-sign-up"></div>
+                <p class="signup-link">
+                    No tienes cuenta?
+                    <a href="/register">Registrate</a>
+                </p>
+            </form>
+
+        </div>
+    </div>
+</div>

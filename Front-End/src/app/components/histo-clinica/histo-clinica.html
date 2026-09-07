@@ -1,0 +1,295 @@
+<div class="body-formulario">
+    <div class="formulario-container">
+        <div class="progressForm">
+            <p>Información General</p>
+            <hr>
+            <p class="currentForm">Historia Clínica</p>
+        </div>
+
+        <div class="formulario-card">
+            <p class="aviso-formulario">
+                La siguiente información es de carácter confidencial para integrar su archivo personal.
+            </p>
+
+            <form [formGroup]="histoForm" class="generalForm" (ngSubmit)="onSubmit()">
+
+                <div class="lineStyle">
+                    <div class="select">
+                        <p>Estado de Salud General</p>
+                        <div class="radio-inputs">
+                            @for(salud of edoSalud; track salud.value; let i = $index){
+                            <label [for]="'salud-' + i" class="radio">
+                                <input type="radio" formControlName="salud" [id]="'salud-' + i" [value]="salud.value">
+                                <span class="name">{{salud.value}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="width: 90%; margin: 1em 0;">
+
+                <div class="lineStyle" >
+                    <div class="general-label-input">
+                        <h3>Padecimientos que ha tenido o tiene (Selección Múltiple):</h3>
+                    </div>
+
+                    <div class="checkbox-group">
+                        @for(padecimiento of padecimientos; track padecimiento.value; let i = $index){
+                        <div class="checkbox-container">
+                            <input type="checkbox" formControlName="padecimiento" [id]="'padecimiento-' + i" [value]="padecimiento.value"><label
+                                [for]="'padecimiento-' + i">{{padecimiento.value}}</label>
+                        </div>
+                        }
+                    </div>
+
+                    <hr style="width: 90%; margin: 1em 0;">
+
+                    <div class="select" style="width: 45%;">
+                        <p>Fiebre Reumática:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'fiebreReumatica-' + i" class="radio">
+                                <input type="radio" formControlName="fiebreReumatica" [id]="'fiebreReumatica-' + i"
+                                    [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>Enfermedades Cardiovasculares:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'enfermedadesCardiovasculares-' + i" class="radio">
+                                <input type="radio" formControlName="enfermedadesCardiovasculares"
+                                    [id]="'enfermedadesCardiovasculares-' + i" [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>Mareos/Desmayos:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'mareos-' + i" class="radio">
+                                <input type="radio" formControlName="mareos" [id]="'mareos-' + i" [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>Diabetes:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'diabetes-' + i" class="radio">
+                                <input type="radio" formControlName="diabetes" [id]="'diabetes-' + i"
+                                    [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>Hepatitis:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'hepatitis-' + i" class="radio">
+                                <input type="radio" formControlName="hepatitis" [id]="'hepatitis-' + i"
+                                    [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>VIH:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'vih-' + i" class="radio">
+                                <input type="radio" formControlName="vih" [id]="'vih-' + i" [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>Artritis:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'artritis-' + i" class="radio">
+                                <input type="radio" formControlName="artritis" [id]="'artritis-' + i"
+                                    [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="select" style="width: 45%;">
+                        <p>Gastritis:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'gastritis-' + i" class="radio">
+                                <input type="radio" formControlName="gastritis" [id]="'gastritis-' + i"
+                                    [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="select" style="width: 45%;">
+                        <p>Problemas Renales:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                        @for (bool of booleano; track bool.value; let i = $index) {
+                            <label [for]="'renales-' + i" class="radio">
+                                <input type="radio" formControlName="renales" [id]="'renales-' + i"
+                                [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                        }
+                        </div>
+                    </div>
+                    <div class="select" style="width: 45%;">
+                        <p>Anemia:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                        @for (bool of booleano; track bool.value; let i = $index) {
+                            <label [for]="'anemia-' + i" class="radio">
+                                <input type="radio" formControlName="anemia" [id]="'anemia-' + i"
+                                [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                        }
+                        </div>
+                    </div>
+                    <div class="select" style="width: 45%;">
+                        <p>Sangrado Anormal:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                        @for (bool of booleano; track bool.value; let i = $index) {
+                            <label [for]="'sangradoAnormal-' + i" class="radio">
+                                <input type="radio" formControlName="sangradoAnormal" [id]="'sangradoAnormal-' + i"
+                                [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                        }
+                        </div>
+                    </div>
+                    <div class="select" style="width: 45%;">
+                        <p>Moretones:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                        @for (bool of booleano; track bool.value; let i = $index) {
+                            <label [for]="'moretones-' + i" class="radio">
+                                <input type="radio" formControlName="moretones" [id]="'moretones-' + i"
+                                [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                        }
+                        </div>
+                    </div>
+                    <div class="select" style="width: 45%;">
+                        <p>Transfusiones:</p>
+                        <div class="radio-inputs" style="width: 100%;">
+                        @for (bool of booleano; track bool.value; let i = $index) {
+                            <label [for]="'transfusiones-' + i" class="radio">
+                                <input type="radio" formControlName="transfusiones" [id]="'transfusiones-' + i"
+                                [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                        }
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr style="width: 90%; margin: 1em 0;">
+
+                <div class="lineStyleInput">
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="presionArterial" required>
+                            <span class="placeholder">Presión Arterial (Ej: 120/80)</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="tratamientoMedicoActual" required>
+                            <span class="placeholder">Tratamiento Médico Actual (Especifique)</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="tomandoMedicamento" required>
+                            <span class="placeholder">¿Tomando Algún Medicamento? (Especifique)</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="alergicoMedicamento" required>
+                            <span class="placeholder">¿Alérgico a Medicamento? (Especifique)</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="adiccion" required>
+                            <span class="placeholder">¿Tiene alguna adicción? (Especifique)</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="fuma" required>
+                            <span class="placeholder">¿Fuma? (Especifique cantidad/día)</span>
+                        </label>
+                    </div>
+
+                    <div class="general-label-input" >
+                        <label class="custom-field one">
+                            <input type="text" formControlName="enfermedadNoMencionada" required>
+                            <span class="placeholder">¿Alguna otra enfermedad no mencionada? (Especifique)</span>
+                        </label>
+                    </div>
+
+                </div>
+
+                <hr style="width: 90%; margin: 1em 0;">
+
+                <div class="lineStyleInput">
+                    <h3 >Sección Exclusiva para Mujeres:</h3>
+                    <div class="general-label-input">
+                        <label class="custom-field one">
+                            <input type="text" formControlName="embarazo" required>
+                            <span class="placeholder">Embarazo (Meses de gestación, si aplica)</span>
+                        </label>
+                    </div>
+                    <div class="select">
+                        <p>Problema Hormonal:</p>
+                        <div class="radio-inputs">
+                            @for(bool of booleano; track bool.value; let i = $index){
+                            <label [for]="'problemaHormonal-' + i" class="radio">
+                                <input type="radio" formControlName="problemaHormonal" [id]="'problemaHormonal-' + i"
+                                    [value]="bool.value">
+                                <span class="name">{{bool.value | uppercase}}</span>
+                            </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">Finalizar</button>
+            </form>
+        </div>
+    </div>
+</div>

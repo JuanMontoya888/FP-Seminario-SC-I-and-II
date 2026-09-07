@@ -1,0 +1,362 @@
+/* ======== GENERAL ======== */
+.body-help {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    /* Fondo suave */
+    min-height: 100vh;
+}
+
+.help-container {
+    width: 100%;
+    max-width: 800px;
+    background: white;
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Animación de entrada */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header-section {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.help-title {
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.help-subtitle {
+    color: #7f8c8d;
+    margin-top: 0.5rem;
+}
+
+/* ======== SECCIONES COMPARTIDAS ======== */
+.section-block {
+    margin-bottom: 3rem;
+}
+
+.section-heading {
+    color: #34495e;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.icon-bg {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.icon-bg.blue {
+    background: #3b82f6;
+}
+
+.icon-bg.yellow {
+    background: #f59e0b;
+}
+
+/* ======== PASOS (STEPS GRID) ======== */
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.step-card {
+    background: #f8fbff;
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.step-card:hover {
+    transform: translateY(-3px);
+    border-color: #dbeafe;
+}
+
+.step-number {
+    background: var(--color-btn, #007bff);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.step-content strong {
+    display: block;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.step-content p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.3;
+}
+
+/* ======== ACORDEÓN (CON ANIMACIÓN) ======== */
+.accordion-item {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: white;
+    overflow: hidden;
+    /* Necesario para la animación */
+}
+
+/* Estado activo: Borde azul y fondo suave */
+.accordion-item.active {
+    background: #fbfbfb;
+}
+
+.accordion-button {
+    width: 100%;
+    padding: 1.2rem 1rem;
+    background: none;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.question-text {
+    font-weight: 600;
+    color: #444;
+    font-size: 1rem;
+}
+
+.accordion-item.active .question-text {
+    color: var(--color-btn, #007bff);
+}
+
+/* Icono rotatorio */
+.arrow-icon {
+    color: #ccc;
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.accordion-item.active .arrow-icon {
+    transform: rotate(180deg);
+    color: var(--color-btn, #007bff);
+}
+
+/* Animación Smooth Slide */
+.accordion-collapse {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.accordion-item.active .accordion-collapse {
+    max-height: 200px;
+    /* Altura suficiente para el contenido */
+    opacity: 1;
+}
+
+.accordion-body {
+    padding: 0 1rem 1.2rem 1rem;
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ======== CONTACT GRID ======== */
+.contact-section {
+    background: #f1f5f9;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.contact-title {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.1rem;
+    color: #444;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.contact-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.contact-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.icon-lg {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.whatsapp-color {
+    color: #25D366;
+}
+
+.email-color {
+    color: #EA4335;
+}
+
+.phone-color {
+    color: #34495e;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 1024px) {
+    .body-help {
+        padding: 2rem 0;
+    }
+    .help-container {
+        padding: 2rem;
+        margin: 1rem;
+        max-width: 95%;
+    }
+
+    .steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem; /* Un poco más de espacio entre tarjetas */
+    }
+
+    /* Los botones de contacto (3 ítems) se ven bien en 3 columnas
+       o dejamos que se ajusten solos si falta espacio */
+    .contact-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+    }
+
+    .contact-card {
+        padding: 0.8rem; /* Reducimos padding para que quepan */
+        font-size: 0.85rem;
+    }
+}
+
+/* --- MÓVIL (Menos de 600px) --- */
+@media (max-width: 600px) {
+
+    .body-help {
+        padding: 0;
+        background-color: white; 
+        align-items: flex-start; 
+    }
+
+    .help-container {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 1.5rem 1rem; /* Un poco más de aire a los lados */
+        max-width: 100%;
+    }
+
+    .help-title {
+        font-size: 1.6rem; 
+        text-align: left; /* En móvil a veces se ve mejor alineado a la izq */
+    }
+    
+    .header-section {
+        text-align: left;
+        margin-bottom: 2rem;
+    }
+
+    /* MODO LISTA VERTICAL */
+    .steps-grid {
+        grid-template-columns: 1fr; /* 1 sola columna */
+    }
+
+    .step-card {
+        flex-direction: row; /* Número a la izquierda, texto a la derecha */
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .step-number {
+        /* Hacemos el número un poco más grande para que destaque en la lista */
+        width: 32px; 
+        height: 32px;
+        min-width: 32px; /* Evita que se aplaste */
+        font-size: 0.9rem;
+    }
+
+    /* MODO LISTA VERTICAL PARA CONTACTO */
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-card {
+        flex-direction: row;
+        justify-content: flex-start; /* Alinear contenido a la izquierda */
+        padding: 1rem;
+        gap: 1rem;
+        border: 1px solid #f0f0f0; /* Borde suave para separar botones */
+    }
+
+    .icon-lg {
+        margin-bottom: 0;
+        font-size: 1.4rem;
+    }
+}

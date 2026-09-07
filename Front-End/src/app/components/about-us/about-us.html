@@ -1,0 +1,92 @@
+<div class="nosotros">
+    <h1 class="seccion-titulo-nosotros">Quiénes Somos</h1>
+
+    <div class="contenido-centrado-nosotros">
+
+        <!-- NUESTRA HISTORIA -->
+        <div class="introductionN bloque-nosotros">
+            <div class="imageN">
+                <img src="nuestra-historia.jpg" alt="Dental One — atención cercana">
+            </div>
+            <div class="intro texto-nosotros">
+                <h2>Nuestra Historia</h2>
+                <p>La historia de Dental One comenzó hace más de 20 años, cuando abrimos nuestras puertas con un sueño claro: brindar a la comunidad de Aguascalientes una atención dental profesional, humana y cercana, donde cada paciente pudiera sentirse en confianza y tranquilidad.</p>
+                <p>Desde nuestros inicios, nos hemos comprometido no solo con la salud bucal, sino también con transformar la manera en que las personas viven la experiencia de acudir al dentista. En Dental One trabajamos cada día para crear un ambiente cálido, amable y seguro, donde cada sonrisa sea atendida con empatía, paciencia y profesionalismo.</p>
+                <p>A lo largo de estos años, hemos crecido gracias a la confianza de nuestros pacientes y al compromiso de un equipo de especialistas preparados en distintas áreas de la odontología, unidos con un mismo propósito: ayudarte a recuperar tu salud, tu confianza y tu sonrisa.</p>
+                <p class="historia-cierre">Hoy, después de dos décadas de experiencia, seguimos evolucionando y preparándonos para ofrecer tratamientos de calidad, tecnología y atención personalizada, siempre fieles a nuestra esencia: <strong>Trabajamos para verte sonreír.</strong></p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- QUIÉNES SOMOS -->
+        <div class="bloque-texto-completo">
+            <h2 class="subtitulo-seccion">En Dental One</h2>
+            <p>Somos una clínica comprometida con la salud, la confianza y la sonrisa de cada paciente. Contamos con un equipo de odontólogos altamente capacitados e instruidos en diferentes especialidades odontológicas, trabajando de manera integral para brindar atención personalizada, humana y de excelencia.</p>
+            <p>Nuestra misión es servir a la comunidad ofreciendo tratamientos de calidad en un ambiente cálido, profesional y seguro, donde cada visita se convierta en una experiencia grata, cómoda e inolvidable. En Dental One creemos que una sonrisa saludable transforma vidas, por eso nos enfocamos en cuidar cada detalle, desde la atención hasta los resultados.</p>
+            <p>Más que una clínica dental, somos un equipo apasionado por crear bienestar, confianza y sonrisas que duren para toda la vida.</p>
+        </div>
+
+        <hr class="divider">
+
+        <!-- NUESTRO OBJETIVO -->
+        <div class="otro bloque-nosotros bloque-inverso">
+            <div class="interests texto-nosotros">
+                <h2>Nuestro Objetivo</h2>
+                <p>Brindar atención odontológica integral y de alta calidad, apoyados en un equipo de especialistas capacitados y comprometidos con la salud bucal, la estética y el bienestar de nuestros pacientes. Buscamos ofrecer experiencias cálidas, profesionales y confiables, creando sonrisas saludables que generen seguridad, satisfacción y una mejor calidad de vida para nuestra comunidad.</p>
+                <p class="interes-hint">Haz clic en cada tarjeta para conocer más ⮕</p>
+            </div>
+            <div class="imageInterests">
+                <button type="button" class="interes-tarjeta" [class.activa]="seccionActiva === 'mision'" (click)="seleccionar('mision')">
+                    <div class="tarjeta-imagen-interes"></div>
+                    <p class="tarjeta-titulo-interes">Misión</p>
+                </button>
+                <button type="button" class="interes-tarjeta" [class.activa]="seccionActiva === 'vision'" (click)="seleccionar('vision')">
+                    <div class="tarjeta-imagen-interes"></div>
+                    <p class="tarjeta-titulo-interes">Visión</p>
+                </button>
+                <button type="button" class="interes-tarjeta" [class.activa]="seccionActiva === 'valores'" (click)="seleccionar('valores')">
+                    <div class="tarjeta-imagen-interes"></div>
+                    <p class="tarjeta-titulo-interes">Valores</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- PANEL DE CONTENIDO (Misión / Visión / Valores) -->
+        @if (seccionActiva) {
+            <div class="mvv-panel">
+
+                @if (seccionActiva === 'mision') {
+                    <h2 class="mvv-titulo">Misión</h2>
+                    <p class="mvv-texto">{{ mision }}</p>
+                }
+
+                @if (seccionActiva === 'vision') {
+                    <h2 class="mvv-titulo">Visión</h2>
+                    <p class="mvv-texto">{{ vision }}</p>
+                }
+
+                @if (seccionActiva === 'valores') {
+                    <h2 class="mvv-titulo">Nuestros Valores</h2>
+                    <div class="valores-grid">
+                        @for (valor of valores; track valor.titulo) {
+                            <div class="valor-item">
+                                <span class="valor-icono">✦</span>
+                                <div>
+                                    <strong>{{ valor.titulo }}</strong>
+                                    <p>{{ valor.descripcion }}</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+    <div class="tagline-footer">
+        <p>Sonrisas saludables, experiencias inolvidables.</p>
+    </div>
+</div>

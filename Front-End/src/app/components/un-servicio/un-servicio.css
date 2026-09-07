@@ -1,0 +1,119 @@
+/* Contenedor principal, similar al .servicios, para centrar la tarjeta */
+.servicio-detalle-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #f8f8f8; /* Fondo ligeramente diferente para contraste */
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center; /* Centrado horizontal */
+    min-height: 90vh; /* Asegura que cubra la altura de la vista */
+}
+
+/* La tarjeta de detalle (donde va toda la información) */
+.detalle-card {
+    background-color: #ffffff;
+    max-width: 800px; /* Ancho máximo para el contenido de lectura */
+    width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Encabezado visual (simula el área de la imagen) */
+.detalle-imagen-header {
+    height: 220px;
+    /* Degradado de respaldo si el servicio no tiene imagen */
+    background: linear-gradient(135deg, #457b9d, #a8dadc);
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+
+.detalle-contenido {
+    padding: 30px;
+}
+
+/* Título principal del servicio */
+.detalle-titulo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #000000;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+/* Descripción */
+.detalle-descripcion {
+    font-size: 1.1rem;
+    color: #555555;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+/* Divisor */
+.detalle-divider {
+    border: none;
+    height: 1px;
+    background-color: #eeeeee;
+    margin: 30px 0;
+}
+
+/* Subtítulos de las secciones */
+.seccion-subtitulo {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.emoji {
+    margin-right: 10px;
+}
+
+/* Lista de características */
+.lista-caracteristicas {
+    list-style: none;
+    padding-left: 0;
+}
+
+.lista-caracteristicas li {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="%23457b9d" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') no-repeat left 5px center;
+    background-size: 18px;
+    padding-left: 30px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    color: #333333;
+}
+
+/* Botón de Volver */
+.btn-volver {
+    background-color: #457b9d; /* Color principal */
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+}
+
+.btn-volver:hover {
+    background-color: #1d3557;
+}
+
+/* Responsive para móviles */
+@media (max-width: 600px) {
+    .detalle-titulo {
+        font-size: 2rem;
+    }
+    .detalle-contenido {
+        padding: 20px;
+    }
+}

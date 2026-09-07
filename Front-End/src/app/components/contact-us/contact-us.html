@@ -1,0 +1,67 @@
+<div class="body-contact-us">
+    <div class="contact-us-container">
+
+        <div class="contact-us-card fade-in">
+            <div class="card-header">
+                <h1>Contáctanos</h1>
+                <p>¿Tienes dudas o sugerencias? Escríbenos.</p>
+            </div>
+
+            <form [formGroup]="contactoForm" (ngSubmit)="enviar()">
+
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo</label>
+                    <input type="text" id="nombre" formControlName="nombre" placeholder="Ej. Juan Pérez"
+                        [class.error-border]="f['nombre'].invalid && f['nombre'].touched">
+
+                    @if (f['nombre'].invalid && f['nombre'].touched) {
+                    <small class="text-danger slide-in">Mínimo 3 letras requerido.</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" formControlName="email" placeholder="tucorreo@ejemplo.com"
+                        [class.error-border]="f['email'].invalid && f['email'].touched">
+
+                    @if (f['email'].invalid && f['email'].touched) {
+                    <small class="text-danger slide-in">Correo electrónico inválido.</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="celular">Celular</label>
+                    <input type="text" id="celular" formControlName="celular" maxlength="10" placeholder="10 dígitos"
+                        [class.error-border]="f['celular'].invalid && f['celular'].touched">
+
+                    @if (f['celular'].invalid && f['celular'].touched) {
+                    <small class="text-danger slide-in">Deben ser 10 números.</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="asunto">Asunto</label>
+                    <input type="text" id="asunto" formControlName="asunto" placeholder="Resumen breve"
+                        [class.error-border]="f['asunto'].invalid && f['asunto'].touched">
+                </div>
+
+                <div class="form-group">
+                    <label for="mensaje">Mensaje</label>
+                    <textarea id="mensaje" formControlName="mensaje" rows="4"
+                        placeholder="Cuéntanos en qué podemos ayudarte..."
+                        [class.error-border]="f['mensaje'].invalid && f['mensaje'].touched"></textarea>
+
+                    @if (f['mensaje'].invalid && f['mensaje'].touched) {
+                    <small class="text-danger slide-in">El mensaje es muy corto.</small>
+                    }
+                </div>
+
+                <button type="submit" class="submit-button ripple">
+                    Enviar Mensaje
+                    <span class="icon-send">➤</span>
+                </button>
+
+            </form>
+        </div>
+    </div>
+</div>

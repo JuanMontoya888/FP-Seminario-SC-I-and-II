@@ -1,0 +1,107 @@
+{
+  "kind": "singleType",
+  "collectionName": "inicios",
+  "info": {
+    "singularName": "inicio",
+    "pluralName": "inicios",
+    "displayName": "Inicio"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "frasePrincipal": {
+      "type": "string"
+    },
+    "primerSubtituloInicio": {
+      "type": "string"
+    },
+    "texto1Sub1": {
+      "type": "text"
+    },
+    "texto2Sub1": {
+      "type": "string"
+    },
+    "texto3Sub1": {
+      "type": "string"
+    },
+    "texto4Sub1": {
+      "type": "string"
+    },
+    "texto5Sub1": {
+      "type": "string"
+    },
+    "BtnSub1": {
+      "type": "string"
+    },
+    "imagenSub1": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "fraseSubServicios": {
+      "type": "string"
+    },
+    "descSubServicios": {
+      "type": "text"
+    },
+    "tit1SubServicios": {
+      "type": "string"
+    },
+    "descTit1SubServicios": {
+      "type": "text"
+    },
+    "tit2SubServicios": {
+      "type": "string"
+    },
+    "descTit2SubServicios": {
+      "type": "string"
+    },
+    "tit3SubServicios": {
+      "type": "string"
+    },
+    "desTit3SubServicios": {
+      "type": "text"
+    },
+    "tit4SubServicios": {
+      "type": "string"
+    },
+    "descTit4SubServicios": {
+      "type": "text"
+    },
+    "BtnSubServicios": {
+      "type": "string"
+    },
+    "titSubNosotros": {
+      "type": "string"
+    },
+    "fraseSubNosotros": {
+      "type": "string"
+    },
+    "descSubNosotros": {
+      "type": "text"
+    },
+    "imagenSubNosotros": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "BtnSubNosotros": {
+      "type": "string"
+    },
+    "titSubUbicacion": {
+      "type": "string"
+    }
+  }
+}

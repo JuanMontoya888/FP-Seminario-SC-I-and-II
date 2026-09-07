@@ -1,0 +1,119 @@
+/* Aditionals fonts*/
+@font-face {
+    font-family: 'DM Sans Regular';
+    src: url('assets/fonts/DMSans_18pt-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans Bold';
+    src: url('assets/fonts/DMSans_18pt-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans Bold Italic';
+    src: url('assets/fonts/DMSans_18pt-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans Italic';
+    src: url('assets/fonts/DMSans_18pt-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Colors principals */
+:root {
+    /* General colors*/
+    --color-white: #cccccc;
+    --color-black: #333;
+
+    /* Themes dark and light */
+    --bg-light: #FFFFFF;
+    --color-light: #333;
+
+    --bg-dark: #1E1E1E;
+    --color-dark: #E0E0E0;
+
+    --blue: #3f51b5;
+
+    /* Colors of buttons */
+    --color-btn: rgb(174, 190, 203);
+    --color-btn-hover: rgb(161, 190, 214);
+
+    /*--color-btn: #556B2F;
+    --color-btn-hover: #6B8E23;*/
+
+
+    /* Colors of hover in a tags*/
+    --a-hover: #0074B5;
+    --a-hover: #90EE90;
+
+    /* Colors in footer*/
+    --bg-footer: #364757;
+
+
+
+
+    /*Colors for calendar*/
+    --color-text-main: #333;
+    --color-time: #555;
+    --color-green: #6bc376;
+    --color-red: #c94040;
+    --color-yellow: #e6b349;
+    --color-purple: #8a63e9;
+    --color-blue: #4a82e8;
+    --color-border: #444444a2;
+    --color-CL: #364757;
+
+
+    --azulclaro: #00befa;
+    --amarilloclaro: #FAE900;
+    --azulbrillante: #003afa;
+    --amarillooscuro: #fab600;
+    --azuloscuro: #3751a5;
+    --azulgris: #3d6c7a;
+    --azulgrisf: #2c3e50;
+    --blanco: whitesmoke;
+    --fondo-principal: whitesmoke;
+    --special: "Comfortaa", sans-serif;
+    --text: "Helvetica Neue", sans-serif;
+    --other: "Franklin Gothic", sans-serif;
+
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--color-light);
+    font-family: 'DM Sans Regular', sans-serif;
+    padding: 0;
+    margin: 0;
+}
+
+
+.text-center {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 24px;
+    color: var(--azulgris);
+    font-family: 'Poppins', sans-serif;
+
+}
+
+/* En styles.css (Global) */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden; /* Corta cualquier cosa que intente salirse a la derecha */
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}

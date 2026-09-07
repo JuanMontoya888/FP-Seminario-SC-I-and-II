@@ -1,0 +1,24 @@
+<div class="tp-body">
+  <div class="tp-container">
+    <header class="tp-header">
+      <h1>Una última pregunta</h1>
+      <p>Cuéntanos si es tu primera vez con nosotros para preparar tu cita.</p>
+    </header>
+
+    <div class="tp-options">
+      <button type="button" class="tp-card" [disabled]="saving" (click)="select('new')">
+        <div class="tp-icon">🦷</div>
+        <h2>Soy paciente nuevo</h2>
+        <p>Es mi primera vez en Dental One.</p>
+        <span class="tp-note">Tu primera cita se paga en línea al agendarla.</span>
+      </button>
+
+      <button type="button" class="tp-card" [disabled]="saving" (click)="select('returning')">
+        <div class="tp-icon">😄</div>
+        <h2>Ya he ido a la clínica</h2>
+        <p>Soy paciente recurrente de Dental One.</p>
+        <span class="tp-note">Podrás elegir pagar en línea o en la clínica.</span>
+      </button>
+    </div>
+  </div>
+</div>

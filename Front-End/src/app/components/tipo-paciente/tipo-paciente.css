@@ -1,0 +1,98 @@
+.tp-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: #f9fafb;
+}
+
+.tp-container {
+  max-width: 760px;
+  width: 100%;
+}
+
+.tp-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.tp-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.tp-header p {
+  color: #6b7280;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.tp-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.tp-card {
+  background: #fff;
+  border: 2px solid #e8eaed;
+  border-radius: 16px;
+  padding: 2em 1.5em;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tp-card:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: #457b9d;
+  box-shadow: 0 10px 24px rgba(69, 123, 157, 0.15);
+}
+
+.tp-card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tp-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.tp-card h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 6px 0 0;
+}
+
+.tp-card p {
+  color: #4b5563;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.tp-note {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: #457b9d;
+  font-weight: 600;
+  background: #eef4fb;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+@media (max-width: 600px) {
+  .tp-options {
+    grid-template-columns: 1fr;
+  }
+}

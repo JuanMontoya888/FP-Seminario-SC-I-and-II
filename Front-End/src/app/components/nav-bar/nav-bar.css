@@ -1,0 +1,160 @@
+/* Configuración Global de la Barra */
+.body-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 75px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5%;
+  box-sizing: border-box; /* Crucial para que el padding no ensanche el nav */
+}
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.logo-dental-one {
+  width: 140px;
+}
+
+/* Escritorio */
+.modules-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.nav-cl {
+  display: flex;
+  gap: 20px;
+  font-weight: bold;
+}
+
+.nav-cl a {
+  text-decoration: none;
+  color: #333;
+}
+
+.login-button, .logout-button {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #556B2F;
+  color: white;
+}
+
+.logout-button { background: #d9534f; }
+
+.hamburguer-icon {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+/* MÓVIL (Cambios críticos) */
+@media (max-width: 900px) {
+  .modules-nav-bar { display: none; }
+  .hamburguer-icon { display: block; }
+
+  /* Aseguramos que la barra ocupe solo el 100% real */
+  .body-nav-bar {
+    padding: 0 20px;
+  }
+ 
+}
+
+/* SIDEBAR */
+.menu-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100vh;
+  background: white;
+  z-index: 2000;
+  padding: 20px;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+
+  /* OCULTAMIENTO PERFECTO */
+  transform: translateX(100%);
+  visibility: hidden;
+  display: none;
+  transition: transform 0.3s ease, visibility 0.3s;
+}
+
+.menu-sidebar.abierto {
+  transform: translateX(0);
+  visibility: visible;
+  display:unset;
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.mobile-modules-list {
+  list-style: none;
+  padding: 0;
+}
+
+.mobile-modules-list li a {
+  display: block;
+  padding: 15px 0;
+  color: #333;
+  text-decoration: none;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mobile-auth-section {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-link {
+  text-align: center;
+  padding: 12px;
+  background: #556B2F;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  border: none;
+}
+
+.logout-btn-mobile { background: #d9534f; font-weight: bold; }
+
+/* OVERLAY */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 1500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.menu-overlay.show-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}

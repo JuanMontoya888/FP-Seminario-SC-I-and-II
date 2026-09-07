@@ -1,0 +1,94 @@
+<div class="rp-body">
+  <div class="rp-container">
+    <header class="rp-header">
+      <h1>Registrar Procedimiento</h1>
+      <p>Registra lo que se realizó en la cita del paciente. Aparecerá en su cuenta.</p>
+    </header>
+
+    <div class="rp-grid">
+      <!-- FORMULARIO -->
+      <form class="rp-form" (ngSubmit)="submit()">
+        <div class="rp-field">
+          <label for="patient">Paciente</label>
+          <select id="patient" name="patient" [(ngModel)]="form.patientId" (change)="onPatientChange()" required>
+            <option value="" disabled>Selecciona un paciente</option>
+            @for (p of patients; track p._id) {
+              <option [value]="p._id">{{ p.nombre }} {{ p.apellidos }} — {{ p.email }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-row">
+          <div class="rp-field">
+            <label for="fecha">Fecha de la consulta</label>
+            <input id="fecha" name="fecha" type="date" [(ngModel)]="form.fecha">
+          </div>
+          <div class="rp-field">
+            <label for="dentista">Dentista</label>
+            <input id="dentista" name="dentista" type="text" [(ngModel)]="form.dentista" placeholder="Ej. Dra. López" required>
+          </div>
+        </div>
+
+        <div class="rp-field">
+          <label for="procedimientos">Procedimientos realizados</label>
+          <input id="procedimientos" name="procedimientos" type="text" [(ngModel)]="form.procedimientos"
+                 placeholder="Separa con comas. Ej: Limpieza, Resina, Extracción">
+          <small>Separa cada procedimiento con una coma.</small>
+        </div>
+
+        <div class="rp-field">
+          <label for="descripcion">Descripción de lo realizado</label>
+          <textarea id="descripcion" name="descripcion" rows="4" [(ngModel)]="form.descripcion"
+                    placeholder="Describe el tratamiento realizado en la cita..." required></textarea>
+        </div>
+
+        <div class="rp-field">
+          <label for="indicaciones">Indicaciones para el paciente <span class="rp-opt">(opcional)</span></label>
+          <textarea id="indicaciones" name="indicaciones" rows="2" [(ngModel)]="form.indicaciones"
+                    placeholder="Recomendaciones, cuidados, próxima cita..."></textarea>
+        </div>
+
+        <div class="rp-field rp-field-costo">
+          <label for="costo">Costo <span class="rp-opt">(opcional)</span></label>
+          <input id="costo" name="costo" type="number" min="0" step="0.01" [(ngModel)]="form.costo" placeholder="0.00">
+        </div>
+
+        <button type="submit" class="rp-btn" [disabled]="saving">
+          {{ saving ? 'Guardando...' : 'Registrar procedimiento' }}
+        </button>
+      </form>
+
+      <!-- HISTORIAL DEL PACIENTE -->
+      <aside class="rp-history">
+        <h2>Historial del paciente</h2>
+
+        @if (!form.patientId) {
+          <p class="rp-history-msg">Selecciona un paciente para ver su historial.</p>
+        } @else if (loadingHistory) {
+          <p class="rp-history-msg">Cargando historial...</p>
+        } @else if (patientProcedures.length === 0) {
+          <p class="rp-history-msg">Este paciente aún no tiene procedimientos registrados.</p>
+        } @else {
+          <div class="rp-history-list">
+            @for (proc of patientProcedures; track proc._id) {
+              <article class="rp-history-card">
+                <div class="rp-history-head">
+                  <span class="rp-history-date">{{ proc.fecha | date:'dd MMM yyyy':'UTC' }}</span>
+                  <span class="rp-history-dentist">{{ proc.dentista }}</span>
+                </div>
+                @if (proc.procedimientos && proc.procedimientos.length > 0) {
+                  <div class="rp-history-tags">
+                    @for (p of proc.procedimientos; track p) {
+                      <span class="rp-history-tag">{{ p }}</span>
+                    }
+                  </div>
+                }
+                <p class="rp-history-desc">{{ proc.descripcion }}</p>
+              </article>
+            }
+          </div>
+        }
+      </aside>
+    </div>
+  </div>
+</div>

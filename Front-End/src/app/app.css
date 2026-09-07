@@ -1,0 +1,76 @@
+.body-main {
+    padding-top: 80px;
+    /* Patrón sticky footer: ocupa al menos toda la pantalla
+       para que el footer siempre quede abajo en páginas cortas */
+    min-height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Empuja el footer al fondo cuando el contenido no llena la pantalla */
+.body-main app-footer {
+    margin-top: auto;
+}
+
+/* --- LOADER (PANTALLA DE CARGA) --- */
+.loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  z-index: 9999; /* Siempre encima */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+  /* ANIMACIÓN */
+  opacity: 1;
+  transition: opacity 0.8s ease-out, visibility 0.8s; 
+}
+
+/* Esta clase se agrega cuando termina de cargar */
+.loader-overlay.escondido {
+  opacity: 0;           /* Se vuelve transparente */
+  visibility: hidden;   /* Se oculta para que no estorbe los clics */
+  pointer-events: none; /* Asegura que puedas dar clic a lo de abajo */
+}
+
+
+/* --- CONTENIDO DE LA WEB --- */
+.contenido-web {
+  opacity: 0;            /* Empieza invisible */
+  transform: translateY(20px); /* Empieza un poco abajo */
+  transition: opacity 1s ease-out, transform 1s ease-out;
+  transition-delay: 0.3s; /* Espera un poquito antes de empezar a aparecer */
+}
+
+/* Esta clase hace que el contenido aparezca */
+.contenido-web.visible {
+  opacity: 1;
+  transform: translateY(0); /* Sube a su posición original */
+}
+
+
+/* --- SPINNER DE EJEMPLO --- */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e1e1e1;
+  border-top: 4px solid #0077b6; /* Azul dental */
+  border-radius: 50%;
+  animation: rotar 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes rotar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+}

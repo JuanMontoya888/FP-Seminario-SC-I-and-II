@@ -1,0 +1,379 @@
+/* ==================================== */
+/* ESTILOS GLOBALES DE LA SECCIÓN      */
+/* ==================================== */
+.nosotros {
+    /* Mantiene el padding superior */
+    padding: 40px 20px; 
+    margin: 0;
+    color: #000000;
+    /* Para centrar el contenido y tener padding lateral */
+}
+
+/* Título Principal al estilo de .seccion-titulo */
+.seccion-titulo-nosotros {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    max-width: 1000px; 
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+/* Contenedor central que limita el ancho del contenido */
+.contenido-centrado-nosotros {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px; /* Espacio entre los bloques principales */
+}
+
+/* Estilo para los bloques principales (Introducción y Objetivo) */
+.bloque-nosotros {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10em;
+    padding: 20px 0;
+}
+
+.texto-nosotros h2 {
+    font-size: 2.5rem; /* Ajustado para subtítulo */
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #457b9d; /* Color de acento */
+}
+
+.texto-nosotros p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Estilo para las imágenes en los bloques */
+.imageN img,
+.imageInterests img {
+    width: 100%;
+    max-width: 450px; /* Máximo para la imagen principal */
+    height: auto;
+    border-radius: 12px; /* Redondeado como las tarjetas */
+    object-fit: cover;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); /* Sombra para el estilo de tarjeta */
+}
+
+.imageN {
+    flex-shrink: 0; /* Evita que la imagen se comprima demasiado */
+    max-width: 450px;
+}
+
+/* Bloque inverso (para alternar imagen/texto) */
+.bloque-inverso {
+    flex-direction: row-reverse;
+}
+
+/* Divider con el nuevo estilo */
+.divider {
+    border: none;
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 20px 0;
+}
+
+/* ==================================== */
+/* BLOQUE DE IMÁGENES DE INTERESES (.imageInterests) - Como Tarjetas */
+/* ==================================== */
+
+.imageInterests {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+    flex: 1; /* Ocupa el espacio restante en el flex del bloque-nosotros */
+}
+
+.imageInterests img {
+    /* Removido ya que se usan las tarjetas de ejemplo */
+    display: none; 
+}
+
+/* Estilo de Tarjeta para los intereses */
+.interes-tarjeta {
+    flex: 1; /* Distribuye el espacio entre las tres tarjetas */
+    background-color: #f8f8f8;
+    border: 2px solid transparent; /* Reset del borde del button + base para el estado activo */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    color: inherit;
+}
+
+.interes-tarjeta:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Tarjeta seleccionada */
+.interes-tarjeta.activa {
+    border-color: #457b9d;
+    box-shadow: 0 6px 16px rgba(69, 123, 157, 0.25);
+    transform: translateY(-5px);
+}
+
+/* Texto de ayuda junto al objetivo */
+.interes-hint {
+    font-size: 0.95rem !important;
+    color: #457b9d !important;
+    font-weight: 600;
+    margin-top: 0.5em;
+}
+
+/* ==================================== */
+/* PANEL DE CONTENIDO (Misión / Visión / Valores) */
+/* ==================================== */
+.mvv-panel {
+    background-color: #f8f8f8;
+    border-radius: 12px;
+    padding: 2.5em 2em;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    animation: mvv-fade-in 0.35s ease;
+}
+
+@keyframes mvv-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mvv-titulo {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #457b9d;
+    margin-top: 0;
+    margin-bottom: 0.7em;
+}
+
+.mvv-texto {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #444;
+    margin: 0;
+}
+
+.tarjeta-imagen-interes {
+    height: 100px;
+    /* Uso de degradado para simular la imagen como en el ejemplo de servicios */
+    background: linear-gradient(135deg, #a8dadc, #457b9d); 
+}
+
+.interes-tarjeta:nth-child(2) .tarjeta-imagen-interes {
+    background: linear-gradient(135deg, #457b9d, #1d3557);
+}
+
+.interes-tarjeta:nth-child(3) .tarjeta-imagen-interes {
+    background: linear-gradient(135deg, #3ce639, #a8dadc);
+}
+
+.tarjeta-titulo-interes {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 10px 5px;
+    margin: 0;
+}
+
+
+/* ==================================== */
+/* NUEVAS SECCIONES                    */
+/* ==================================== */
+
+.bloque-texto-completo {
+    padding: 20px 0;
+}
+
+.bloque-texto-completo p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 1em;
+    color: #444;
+}
+
+.subtitulo-seccion {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #457b9d;
+    margin-bottom: 1em;
+}
+
+.historia-cierre {
+    margin-top: 1em;
+    font-style: italic;
+    color: #555;
+}
+
+/* MISIÓN Y VISIÓN */
+.mision-vision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2em;
+    padding: 20px 0;
+}
+
+.mv-card {
+    background-color: #f8f8f8;
+    border-radius: 12px;
+    padding: 2em;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mv-card h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #457b9d;
+    margin-bottom: 0.8em;
+}
+
+.mv-card p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #555;
+}
+
+/* VALORES */
+.bloque-valores {
+    padding: 20px 0;
+}
+
+.valores-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5em;
+    margin-top: 1em;
+}
+
+.valor-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1em;
+}
+
+.valor-icono {
+    color: #457b9d;
+    font-size: 1.2rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.valor-item strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.3em;
+    color: #333;
+}
+
+.valor-item p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #555;
+    margin: 0;
+}
+
+/* TAGLINE FOOTER */
+.tagline-footer {
+    text-align: center;
+    padding: 3em 1em 2em;
+    margin-top: 2em;
+}
+
+.tagline-footer p {
+    font-family: "Crimson Text", serif;
+    font-size: 2rem;
+    font-style: italic;
+    color: #457b9d;
+}
+
+/* ==================================== */
+/* ADAPTACIÓN MÓVIL (Max-width: 800px) */
+/* ==================================== */
+@media (max-width: 800px) {
+    
+    .seccion-titulo-nosotros {
+        font-size: 2.5rem;
+        text-align: center; /* Centrar título en móvil */
+    }
+
+    .bloque-nosotros {
+        flex-direction: column; /* Apilar elementos en móvil */
+        gap: 20px;
+        padding: 20px; /* Agregar padding interno para separar del borde */
+    }
+
+    .bloque-inverso {
+        flex-direction: column; /* Apilar también el bloque inverso */
+    }
+
+    .imageN,
+    .imageN img {
+        max-width: 100%; /* La imagen ocupa todo el ancho */
+    }
+
+    .texto-nosotros h2 {
+        font-size: 2rem;
+        text-align: center;
+    }
+    .texto-nosotros p{
+        text-align: center;
+    }
+
+    .imageInterests {
+        flex-direction: column; /* Apilar las tarjetas de interés */
+        width: 100%;
+    }
+
+    .interes-tarjeta {
+        flex-direction: row; /* Diseño de tarjeta horizontal en móvil para aprovechar mejor el espacio */
+        height: 80px;
+    }
+    
+    .tarjeta-imagen-interes {
+        height: 100%;
+        width: 80px; /* Imagen pequeña a la izquierda */
+        flex-shrink: 0;
+    }
+
+    .tarjeta-titulo-interes {
+        padding: 0 15px;
+        display: flex;
+        align-items: center;
+        text-align: left;
+    }
+
+    .mision-vision-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .valores-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bloque-texto-completo p,
+    .subtitulo-seccion {
+        text-align: center;
+    }
+
+    .tagline-footer p {
+        font-size: 1.4rem;
+    }
+}

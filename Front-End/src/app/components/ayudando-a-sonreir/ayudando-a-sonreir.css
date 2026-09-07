@@ -1,0 +1,131 @@
+.ayudando-body {
+    padding: 40px 20px;
+    color: #000;
+}
+
+.ayudando-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.ayudando-header {
+    margin-bottom: 1.5em;
+}
+
+.ayudando-titulo {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.3em;
+}
+
+.ayudando-subtitulo {
+    font-size: 1.1rem;
+    color: #457b9d;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.divider {
+    border: none;
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 20px 0 2em;
+}
+
+.ayudando-img {
+    width: 100%;
+    max-height: 360px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 2em;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.ayudando-contenido {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3em;
+    align-items: start;
+}
+
+.ayudando-texto p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 1.2em;
+}
+
+.ayudando-frase {
+    color: #457b9d;
+    font-size: 1.1rem;
+}
+
+.ayudando-card {
+    background-color: #f8f8f8;
+    border-radius: 16px;
+    padding: 2.5em 2em;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
+}
+
+.ayudando-card-icono {
+    font-size: 3rem;
+}
+
+.ayudando-card h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.ayudando-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #555;
+    margin: 0;
+}
+
+.ayudando-cierre {
+    color: #457b9d;
+}
+
+.ayudando-btn {
+    display: inline-block;
+    margin-top: 0.5em;
+    background-color: var(--color-btn, #457b9d);
+    color: white;
+    text-decoration: none;
+    padding: 0.8em 2em;
+    border-radius: 50px;
+    font-size: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.ayudando-btn:hover {
+    background-color: var(--color-btn-hover, #1d3557);
+}
+
+@media (max-width: 800px) {
+    .ayudando-titulo {
+        font-size: 2.2rem;
+        text-align: center;
+    }
+
+    .ayudando-subtitulo {
+        text-align: center;
+    }
+
+    .ayudando-contenido {
+        grid-template-columns: 1fr;
+        gap: 2em;
+    }
+
+    .ayudando-texto p {
+        text-align: center;
+    }
+}

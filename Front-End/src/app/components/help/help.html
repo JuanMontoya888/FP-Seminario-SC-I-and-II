@@ -1,0 +1,93 @@
+<div class="body-help">
+  <section class="help-container fade-in">
+
+    <div class="header-section">
+      <h1 class="help-title">Centro de Ayuda</h1>
+      <p class="help-subtitle">Resuelve tus dudas y gestiona tus citas fácilmente</p>
+    </div>
+
+    <div class="section-block">
+      <h4 class="section-heading">
+        <span class="icon-bg blue"><i class="fa-solid fa-info"></i></span>
+        ¿Cómo funciona?
+      </h4>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <strong>Elige servicio</strong>
+            <p>Selecciona limpieza, ortodoncia, etc.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <strong>Revisa horarios</strong>
+            <p>Busca el hueco que mejor te venga.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <strong>Solicita cita</strong>
+            <p>Completa el formulario en segundos.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <strong>Confirma</strong>
+            <p>Recibirás un correo de confirmación.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h4 class="section-heading">
+        <span class="icon-bg yellow"><i class="fa-solid fa-question"></i></span>
+        Preguntas Frecuentes
+      </h4>
+
+      <div class="faq-container">
+        @for (faq of faqs; track $index; let i = $index) {
+        <div class="accordion-item" [class.active]="openIndex === i">
+
+          <button class="accordion-button" (click)="toggleAccordion(i)">
+            <span class="question-text">{{ faq.question }}</span>
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+          </button>
+
+          <div class="accordion-collapse">
+            <div class="accordion-body">
+              {{ faq.answer }}
+            </div>
+          </div>
+
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="contact-section">
+      <h5 class="contact-title">¿Aún tienes dudas?</h5>
+
+      <div class="contact-grid">
+        <a href="#" class="contact-card ripple">
+          <i class="fa-brands fa-whatsapp icon-lg whatsapp-color"></i>
+          <span>WhatsApp</span>
+        </a>
+        <a href="#" class="contact-card ripple">
+          <i class="fa-solid fa-envelope icon-lg email-color"></i>
+          <span>Correo</span>
+        </a>
+        <a href="#" class="contact-card ripple">
+          <i class="fa-solid fa-phone icon-lg phone-color"></i>
+          <span>Llamar</span>
+        </a>
+      </div>
+    </div>
+
+  </section>
+</div>

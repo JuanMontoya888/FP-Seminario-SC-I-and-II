@@ -1,0 +1,79 @@
+<div class="body-nav-bar">
+  <div class="logo-nav-bar">
+    <a routerLink="/">
+      <img src="LOGO-DENTAL-ONE.png" alt="DENTAL-ONE" class="logo-dental-one">
+    </a>
+  </div>
+
+  <div class="modules-nav-bar">
+    <div class="nav-cl">
+      <a routerLink="/" routerLinkActive="underline">Inicio</a>
+      <a routerLink="/about-us">Nosotros</a>
+      <a routerLink="/services">Servicios</a>
+      <a routerLink="/contact-us">Contacto</a>
+      <a routerLink="/help">Ayuda</a>
+      <a routerLink="/ayudando-a-sonreir">Ayudando a Sonreír</a>
+
+      @if (this.userService.isLoggedIn()) {
+        @if (!this.userService.userLogged()?.isAdmin) {
+          <a routerLink="/paciente">Mi historial</a>
+        }
+        <a routerLink="/calendar">
+          {{ this.userService.userLogged()?.isAdmin ? 'Gestionar Citas' : 'Agendar Cita' }}
+        </a>
+        @if (this.userService.userLogged()?.isAdmin) {
+          <a routerLink="/registrar-procedimiento">Procedimientos</a>
+        }
+      }
+    </div>
+
+    <div class="auth-desktop">
+      @if (!this.userService.isLoggedIn()) {
+        <button class="login-button" routerLink="/log-in">Iniciar Sesión</button>
+      } @else {
+        <button class="logout-button" (click)="logOut()">Cerrar Sesión</button>
+      }
+    </div>
+  </div>
+
+  <button class="hamburguer-icon" (click)="toggleMenu()" aria-label="Abrir menú">
+    ☰
+  </button>
+</div>
+
+<div class="menu-overlay" [class.show-overlay]="wasOpenMenu" (click)="cerrarMenu()"></div>
+
+<div class="menu-sidebar" [class.abierto]="wasOpenMenu">
+  <div class="menu-header">
+    <h4>Menú Principal</h4>
+    <button class="close-btn" (click)="cerrarMenu()">✕</button>
+  </div>
+
+  <ul class="mobile-modules-list">
+    <li><a routerLink="/" (click)="cerrarMenu()">Inicio</a></li>
+    <li><a routerLink="/about-us" (click)="cerrarMenu()">Nosotros</a></li>
+    <li><a routerLink="/services" (click)="cerrarMenu()">Servicios</a></li>
+    <li><a routerLink="/contact-us" (click)="cerrarMenu()">Contacto</a></li>
+    <li><a routerLink="/help" (click)="cerrarMenu()">Ayuda</a></li>
+    <li><a routerLink="/ayudando-a-sonreir" (click)="cerrarMenu()">Ayudando a Sonreír</a></li>
+    
+    @if (this.userService.isLoggedIn()) {
+      @if (!this.userService.userLogged()?.isAdmin) {
+        <li><a routerLink="/paciente" (click)="cerrarMenu()">Mi historial</a></li>
+      }
+      <li><a routerLink="/calendar" (click)="cerrarMenu()">{{ this.userService.userLogged()?.isAdmin ? 'Gestionar Citas' : 'Agendar Cita' }}</a></li>
+      @if (this.userService.userLogged()?.isAdmin) {
+        <li><a routerLink="/registrar-procedimiento" (click)="cerrarMenu()">Procedimientos</a></li>
+      }
+    }
+  </ul>
+
+  <div class="mobile-auth-section">
+    @if (!this.userService.isLoggedIn()) {
+      <a class="auth-link" (click)="cerrarMenu()" routerLink="/log-in">Iniciar Sesión</a>
+      <a class="auth-link register-link" (click)="cerrarMenu()" routerLink="/register">Registrarse</a>
+    } @else {
+      <button class="auth-link logout-btn-mobile" (click)="logOut()">Cerrar Sesión</button>
+    }
+  </div>
+</div>

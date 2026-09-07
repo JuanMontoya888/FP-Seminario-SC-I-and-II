@@ -1,0 +1,196 @@
+.body-log-in {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    padding-top: 50px;
+    padding-bottom: 60px;
+}
+
+.login-card {
+    text-align: center;
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+.tab-selector {
+    display: flex;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tab-selector button {
+    flex: 1;
+    padding: 15px 0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.tab-left {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.tab-right {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.tab-active {
+    background-color: var(--color-btn);
+    color: white;
+    border-color: var(--color-btn);
+}
+
+.tab-inactive {
+    background-color: white;
+    color: #333;
+    border-color: var(--color-btn-hover);
+}
+
+
+
+form {
+    text-align: left;
+    width: 100%;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 14px;
+}
+
+
+input{
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #009ee3;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.password-toggle:hover {
+    opacity: 1;
+}
+
+/* Styles button --------------------------------*/
+.submit-button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 15px;
+    background-color: var(--color-btn);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+    background-color: var(--color-btn-hover)
+}
+
+.google-sign-up{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1em;
+}
+
+/* --- DISEÑO DE MENSAJES DE ERROR --- */
+
+.alert-dialog {
+    /* Layout */
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin-top: 5px;
+    margin-bottom: 15px; /* Espacio antes del siguiente campo/elemento */
+    
+    /* Colores y Borde */
+    background-color: #ffeaea; /* Fondo rojo muy suave */
+    color: #cc0000; /* Texto rojo oscuro */
+    border: 1px solid #ff9999; /* Borde rojo claro */
+    border-radius: 4px;
+    
+    /* Tipografía */
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+/* Opcional: Añadir un ícono (usando un pseudo-elemento) */
+.alert-dialog::before {
+    content: '⚠️'; /* Icono de advertencia */
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* Estilo específico para errores de coincidencia o pattern (más serios) */
+.alert-error-match, .alert-pattern {
+    background-color: #f7e0e5; /* Un tono un poco más fuerte */
+    color: #a3002f;
+    border-color: #e07f97;
+}
+
+@media(max-width: 799px) {
+    .form input {
+        width: 100%;
+    }
+    .password-wrapper {
+        width: 75%;
+    }
+    .form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .form label{
+        padding-left: 15%;
+        align-self:flex-start;
+    }
+    .form button{
+        width: 75%;
+    }
+}

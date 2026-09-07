@@ -1,0 +1,209 @@
+/* ================= ESTRUCTURA PRINCIPAL ================= */
+.body-contact-us {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Centrado vertical */
+    min-height: 100vh;
+    background-color: #f4f7f6;
+    /* Fondo suave para la página */
+    padding: 20px;
+}
+
+.contact-us-container {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* ================= TARJETA (CARD) ================= */
+.contact-us-card {
+    background: #ffffff;
+    border-radius: 16px;
+    /* Bordes más redondeados */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    /* Sombra elegante */
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Animación de entrada */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ================= HEADER ================= */
+.card-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.card-header p {
+    color: #777;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ================= FORMULARIO ================= */
+form {
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #444;
+    font-size: 0.9rem;
+}
+
+/* Inputs y Textarea modernos */
+input[type="text"],
+input[type="email"],
+textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid transparent;
+    /* Truco para evitar salto al enfocar */
+    background-color: #f5f7fa;
+    /* Fondo gris claro */
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    color: #333;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+/* Efecto al hacer clic en el input */
+input:focus,
+textarea:focus {
+    background-color: #fff;
+    border-color: var(--color-btn, #007bff);
+    /* Usa tu variable o azul por defecto */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    outline: none;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Placeholders más suaves */
+::placeholder {
+    color: #aab;
+}
+
+/* ================= VALIDACIONES ================= */
+.error-border {
+    border-color: #ff5252 !important;
+    background-color: #fffafa !important;
+}
+
+.text-danger {
+    color: #ff5252;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    display: block;
+    font-weight: 500;
+}
+
+/* Pequeña animación para el error */
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ================= BOTÓN ================= */
+.submit-button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 10px;
+    background-color: var(--color-btn, #007bff);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button:hover {
+    background-color: var(--color-btn-hover, #0056b3);
+    transform: translateY(-2px);
+    /* Efecto de levantamiento */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:active {
+    transform: translateY(0);
+}
+
+.icon-send {
+    font-size: 1.2rem;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 480px) {
+    .contact-us-card {
+        padding: 25px;
+        border-radius: 12px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    input,
+    textarea {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+}

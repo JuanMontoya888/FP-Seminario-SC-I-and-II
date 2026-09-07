@@ -1,0 +1,362 @@
+/* En Angular los estilos de componente están encapsulados: :root NO aplica,
+   así que las variables se definen en :host para que se hereden al contenido. */
+:host {
+    --primary-blue: #005bb5;
+    --primary-blue-hover: #00448a;
+    --text-color: #333;
+    --border-color: #c4ccd4;
+    --bg-light: #f8f9fa;
+    --error-color: #dc3545;
+    display: block;
+}
+
+/* =========================================
+   LAYOUT GENERAL
+   ========================================= */
+.body-formulario {
+    display: flex;
+    justify-content: center;
+    background: #f0f2f5;
+    /* Un gris un poco más moderno */
+    padding: 2rem 1rem;
+    min-height: 100vh;
+}
+
+.formulario-container {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.progressForm {
+    display: flex;
+    gap: 1.5em;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.progressForm hr {
+    width: 60px;
+    border: 1px solid #ccc;
+}
+
+.currentForm {
+    color: var(--primary-blue);
+    font-weight: bold;
+    text-decoration: underline;
+    text-underline-offset: 8px;
+}
+
+.formulario-card {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    /* Sombra más suave y moderna */
+    padding: 3rem;
+    box-sizing: border-box;
+}
+
+.aviso-formulario {
+    text-align: center;
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+}
+
+.generalForm {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.divider {
+    width: 100%;
+    margin: 2rem 0;
+    border: none;
+    border-top: 1px dashed #ccc;
+}
+
+.section-title {
+    width: 100%;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 1.5rem;
+    text-align: left;
+    padding: 10px 14px;
+    background: #eef4fb;
+    border-left: 4px solid var(--primary-blue);
+    border-radius: 0 8px 8px 0;
+    box-sizing: border-box;
+}
+
+/* =========================================
+   SISTEMA DE GRID (Responsivo)
+   ========================================= */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* Permite que un elemento ocupe dos columnas en desktop si hay espacio */
+@media (min-width: 768px) {
+    .col-span-2 {
+        grid-column: span 2;
+    }
+
+    .col-span-full {
+        grid-column: 1 / -1;
+    }
+}
+
+.service-details-box {
+    background-color: var(--bg-light);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* =========================================
+   INPUTS Y SELECTS (Floating Labels)
+   ========================================= */
+.general-label-input {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.custom-field {
+    position: relative;
+    padding-top: 12px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* Estilos compartidos para Input y Select */
+.custom-field.one input,
+.custom-field.one select {
+    width: 100%;
+    box-sizing: border-box;
+    background: #f7f9fb;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--text-color);
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    appearance: none;
+    /* Quita flecha nativa en algunos selects */
+    -webkit-appearance: none;
+}
+
+/* Resalta el campo al pasar el cursor para que se note interactivo */
+.custom-field.one input:not([readonly]):hover,
+.custom-field.one select:hover {
+    border-color: #9bb4cc;
+}
+
+/* Flecha personalizada para el select */
+.custom-field.one select {
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px top 50%;
+    background-size: 10px auto;
+    padding-right: 30px;
+}
+
+.custom-field.one input:focus,
+.custom-field.one select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 91, 181, 0.1);
+}
+
+.custom-field.one input[readonly] {
+    background-color: var(--bg-light);
+    color: #555;
+    cursor: not-allowed;
+    border-color: #ddd;
+}
+
+/* El Label (Placeholder) */
+.custom-field .placeholder {
+    position: absolute;
+    left: 12px;
+    top: calc(50% + 6px);
+    transform: translateY(-50%);
+    color: #888;
+    background: transparent;
+    padding: 0 4px;
+    transition: top 0.3s ease, font-size 0.3s ease, color 0.3s ease, background 0.3s ease;
+    pointer-events: none;
+}
+
+/* Animación del Label al escribir o enfocar */
+/* Nota: Se usa :not(:placeholder-shown) para inputs normales y valid para selects/readonly */
+.custom-field.one input:focus+.placeholder,
+.custom-field.one input:not(:placeholder-shown)+.placeholder,
+.custom-field.one input:valid+.placeholder,
+.custom-field.one select:focus+.placeholder,
+.custom-field.one select:valid+.placeholder {
+    top: 12px;
+    font-size: 12px;
+    color: var(--primary-blue);
+    background: #f7f9fb;
+    /* Tapa el borde del input (coincide con el fondo del campo) */
+}
+
+.custom-field.one input[readonly]+.placeholder {
+    background: linear-gradient(to bottom, white 50%, var(--bg-light) 50%);
+    /* Ajuste para el fondo gris del readonly */
+    color: #555;
+}
+
+/* Arreglo para inputs de fecha (esconden el texto por defecto para no pisar el label) */
+/* Arreglo para inputs de fecha (esconden el texto por defecto para no pisar el label) */
+.custom-field.one input[type="date"] {
+    color: transparent;
+}
+
+/* Agregamos la clase .ng-valid de Angular para asegurar que se muestre el texto */
+.custom-field.one input[type="date"]:focus,
+.custom-field.one input[type="date"]:valid,
+.custom-field.one input[type="date"].ng-valid {
+    color: #333 !important;
+    /* Forzamos el color oscuro */
+}
+
+/* Forzamos a que el label se quede arriba si Angular ya le puso una fecha válida */
+.custom-field.one input[type="date"].ng-valid+.placeholder {
+    top: 12px;
+    font-size: 12px;
+    color: var(--primary-blue, #005bb5);
+    background: #f7f9fb;
+}
+
+/* =========================================
+   RADIO BUTTONS (Estado Inicial)
+   ========================================= */
+.status-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.status-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.readonly-status {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.radio-inputs {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    /* Para que bajen en móviles si no caben */
+    border-radius: 0.5rem;
+    background-color: #e9ecef;
+    padding: 0.25rem;
+    width: 100%;
+    max-width: 400px;
+    font-size: 13px;
+}
+
+.radio-inputs .radio {
+    flex: 1 1 auto;
+    text-align: center;
+}
+
+.radio-inputs .radio input {
+    display: none;
+}
+
+.radio-inputs .radio .name {
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: none;
+    padding: 0.5rem 0.5rem;
+    color: #495057;
+    transition: all 0.15s ease-in-out;
+}
+
+.radio-inputs .radio input:checked+.name {
+    background-color: #fff;
+    font-weight: 600;
+    color: var(--primary-blue);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* =========================================
+   BOTÓN PRINCIPAL
+   ========================================= */
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 300px;
+    align-self: center;
+    /* Centra el botón en el form de flexbox */
+    box-shadow: 0 4px 12px rgba(0, 91, 181, 0.2);
+}
+
+.btn-primary:hover:not([disabled]) {
+    background-color: var(--primary-blue-hover);
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    background-color: #a0c4e4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* =========================================
+   MEDIA QUERIES (Móviles)
+   ========================================= */
+@media (max-width: 600px) {
+    .formulario-card {
+        padding: 1.5rem;
+    }
+
+    .progressForm {
+        flex-direction: column;
+        gap: 0.5em;
+    }
+
+    .progressForm hr {
+        display: none;
+    }
+
+    .btn-primary {
+        width: 100%;
+        max-width: none;
+    }
+}

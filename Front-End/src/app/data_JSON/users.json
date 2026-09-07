@@ -1,0 +1,29 @@
+[
+    {
+        "_idUser": "3b4623dd-91c9-4637-9a3f-a7e5a2177b78",
+        "_name": "Juan Mauricio",
+        "_lastname": "Montoya Martinez",
+        "_email": null,
+        "_phone": "4493716721",
+        "_password": "jm1234",
+        "_isAdmin": true
+    },
+    {
+        "_idUser": "4e2eae81-4997-4b9e-9079-73adb73c8d4f",
+        "_name": "Tomas Alberto",
+        "_lastname": "Alegria Martinez",
+        "_email": "thalberto@gmail.com",
+        "_phone": null,
+        "_password": "tomas12345",
+        "_isAdmin": false
+    },
+    {
+        "_idUser": "8e5c58d0-ab28-4f67-b8e9-e7d56bbdd276",
+        "_name": "Juan Mauricio",
+        "_lastname": "Montoya Martinez",
+        "_email": null,
+        "_phone": "4493716727",
+        "_password": "jm1234",
+        "_isAdmin": false
+    }
+]

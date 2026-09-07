@@ -1,0 +1,19 @@
+<div class="servicios">
+    <h1 class="seccion-titulo">Servicios</h1>
+
+    <div class="servicios-grid">
+
+        @for(s of misServicios; track s; let i = $index){
+            <div class="servicio-tarjeta tarjeta-implantes">
+                <div class="tarjeta-imagen" [style.background-image]="'url(' + s.img + ')'"></div>
+                <div class="tarjeta-contenido">
+                    <p class="tarjeta-titulo">{{s.nombre}}</p>
+                    <a [routerLink]= "['/servicio', i]" class="tarjeta-vermas">Ver Más</a>
+                </div>
+            </div>
+        }
+            
+       
+    </div>
+</div>
+    
