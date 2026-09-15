@@ -1,0 +1,38 @@
+# Usar una imagen base de Node.js (usamos la versión estándar de Debian para mayor compatibilidad con sharp/sqlite)
+FROM node:20
+
+WORKDIR /opt/app
+
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=1337
+
+# Instalar dependencias necesarias para algunos paquetes de Strapi
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  gcc \
+  autoconf \
+  automake \
+  zlib1g-dev \
+  libpng-dev \
+  libvips-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Copiar package.json y package-lock.json
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar el resto del código
+COPY . .
+
+# Construir el panel de administración
+RUN npm run build
+
+# Exponer el puerto
+EXPOSE 1337
+
+# Iniciar Strapi
+CMD ["npm", "start"]

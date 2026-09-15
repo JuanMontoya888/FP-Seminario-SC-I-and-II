@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:4.4
+    container_name: dental_one_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../Back-End
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: dental_one_backend
+    ports:
+      - "3000:3000"
+    environment:
+      # Conectamos a la BD local
+      - MONGODB_URI=mongodb://mongodb:27017/Dental-One
+      - PORT=3000
+      - FRONTEND_URL=http://localhost:4200
+      - GOOGLE_CALENDAR_ID=montoya.martinez.juan.cb284@gmail.com
+      - GOOGLE_CALENDAR_KEYFILE=/app/google-calendar-prueba.json
+    volumes:
+      - ../Back-End/google-calendar-prueba.json:/app/google-calendar-prueba.json:ro
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  cms:
+    build:
+      context: ../cms
+      dockerfile: ../docker/Dockerfile.cms
+    container_name: dental_one_cms
+    ports:
+      - "1337:1337"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=1337
+      # Valores necesarios para Strapi
+      - APP_KEYS=toBeModified1,toBeModified2
+      - API_TOKEN_SALT=tobemodified
+      - ADMIN_JWT_SECRET=tobemodified
+      - TRANSFER_TOKEN_SALT=tobemodified
+      - JWT_SECRET=tobemodified
+    volumes:
+      - cms_uploads:/opt/app/public/uploads
+      - cms_data:/opt/app/.tmp
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../Front-End
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: dental_one_frontend
+    ports:
+      - "4200:80" # Mapeamos el 4200 host al 80 del Nginx en el contenedor
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
+  cms_uploads:
+  cms_data:
