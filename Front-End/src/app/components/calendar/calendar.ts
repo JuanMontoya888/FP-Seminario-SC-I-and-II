@@ -30,6 +30,7 @@ export class Calendar implements OnInit {
   hours!: Array<string>;
   periodSelected!: { startDay: string, endDay: string };
   currentAppointments: Array<Appointment> = [];
+  currentMonthAppointments: Array<Appointment> = [];
   appointmentsMap: Array<Array<Appointment | null>> = [];
 
   // --- MODAL DE PROCEDIMIENTO (solo admin) ---
@@ -59,12 +60,6 @@ export class Calendar implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Verificar sesión
-    if (!this.userService.isLoggedIn()) {
-      this.routerViews.navigate(['/']);
-      return;
-    }
-
     // 2. Determinar si es Admin
     const user = this.userService.userLogged();
     this.isAdmin = user?.isAdmin || false;
@@ -104,8 +99,13 @@ export class Calendar implements OnInit {
     this.sethoursArray(8, 15.5);
 
     // 3. Obtener citas del periodo y llenar matriz
-    // getApptBetweenPeriod usa los datos que acabamos de cargar en ngOnInit
     this.currentAppointments = this.calendarService.getApptBetweenPeriod();
+    
+    // Obtener citas de todo el mes
+    this.currentMonthAppointments = this.calendarService.appointmentsUser
+      .filter(a => a.dateTime.getMonth() === currentMonth && a.dateTime.getFullYear() === currentYear)
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+
     this.initializeAppointmentsMap();
 
     this.cdr.detectChanges();

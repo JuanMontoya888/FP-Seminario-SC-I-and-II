@@ -105,6 +105,9 @@ export class FormularioInicial {
     this.http.get('http://localhost:3000/api/get/patientDetails').subscribe({
       next: (data: any)=> {
         console.log('Patient Details: ', data);
+        if (data && data.nacimiento) {
+          data.nacimiento = new Date(data.nacimiento).toISOString().split('T')[0];
+        }
         this.generalForm.patchValue(data);
       }
     })
@@ -128,6 +131,11 @@ export class FormularioInicial {
       });
 
       this.generalForm.markAllAsTouched();
+      Swal.fire({
+          title: "Faltan datos",
+          text: "Por favor, completa todos los campos requeridos correctamente.",
+          icon: "warning"
+      });
       return;
     }
 

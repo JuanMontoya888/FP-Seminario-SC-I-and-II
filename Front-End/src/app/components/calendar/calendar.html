@@ -49,6 +49,26 @@
                     }
                     }
                 </div>
+
+                <div class="event-module" style="margin-top: 20px;">
+                    <h2 class="module-header">
+                        <span class="icon-calendar">📅</span>
+                        Resumen Mensual
+                    </h2>
+                    @if (currentMonthAppointments && currentMonthAppointments.length === 0) {
+                    <p class="no-events">No hay citas este mes.</p>
+                    }
+                    @else if (currentMonthAppointments) {
+                    @for (appt of currentMonthAppointments; track appt.dateTime) {
+                    <div class="event-item">
+                        <div class="event-tt">
+                            <span class="dot" [ngClass]="getStatusColor(appt.status)"></span>
+                            <span class="event-name">{{ formatFullDateTime(appt.dateTime) }}</span>
+                        </div>
+                    </div>
+                    }
+                    }
+                </div>
             </div>
         </div>
     </div>

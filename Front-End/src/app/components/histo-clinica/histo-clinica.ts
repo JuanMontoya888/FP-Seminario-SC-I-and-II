@@ -61,7 +61,11 @@ export class HistoClinica implements OnInit {
   onSubmit() {
     if (this.histoForm.invalid) {
       this.histoForm.markAllAsTouched();
-      Swal.fire('Atención', 'Por favor completa todos los campos requeridos', 'warning');
+      Swal.fire({
+        title: 'Faltan datos',
+        text: 'Por favor completa todos los campos requeridos',
+        icon: 'warning'
+      });
       return;
     }
 

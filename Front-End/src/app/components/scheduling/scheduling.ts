@@ -95,16 +95,25 @@ export class Scheduling implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!this.userService.isLoggedIn()) {
-      this.routerSchedule.navigate(['/']);
-      return;
-    }
-
     // 3. Inicializamos el formulario de manera síncrona INMEDIATAMENTE
     this.initializeFormSync();
 
     // 4. Cargamos el tipo de paciente para decidir las opciones de pago
     this.fetchPaymentEligibility();
+
+    // 5. Cargamos datos complementarios como el numero de telefono
+    this.fetchPatientDetails();
+  }
+
+  fetchPatientDetails(): void {
+    this.http.get<any>('http://localhost:3000/api/get/patientDetails').subscribe({
+      next: (details) => {
+        if (details && details.numcel) {
+          this.schedulForm.patchValue({ contactNumber: details.numcel });
+        }
+      },
+      error: (err) => console.error('No se pudo obtener el patientDetails:', err)
+    });
   }
 
   /** Lee el perfil para saber si el paciente puede pagar en la clínica. */

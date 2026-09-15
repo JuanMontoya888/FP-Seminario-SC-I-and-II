@@ -250,7 +250,7 @@ export class CalendarService {
                 dayOfWeekNumber,    // 4. dayOfWeek (número)
                 isCurrentDay,       // 5. isToday (booleano) - ¡Usa la variable que ya tenías!
                 isWeekend,          // 6. isWeekend (booleano)
-                []                  // 7. appointments (arreglo vacío por defecto)
+                app                 // 7. appointments (se inyectan las citas filtradas)
             );
 
             newMonth.daysInMonth.push(day);
