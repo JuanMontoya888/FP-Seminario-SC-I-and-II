@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { User } from '../../models/user';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { ProcedureService } from '../../services/procedure.service';
 import { Procedure } from '../../models/procedure';
 
@@ -27,7 +28,8 @@ export class Paciente implements OnInit {
   constructor(
     private router: Router,
     private procedureService: ProcedureService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient
   ){
 
   }
@@ -77,6 +79,56 @@ export class Paciente implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // --- NUEVA LÓGICA DE EXPEDIENTE CLÍNICO ---
+  showExpediente = false;
+  patientDetails: any = null;
+  medicalHistory: any = null;
+  loadingExpediente = false;
+
+  toggleExpediente(): void {
+    this.showExpediente = !this.showExpediente;
+    if (this.showExpediente && (!this.patientDetails || !this.medicalHistory)) {
+      this.fetchExpedienteCompleto();
+    }
+  }
+
+  fetchExpedienteCompleto(): void {
+    this.loadingExpediente = true;
+    // Petición para los datos personales
+    this.http.get<any>('http://localhost:3000/api/get/patientDetails').subscribe({
+      next: (details) => {
+        this.patientDetails = details;
+        this.checkExpedienteLoaded();
+      },
+      error: (err) => {
+        console.error('Error al obtener detalles del paciente', err);
+        this.checkExpedienteLoaded();
+      }
+    });
+
+    // Petición para el historial clínico
+    this.http.get<any>('http://localhost:3000/api/get/medicalHistory').subscribe({
+      next: (history) => {
+        this.medicalHistory = history;
+        this.checkExpedienteLoaded();
+      },
+      error: (err) => {
+        console.error('Error al obtener historial médico', err);
+        this.checkExpedienteLoaded();
+      }
+    });
+  }
+
+  private loadCount = 0;
+  checkExpedienteLoaded(): void {
+    this.loadCount++;
+    if (this.loadCount === 2) {
+      this.loadingExpediente = false;
+      this.cdr.detectChanges();
+      this.loadCount = 0;
+    }
   }
 
   navigate(): void{

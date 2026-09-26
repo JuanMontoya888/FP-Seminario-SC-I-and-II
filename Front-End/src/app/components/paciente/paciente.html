@@ -25,17 +25,75 @@
         <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
       </button>
 
-      <button class="menu-item">
+      <button class="menu-item" (click)="toggleExpediente()">
         <div class="icon-label">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <span>Mi historial</span>
+          <span>Consultar expediente clínico</span>
         </div>
-        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [style.transform]="showExpediente ? 'rotate(90deg)' : 'none'"><path d="M9 5l7 7-7 7"/></svg>
       </button>
     </nav>
   </div>
+
+  <!-- EXPEDIENTE CLÍNICO -->
+  @if (showExpediente) {
+    <section class="procedures-section">
+      <h3 class="procedures-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Mi Expediente Clínico
+      </h3>
+
+      @if (loadingExpediente) {
+        <p class="procedures-msg">Cargando expediente...</p>
+      } @else if (!patientDetails && !medicalHistory) {
+        <p class="procedures-msg error">No se pudo cargar el expediente.</p>
+      } @else {
+        <div class="procedures-list">
+          <!-- DATOS PERSONALES -->
+          @if (patientDetails) {
+            <article class="procedure-card">
+              <h4 style="margin-top:0; color: var(--primary-color);">Datos Personales</h4>
+              <p><strong>Nombre:</strong> {{ patientDetails.nombre }} {{ patientDetails.apep }} {{ patientDetails.apem }}</p>
+              <p><strong>Fecha de Nacimiento:</strong> {{ patientDetails.nacimiento | date:'dd MMM yyyy':'UTC' }}</p>
+              <p><strong>Teléfono:</strong> {{ patientDetails.numcel }}</p>
+              <p><strong>Dirección:</strong> {{ patientDetails.direccion }}</p>
+              <p><strong>Estado Civil:</strong> {{ patientDetails.edoCivil }}</p>
+            </article>
+          }
+          <!-- HISTORIA CLÍNICA -->
+          @if (medicalHistory) {
+            <article class="procedure-card">
+              <h4 style="margin-top:0; color: var(--primary-color);">Antecedentes Médicos</h4>
+              <p><strong>Salud General:</strong> {{ medicalHistory.salud }}</p>
+              <div class="procedure-tags" style="margin-top: 10px;">
+                @if (medicalHistory.diabetes) { <span class="procedure-tag" style="background-color: #fee2e2; color: #b91c1c;">Diabetes</span> }
+                @if (medicalHistory.presionArterial !== 'normal' && medicalHistory.presionArterial !== 'Normal') { <span class="procedure-tag" style="background-color: #fee2e2; color: #b91c1c;">Presión: {{ medicalHistory.presionArterial }}</span> }
+                @if (medicalHistory.enfermedadesCardiovasculares) { <span class="procedure-tag" style="background-color: #fee2e2; color: #b91c1c;">Cardiovascular</span> }
+                @if (medicalHistory.artritis) { <span class="procedure-tag" style="background-color: #fee2e2; color: #b91c1c;">Artritis</span> }
+                @if (medicalHistory.gastritis) { <span class="procedure-tag" style="background-color: #fee2e2; color: #b91c1c;">Gastritis</span> }
+                @if (medicalHistory.fuma === 'si') { <span class="procedure-tag" style="background-color: #fee2e2; color: #b91c1c;">Fuma</span> }
+              </div>
+              @if (medicalHistory.alergicoMedicamento !== 'no') {
+                <p class="procedure-indic" style="color:#b91c1c; font-weight: bold;">
+                  ⚠️ Alergias: {{ medicalHistory.alergicoMedicamento }}
+                </p>
+              }
+              @if (medicalHistory.tratamiendoMedicoActual !== 'no') {
+                <p class="procedure-indic"><strong>Tratamiento Médico Actual:</strong> {{ medicalHistory.tratamiendoMedicoActual }}</p>
+              }
+              @if (medicalHistory.tomandoMedicamento !== 'no') {
+                <p class="procedure-indic"><strong>Medicamento Actual:</strong> {{ medicalHistory.tomandoMedicamento }}</p>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
 
   <!-- ÚLTIMOS PROCEDIMIENTOS / CONSULTAS -->
   <section class="procedures-section">

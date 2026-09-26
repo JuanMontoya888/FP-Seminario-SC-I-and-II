@@ -101,6 +101,35 @@
             <button type="button" class="btn-block-range" (click)="openBlockRangeModal()">
                 🔒 Bloquear / desbloquear rango de horas
             </button>
+            <div class="toolbar-filters">
+                <div class="filter-group">
+                    <label for="doctorFilter">Especialista</label>
+                    <select id="doctorFilter" [(ngModel)]="filterDoctor" (change)="applyFilters()">
+                        <option value="">Todos</option>
+                        <option value="Dra. Lopez">Dra. Lopez</option>
+                        <option value="Dr. Juan">Dr. Juan</option>
+                        <option value="Dra. Martinez">Dra. Martinez</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Estado</label>
+                    <select id="statusFilter" [(ngModel)]="filterStatus" (change)="applyFilters()">
+                        <option value="">Todos</option>
+                        <option value="Scheduled">Programada</option>
+                        <option value="Confirmed">Confirmada</option>
+                        <option value="Completed">Completada</option>
+                        <option value="Canceled">Cancelada</option>
+                    </select>
+                </div>
+            </div>
+            <div class="toolbar-exports">
+                <button type="button" class="btn-export btn-excel" (click)="exportToExcel()">
+                    📊 Excel
+                </button>
+                <button type="button" class="btn-export btn-pdf" (click)="exportToPDF()">
+                    📄 PDF
+                </button>
+            </div>
         </div>
         }
 
