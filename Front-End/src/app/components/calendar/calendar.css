@@ -821,3 +821,65 @@ td {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== DETALLE DE CITAS EN RESUMEN ===== */
+.event-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.event-time {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.event-patient {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.event-reason {
+    font-size: 0.76rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.event-provider {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.cell-blocked-text {
+    color: #d1d5db;
+    font-size: 0.8rem;
+}
+
+/* Scroll interno para las listas de resumen para no alargar la página */
+.event-list-scroll {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Separación entre tarjetas de resumen */
+}
+
+/* Custom scrollbar para webkit */
+.event-list-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.event-list-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.event-list-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.event-list-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

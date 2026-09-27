@@ -89,24 +89,44 @@ export class Calendar implements OnInit {
   }
 
   /**
-   * Lógica de inicialización visual del calendario
+   * Lógica de inicialización visual del calendario.
+   * Al cargar el mes actual → posiciona en el día de hoy.
+   * Al navegar a otro mes → posiciona en el día 1.
    */
   private initializeCalendarData(): void {
-    const currentMonth = this.calendarService.selectedMonth;
-    const currentYear = this.calendarService.selectedYear;
+    const svc = this.calendarService;
+    const currentMonth = svc.selectedMonth;
+    const currentYear = svc.selectedYear;
 
     // 1. Generar mes
-    this.currentMonthCal = this.calendarService.getNewMonth(currentMonth, currentYear);
+    this.currentMonthCal = svc.getNewMonth(currentMonth, currentYear);
 
-    // Encontrar primer día visible
-    const firstDay = this.currentMonthCal.daysInMonth.find(d => d.dayNumber !== '') || this.currentMonthCal.daysInMonth[0];
+    // 2. Elegir día de inicio
+    const today = new Date();
+    const isCurrentMonth = (currentMonth === today.getMonth() && currentYear === today.getFullYear());
+    const targetDayNum = isCurrentMonth ? today.getDate() : 1;
+    svc.selectedDay = targetDayNum;
 
-    // 2. Establecer periodo y horas (8:00 a 15:30 = 15.5)
-    this.periodSelected = this.calendarService.getWeek(firstDay);
+    const targetDayObj = this.currentMonthCal.daysInMonth.find(
+      d => d.dayNumber !== '' && Number(d.dayNumber) === targetDayNum
+    ) || this.currentMonthCal.daysInMonth.find(d => d.dayNumber !== '');
+
+    // 3. Establecer semana y horas (8:00 a 15:30)
+    this.periodSelected = svc.getWeek(targetDayObj!);
     this.sethoursArray(8, 15.5);
 
-    // 3. Obtener citas del periodo y llenar matriz
+    // 4. Citas del periodo
     this.applyFilters();
+  }
+
+  /** Devuelve true si la columna es fin de semana o fecha anterior a hoy */
+  isPastOrWeekend(indDay: number): boolean {
+    const dayObj = this.getDayObjectForColumn(indDay);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dayObj.yearNumber, dayObj.monthNumber, Number(dayObj.dayNumber));
+    const dow = target.getDay(); // 0=Dom, 6=Sáb
+    return dow === 0 || dow === 6 || target < today;
   }
 
   applyFilters(): void {
@@ -282,6 +302,32 @@ export class Calendar implements OnInit {
 
     // Si por alguna razón hacen clic en un espacio vacío del calendario, lo ignoramos
     if (!dayObj.formattedDate) {
+      return;
+    }
+
+    // Validar que no sea fecha pasada
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dayObj.yearNumber, dayObj.monthNumber, Number(dayObj.dayNumber));
+    if (target < today) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Fecha no válida',
+        text: 'No puedes agendar citas en fechas anteriores a hoy.',
+        confirmButtonColor: '#457b9d'
+      });
+      return;
+    }
+
+    // Validar que no sea sábado (6) ni domingo (0)
+    const dow = target.getDay();
+    if (dow === 0 || dow === 6) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Día no hábil',
+        text: 'Los sábados y domingos no son días de atención. Selecciona un día entre lunes y viernes.',
+        confirmButtonColor: '#457b9d'
+      });
       return;
     }
 

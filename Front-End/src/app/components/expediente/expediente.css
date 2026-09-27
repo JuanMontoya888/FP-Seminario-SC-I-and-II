@@ -1,0 +1,476 @@
+/* ============= LAYOUT ============= */
+.exp-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  font-family: inherit;
+  color: #1f2937;
+}
+
+/* ============= TOPBAR ============= */
+.exp-topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.exp-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 50px;
+  padding: 0.5em 1.1em;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.exp-back:hover {
+  border-color: #457b9d;
+  background: #f0f6fb;
+  color: #457b9d;
+}
+
+.exp-title h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: #1f2937;
+}
+
+.exp-title p {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ============= LOADING ============= */
+.exp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem;
+  color: #9ca3af;
+  gap: 14px;
+}
+
+.exp-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #457b9d;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============= TABS ============= */
+.exp-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #f3f4f6;
+  margin-bottom: 1.5rem;
+}
+
+.exp-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.8em 1.2em;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  border-radius: 6px 6px 0 0;
+}
+
+.exp-tab:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.exp-tab.active {
+  color: #457b9d;
+  border-bottom-color: #457b9d;
+}
+
+/* ============= CARD ============= */
+.exp-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f0f2f4;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  padding: 1.8rem 2rem;
+}
+
+.exp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.exp-card-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1f2937;
+}
+
+.exp-badge {
+  background: #eef4fb;
+  color: #457b9d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 50px;
+  padding: 0.3em 0.8em;
+}
+
+.exp-btn-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 50px;
+  padding: 0.45em 1.1em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exp-btn-edit:hover {
+  border-color: #457b9d;
+  color: #457b9d;
+  background: #f0f6fb;
+}
+
+/* ============= GRID DE CAMPOS (vista) ============= */
+.exp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.2rem 2rem;
+}
+
+.exp-grid--mt {
+  margin-top: 1.5rem;
+}
+
+.exp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.exp-field--full {
+  grid-column: 1 / -1;
+}
+
+.exp-field--alert span {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.exp-field label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.exp-field span {
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+/* ============= CONDICIONES MÉDICAS (tags) ============= */
+.exp-conditions {
+  margin-top: 1.5rem;
+}
+
+.exp-conditions h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 10px;
+}
+
+.exp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.exp-tags--small .exp-tag {
+  font-size: 0.78rem;
+}
+
+.exp-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3em 0.8em;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.exp-tag--yes {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.exp-tag--no {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.exp-tag--proc {
+  background: #e0edf6;
+  color: #1d4e72;
+}
+
+/* ============= FORMULARIO ============= */
+.exp-form {}
+
+.exp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 1.5rem;
+}
+
+.exp-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.exp-form-field--full {
+  grid-column: 1 / -1;
+}
+
+.exp-form-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.exp-form-field input,
+.exp-form-field select,
+.exp-form-field textarea {
+  border: 1.5px solid #d1d5db;
+  border-radius: 9px;
+  padding: 0.55em 0.8em;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #1f2937;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.exp-form-field input:focus,
+.exp-form-field select:focus,
+.exp-form-field textarea:focus {
+  outline: none;
+  border-color: #457b9d;
+  box-shadow: 0 0 0 3px rgba(69,123,157,0.12);
+}
+
+.exp-form-field textarea {
+  resize: vertical;
+}
+
+.exp-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  padding-top: 1.6rem;
+}
+
+.exp-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  border: 1.5px solid #d1d5db;
+  border-radius: 4px;
+  accent-color: #457b9d;
+}
+
+.exp-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #f0f2f4;
+}
+
+.exp-btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 50px;
+  padding: 0.65em 1.4em;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.exp-btn-cancel:hover { background: #e5e7eb; }
+
+.exp-btn-save {
+  background: #457b9d;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.65em 1.6em;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.exp-btn-save:hover:not(:disabled) { background: #1d3557; }
+.exp-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ============= EMPTY STATES ============= */
+.exp-empty {
+  color: #9ca3af;
+  font-size: 0.92rem;
+  padding: 1rem 0;
+}
+
+.exp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  gap: 10px;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.exp-empty-state p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.exp-empty-state small {
+  font-size: 0.82rem;
+}
+
+/* ============= TIMELINE DE EVOLUCIONES ============= */
+.exp-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 24px;
+}
+
+.exp-timeline::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: #e5e7eb;
+}
+
+.exp-timeline-item {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+.exp-timeline-dot {
+  position: absolute;
+  left: -24px;
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #457b9d;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px #457b9d;
+}
+
+.exp-timeline-content {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  border-left: 3px solid #457b9d;
+}
+
+.exp-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.exp-timeline-date {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+.exp-timeline-doc {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.exp-timeline-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #374151;
+  margin: 8px 0 0;
+}
+
+.exp-timeline-indic {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 6px 0 0;
+}
+
+.exp-timeline-costo {
+  font-size: 0.82rem;
+  color: #457b9d;
+  font-weight: 700;
+  margin: 6px 0 0;
+}
+
+/* ============= RESPONSIVE ============= */
+@media (max-width: 640px) {
+  .exp-page { padding: 1.2rem 1rem 3rem; }
+  .exp-grid { grid-template-columns: 1fr; }
+  .exp-form-grid { grid-template-columns: 1fr; }
+  .exp-form-field--full { grid-column: 1; }
+  .exp-tabs { flex-direction: column; border-bottom: none; }
+  .exp-tab { border-bottom: none; border-left: 2px solid transparent; }
+  .exp-tab.active { border-left-color: #457b9d; border-bottom: none; }
+}

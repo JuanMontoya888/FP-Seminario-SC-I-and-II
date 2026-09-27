@@ -222,6 +222,34 @@ export class Scheduling implements OnInit {
     }
 
     const formData = this.schedulForm.getRawValue();
+
+    // Validar que la fecha no sea pasada ni fin de semana
+    const selectedDate = new Date(formData.dateTime);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Fecha no válida',
+        text: 'No puedes agendar citas en fechas anteriores a hoy.',
+        confirmButtonColor: '#457b9d'
+      });
+      return;
+    }
+
+    const dow = selectedDate.getDay();
+    if (dow === 0 || dow === 6) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Día no hábil',
+        text: 'Los sábados y domingos no son días de atención. Selecciona un día entre lunes y viernes.',
+        confirmButtonColor: '#457b9d'
+      });
+      return;
+    }
+
     const selectedTreatment = this.reasonSchedule.find(item => item.reason === formData.reason);
 
     if (!selectedTreatment) {
