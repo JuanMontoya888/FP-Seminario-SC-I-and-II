@@ -9,3 +9,8 @@ google-calendar-prueba.json
 dist/
 
 .env
+
+# Ignorar binarios y artefactos de compilación de C# / .NET
+**/bin/
+**/obj/
+dotnet-install.ps1
