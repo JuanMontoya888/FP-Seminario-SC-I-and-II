@@ -39,8 +39,9 @@ const crearPreferencia = async (datos) => {
                 pending: `${FRONTEND_URL}/pago-exitoso`
             },
 
-            // Auto-redirige al usuario sin que tenga que hacer clic en "Volver"
-            auto_return: 'approved',
+            // auto_return solo funciona con URLs públicas (no localhost).
+            // En producción, FRONTEND_URL apunta a un dominio real y se activa.
+            ...(!FRONTEND_URL.includes('localhost') ? { auto_return: 'approved' } : {}),
 
             ...(NOTIFICATION_URL ? { notification_url: NOTIFICATION_URL } : {}),
 

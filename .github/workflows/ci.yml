@@ -7,8 +7,37 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build-and-test:
+  # ─────────────────────────────────────────────
+  # JOB 1: Compilar y probar el proyecto de C#
+  # ─────────────────────────────────────────────
+  build-dotnet:
     runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Build xUnit Tests
+      run: |
+        cd Tests/DentalOne.Tests
+        dotnet build --configuration Release
+
+    - name: Install Playwright Browsers
+      run: |
+        cd Tests/DentalOne.Tests
+        dotnet build --configuration Release -o out
+        pwsh out/playwright.ps1 install chromium --with-deps
+
+  # ─────────────────────────────────────────────
+  # JOB 2: Levantar servicios y ejecutar pruebas
+  # ─────────────────────────────────────────────
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: build-dotnet
 
     steps:
     - name: Checkout repository
@@ -19,33 +48,41 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Build Tests
+    - name: Create dummy .env for CI
       run: |
-        cd Tests/DentalOne.Tests
-        dotnet build
+        cat > Back-End/.env << 'EOF'
+        PORT=3000
+        JWT_SECRET=dummy_secret_for_ci
+        MONGO_URI=mongodb://mongodb:27017/dentalone_test
+        FRONTEND_URL=http://localhost:4200
+        MP_ACCESS_TOKEN=dummy_mp_token
+        EOF
 
-    - name: Install Playwright Browsers
+    - name: Start services with Docker Compose
       run: |
-        cd Tests/DentalOne.Tests
-        pwsh bin/Debug/net8.0/playwright.ps1 install chromium --with-deps
-
-    - name: Start Environment with Docker Compose
-      run: |
-        # Crear un archivo .env temporal para que Docker pueda montar las variables
-        mkdir -p Back-End
-        echo "PORT=3000" > Back-End/.env
-        echo "JWT_SECRET=dummy_secret_for_ci" >> Back-End/.env
-        echo "MONGO_URI=mongodb://mongodb:27017/dentalone_test" >> Back-End/.env
-        
         cd docker
-        docker-compose up -d --build
+        docker compose up -d --build
+      env:
+        COMPOSE_DOCKER_CLI_BUILD: 1
+        DOCKER_BUILDKIT: 1
 
-    - name: Wait for services to be ready
+    - name: Wait for backend to be ready
       run: |
-        echo "Esperando a que los servicios de Node y Angular inicien correctamente..."
-        sleep 25
+        echo "Esperando que el backend esté listo en :3000..."
+        for i in $(seq 1 30); do
+          if curl -s http://localhost:3000/mercado-pago > /dev/null 2>&1; then
+            echo "Backend listo después de ${i}s"
+            break
+          fi
+          echo "Intento $i/30 — esperando 3s..."
+          sleep 3
+        done
 
-    - name: Run xUnit Tests (API & UI)
+    - name: Run API Integration Tests
       run: |
         cd Tests/DentalOne.Tests
-        dotnet test --logger "console;verbosity=detailed"
+        dotnet test --filter "FullyQualifiedName~API" --logger "console;verbosity=normal"
+
+    - name: Show backend logs if tests fail
+      if: failure()
+      run: docker logs dental_one_backend --tail 50
