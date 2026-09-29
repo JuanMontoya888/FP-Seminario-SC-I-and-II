@@ -19,10 +19,15 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
+    - name: Build Tests
+      run: |
+        cd Tests/DentalOne.Tests
+        dotnet build
+
     - name: Install Playwright Browsers
       run: |
-        dotnet tool install --global Microsoft.Playwright.CLI
-        playwright install chromium --with-deps
+        cd Tests/DentalOne.Tests
+        pwsh bin/Debug/net8.0/playwright.ps1 install chromium --with-deps
 
     - name: Start Environment with Docker Compose
       run: |
