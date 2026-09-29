@@ -20,10 +20,8 @@ services:
     environment:
       # Conectamos a la BD local
       - MONGODB_URI=mongodb://mongodb:27017/Dental-One
-      - PORT=3000
-      - FRONTEND_URL=http://localhost:4200
-      - GOOGLE_CALENDAR_ID=montoya.martinez.juan.cb284@gmail.com
-      - GOOGLE_CALENDAR_KEYFILE=/app/google-calendar-prueba.json
+    env_file:
+      - ../Back-End/.env
     volumes:
       - ../Back-End/google-calendar-prueba.json:/app/google-calendar-prueba.json:ro
     depends_on:

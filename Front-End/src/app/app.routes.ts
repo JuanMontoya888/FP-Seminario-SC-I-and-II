@@ -16,6 +16,8 @@ import { AyudandoASonreir } from './components/ayudando-a-sonreir/ayudando-a-son
 import { RegistrarProcedimiento } from './components/registrar-procedimiento/registrar-procedimiento';
 import { TipoPaciente } from './components/tipo-paciente/tipo-paciente';
 import { ResetPassword } from './components/reset-password/reset-password';
+import { Expediente } from './components/expediente/expediente';
+import { PagoExitoso } from './components/pago-exitoso/pago-exitoso';
 
 //Importamos el guard
 import { authGuard } from './guards/auth.guard';
@@ -33,11 +35,14 @@ export const routes: Routes = [
     {path: 'register', component: Register},
     {path: 'reset-password/:token', component: ResetPassword},
     {path: 'calendar', component: Calendar, canActivate: [authGuard]},
-    {path: 'formulario', component: FormularioInicial,canActivate: [authGuard]}, //canActivate: [authGuard]},
+    // /formulario reemplazado por /expediente (CDONE-48, CDONE-55)
+    // {path: 'formulario', component: FormularioInicial, canActivate: [authGuard]},
     {path: 'histo', component: HistoClinica, canActivate: [authGuard]},
     {path: 'scheduling', component: Scheduling, canActivate: [authGuard]},
     {path: 'paciente', component: Paciente, canActivate: [authGuard]},
+    {path: 'expediente', component: Expediente, canActivate: [authGuard]},
     {path: 'registrar-procedimiento', component: RegistrarProcedimiento, canActivate: [authGuard]},
     {path: 'tipo-paciente', component: TipoPaciente, canActivate: [authGuard]},
-    {path: 'ayudando-a-sonreir', component: AyudandoASonreir}
+    {path: 'ayudando-a-sonreir', component: AyudandoASonreir},
+    {path: 'pago-exitoso', component: PagoExitoso}
 ];

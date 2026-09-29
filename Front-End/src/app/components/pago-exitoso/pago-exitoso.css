@@ -1,0 +1,92 @@
+.pe-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    padding: 2rem 1rem;
+}
+
+.pe-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: 3rem 2.5rem;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.pe-icon {
+    font-size: 4rem;
+    line-height: 1;
+}
+
+.pe-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.pe-text {
+    font-size: 0.97rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.pe-folio {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.88rem;
+    color: #374151;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.pe-folio-label {
+    color: #6b7280;
+}
+
+.pe-folio-value {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.pe-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.pe-btn {
+    border: none;
+    border-radius: 50px;
+    padding: 0.65rem 1.8rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.pe-btn:hover {
+    opacity: 0.85;
+}
+
+.pe-btn-primary {
+    background: #457b9d;
+    color: #ffffff;
+}
+
+.pe-btn-secondary {
+    background: #f1f5f9;
+    color: #374151;
+}

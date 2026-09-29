@@ -449,8 +449,12 @@ td {
 /* Barra de herramientas del admin */
 .admin-toolbar {
     display: flex;
-    justify-content: center;
-    margin: 0 0 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #eee;
+    background: #fcfcfc;
 }
 
 .btn-block-range {
@@ -468,6 +472,78 @@ td {
 .btn-block-range:hover {
     background: #eef4fb;
     border-color: #457b9d;
+}
+
+/* Grupo de filtros */
+.toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.filter-group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.filter-group select {
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.4em 0.8em;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: #374151;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    appearance: auto;
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: #457b9d;
+}
+
+/* Botones de exportación */
+.toolbar-exports {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.btn-export {
+    border: 1.5px solid #d1d5db;
+    border-radius: 50px;
+    padding: 0.45em 1.1em;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-excel:hover {
+    background: #f0faf4;
+    border-color: #457b9d;
+    color: #1d6339;
+}
+
+.btn-pdf:hover {
+    background: #fdf2f2;
+    border-color: #e0a5a5;
+    color: #c62828;
 }
 
 /* Estado y botón cancelar en el modal */
@@ -745,3 +821,65 @@ td {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== DETALLE DE CITAS EN RESUMEN ===== */
+.event-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.event-time {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.event-patient {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.event-reason {
+    font-size: 0.76rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.event-provider {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.cell-blocked-text {
+    color: #d1d5db;
+    font-size: 0.8rem;
+}
+
+/* Scroll interno para las listas de resumen para no alargar la página */
+.event-list-scroll {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Separación entre tarjetas de resumen */
+}
+
+/* Custom scrollbar para webkit */
+.event-list-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.event-list-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.event-list-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.event-list-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

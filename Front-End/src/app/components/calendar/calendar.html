@@ -30,45 +30,73 @@
 
         <div class="reminders-left">
             <div class="calendar-list-container">
+                
+                <!-- RESUMEN SEMANAL -->
                 <div class="event-module">
                     <h2 class="module-header">
                         <span class="icon-calendar">🗓️</span>
-                        Resumen Semanal
+                        Semana ({{periodSelected?.startDay}} - {{periodSelected?.endDay}} {{currentMonthCal?.monthString | slice:0:3}})
                     </h2>
                     @if (currentAppointments && currentAppointments.length === 0) {
-                    <p class="no-events">No hay citas esta semana.</p>
-                    }
-                    @else if (currentAppointments) {
-                    @for (appt of currentAppointments; track appt.dateTime) {
-                    <div class="event-item">
-                        <div class="event-tt">
-                            <span class="dot" [ngClass]="getStatusColor(appt.status)"></span>
-                            <span class="event-name">{{ formatFullDateTime(appt.dateTime) }}</span>
+                        <p class="no-events">No hay citas esta semana.</p>
+                    } @else if (currentAppointments) {
+                        <div class="event-list-scroll">
+                            @for (appt of currentAppointments; track appt.dateTime) {
+                            <div class="event-item">
+                                <div class="event-tt">
+                                    <span class="dot" [ngClass]="getStatusColor(appt.status)"></span>
+                                    <div class="event-detail">
+                                        <span class="event-time">{{ formatFullDateTime(appt.dateTime) }}</span>
+                                        @if (appt.patientName && appt.patientName !== 'Ocupado') {
+                                        <span class="event-patient">{{ appt.patientName }}</span>
+                                        }
+                                        @if (appt.reason) {
+                                        <span class="event-reason">{{ appt.reason }}</span>
+                                        }
+                                        @if (appt.providerName) {
+                                        <span class="event-provider">{{ appt.providerName }}</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            }
                         </div>
-                    </div>
-                    }
                     }
                 </div>
 
+                <!-- RESUMEN MENSUAL -->
                 <div class="event-module" style="margin-top: 20px;">
                     <h2 class="module-header">
                         <span class="icon-calendar">📅</span>
-                        Resumen Mensual
+                        Mes ({{currentMonthCal?.monthString}} {{currentMonthCal?.yearString}})
                     </h2>
                     @if (currentMonthAppointments && currentMonthAppointments.length === 0) {
-                    <p class="no-events">No hay citas este mes.</p>
-                    }
-                    @else if (currentMonthAppointments) {
-                    @for (appt of currentMonthAppointments; track appt.dateTime) {
-                    <div class="event-item">
-                        <div class="event-tt">
-                            <span class="dot" [ngClass]="getStatusColor(appt.status)"></span>
-                            <span class="event-name">{{ formatFullDateTime(appt.dateTime) }}</span>
+                        <p class="no-events">No hay citas este mes.</p>
+                    } @else if (currentMonthAppointments) {
+                        <div class="event-list-scroll">
+                            @for (appt of currentMonthAppointments; track appt.dateTime) {
+                            <div class="event-item">
+                                <div class="event-tt">
+                                    <span class="dot" [ngClass]="getStatusColor(appt.status)"></span>
+                                    <div class="event-detail">
+                                        <span class="event-time">{{ formatFullDateTime(appt.dateTime) }}</span>
+                                        @if (appt.patientName && appt.patientName !== 'Ocupado') {
+                                        <span class="event-patient">{{ appt.patientName }}</span>
+                                        }
+                                        @if (appt.reason) {
+                                        <span class="event-reason">{{ appt.reason }}</span>
+                                        }
+                                        @if (appt.providerName) {
+                                        <span class="event-provider">{{ appt.providerName }}</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            }
                         </div>
-                    </div>
-                    }
                     }
                 </div>
+
             </div>
         </div>
     </div>
@@ -101,6 +129,35 @@
             <button type="button" class="btn-block-range" (click)="openBlockRangeModal()">
                 🔒 Bloquear / desbloquear rango de horas
             </button>
+            <div class="toolbar-filters">
+                <div class="filter-group">
+                    <label for="doctorFilter">Especialista</label>
+                    <select id="doctorFilter" [(ngModel)]="filterDoctor" (change)="applyFilters()">
+                        <option value="">Todos</option>
+                        <option value="Dra. Lopez">Dra. Lopez</option>
+                        <option value="Dr. Juan">Dr. Juan</option>
+                        <option value="Dra. Martinez">Dra. Martinez</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Estado</label>
+                    <select id="statusFilter" [(ngModel)]="filterStatus" (change)="applyFilters()">
+                        <option value="">Todos</option>
+                        <option value="Scheduled">Programada</option>
+                        <option value="Confirmed">Confirmada</option>
+                        <option value="Completed">Completada</option>
+                        <option value="Canceled">Cancelada</option>
+                    </select>
+                </div>
+            </div>
+            <div class="toolbar-exports">
+                <button type="button" class="btn-export btn-excel" (click)="exportToExcel()">
+                    📊 Excel
+                </button>
+                <button type="button" class="btn-export btn-pdf" (click)="exportToPDF()">
+                    📄 PDF
+                </button>
+            </div>
         </div>
         }
 
@@ -164,10 +221,17 @@
                                         <span>Bloquear</span>
                                     </button>
                                     } @else {
-                                    <button class="btn-schedule"
-                                        (click)="scheduleAppointment(hour, getDayObjectForColumn(indDay))">
-                                        <span>+</span>
-                                    </button>
+                                        @if (isPastOrWeekend(indDay)) {
+                                        <!-- Día pasado o fin de semana: celda vacía sin botón -->
+                                        <div class="cell-content cell-unavailable">
+                                            <span class="cell-blocked-text">—</span>
+                                        </div>
+                                        } @else {
+                                        <button class="btn-schedule"
+                                            (click)="scheduleAppointment(hour, getDayObjectForColumn(indDay))">
+                                            <span>+</span>
+                                        </button>
+                                        }
                                     }
                                 }
                             </td>
