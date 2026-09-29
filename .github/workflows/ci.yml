@@ -1,0 +1,40 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Install Playwright Browsers
+      run: |
+        dotnet tool install --global Microsoft.Playwright.CLI
+        playwright install chromium
+
+    - name: Start Environment with Docker Compose
+      run: |
+        cd docker
+        docker-compose up -d --build
+
+    - name: Wait for services to be ready
+      run: |
+        echo "Esperando a que los servicios de Node y Angular inicien correctamente..."
+        sleep 25
+
+    - name: Run xUnit Tests (API & UI)
+      run: |
+        cd Tests/DentalOne.Tests
+        dotnet test --logger "console;verbosity=detailed"
