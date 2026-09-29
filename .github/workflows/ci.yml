@@ -22,10 +22,16 @@ jobs:
     - name: Install Playwright Browsers
       run: |
         dotnet tool install --global Microsoft.Playwright.CLI
-        playwright install chromium
+        playwright install chromium --with-deps
 
     - name: Start Environment with Docker Compose
       run: |
+        # Crear un archivo .env temporal para que Docker pueda montar las variables
+        mkdir -p Back-End
+        echo "PORT=3000" > Back-End/.env
+        echo "JWT_SECRET=dummy_secret_for_ci" >> Back-End/.env
+        echo "MONGO_URI=mongodb://mongodb:27017/dentalone_test" >> Back-End/.env
+        
         cd docker
         docker-compose up -d --build
 
