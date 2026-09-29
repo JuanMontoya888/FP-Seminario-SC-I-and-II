@@ -34,19 +34,16 @@ const crearPreferencia = async (datos) => {
             },
 
             back_urls: {
-                success: `${FRONTEND_URL}/calendar`,
-                failure: `${FRONTEND_URL}/calendar`,
-                pending: `${FRONTEND_URL}/calendar`
+                success: `${FRONTEND_URL}/pago-exitoso`,
+                failure: `${FRONTEND_URL}/pago-exitoso`,
+                pending: `${FRONTEND_URL}/pago-exitoso`
             },
 
-            // -----------------------------------------------------
-            // WEBHOOK: A dónde llama MP cuando cambia el estado del pago.
-            // En local: URL de ngrok (MP_NOTIFICATION_URL en .env).
-            // En prod: la URL pública de tu backend.
-            // -----------------------------------------------------
+            // Auto-redirige al usuario sin que tenga que hacer clic en "Volver"
+            auto_return: 'approved',
+
             ...(NOTIFICATION_URL ? { notification_url: NOTIFICATION_URL } : {}),
 
-            //auto_return: "approved"
         };
 
         const result = await preference.create({ body: preferenceData });

@@ -17,6 +17,7 @@ import { RegistrarProcedimiento } from './components/registrar-procedimiento/reg
 import { TipoPaciente } from './components/tipo-paciente/tipo-paciente';
 import { ResetPassword } from './components/reset-password/reset-password';
 import { Expediente } from './components/expediente/expediente';
+import { PagoExitoso } from './components/pago-exitoso/pago-exitoso';
 
 //Importamos el guard
 import { authGuard } from './guards/auth.guard';
@@ -42,5 +43,6 @@ export const routes: Routes = [
     {path: 'expediente', component: Expediente, canActivate: [authGuard]},
     {path: 'registrar-procedimiento', component: RegistrarProcedimiento, canActivate: [authGuard]},
     {path: 'tipo-paciente', component: TipoPaciente, canActivate: [authGuard]},
-    {path: 'ayudando-a-sonreir', component: AyudandoASonreir}
+    {path: 'ayudando-a-sonreir', component: AyudandoASonreir},
+    {path: 'pago-exitoso', component: PagoExitoso}
 ];
