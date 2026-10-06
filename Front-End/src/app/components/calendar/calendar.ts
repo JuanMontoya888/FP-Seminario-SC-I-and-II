@@ -9,6 +9,9 @@ import { AppointmentsService } from '../../services/appointments.service';
 import { ProcedureService } from '../../services/procedure.service';
 import { Appointment } from '../../models/appointment';
 import { format, getDay } from 'date-fns';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import Swal from 'sweetalert2';
 
@@ -32,6 +35,10 @@ export class Calendar implements OnInit {
   currentAppointments: Array<Appointment> = [];
   currentMonthAppointments: Array<Appointment> = [];
   appointmentsMap: Array<Array<Appointment | null>> = [];
+
+  // Filtros
+  filterDoctor: string = '';
+  filterStatus: string = '';
 
   // --- MODAL DE PROCEDIMIENTO (solo admin) ---
   showProcedureModal = false;
@@ -82,33 +89,114 @@ export class Calendar implements OnInit {
   }
 
   /**
-   * Lógica de inicialización visual del calendario
+   * Lógica de inicialización visual del calendario.
+   * Al cargar el mes actual → posiciona en el día de hoy.
+   * Al navegar a otro mes → posiciona en el día 1.
    */
   private initializeCalendarData(): void {
+    const svc = this.calendarService;
+    const currentMonth = svc.selectedMonth;
+    const currentYear = svc.selectedYear;
+
+    // 1. Generar mes
+    this.currentMonthCal = svc.getNewMonth(currentMonth, currentYear);
+
+    // 2. Elegir día de inicio
+    const today = new Date();
+    const isCurrentMonth = (currentMonth === today.getMonth() && currentYear === today.getFullYear());
+    const targetDayNum = isCurrentMonth ? today.getDate() : 1;
+    svc.selectedDay = targetDayNum;
+
+    const targetDayObj = this.currentMonthCal.daysInMonth.find(
+      d => d.dayNumber !== '' && Number(d.dayNumber) === targetDayNum
+    ) || this.currentMonthCal.daysInMonth.find(d => d.dayNumber !== '');
+
+    // 3. Establecer semana y horas (8:00 a 15:30)
+    this.periodSelected = svc.getWeek(targetDayObj!);
+    this.sethoursArray(8, 15.5);
+
+    // 4. Citas del periodo
+    this.applyFilters();
+  }
+
+  /** Devuelve true si la columna es fin de semana o fecha anterior a hoy */
+  isPastOrWeekend(indDay: number): boolean {
+    const dayObj = this.getDayObjectForColumn(indDay);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dayObj.yearNumber, dayObj.monthNumber, Number(dayObj.dayNumber));
+    const dow = target.getDay(); // 0=Dom, 6=Sáb
+    return dow === 0 || dow === 6 || target < today;
+  }
+
+  applyFilters(): void {
     const currentMonth = this.calendarService.selectedMonth;
     const currentYear = this.calendarService.selectedYear;
 
-    // 1. Generar mes
-    this.currentMonthCal = this.calendarService.getNewMonth(currentMonth, currentYear);
+    let allPeriodAppts = this.calendarService.getApptBetweenPeriod();
+    let allMonthAppts = this.calendarService.appointmentsUser
+      .filter(a => a.dateTime.getMonth() === currentMonth && a.dateTime.getFullYear() === currentYear);
 
-    // Encontrar primer día visible
-    const firstDay = this.currentMonthCal.daysInMonth.find(d => d.dayNumber !== '') || this.currentMonthCal.daysInMonth[0];
+    if (this.filterDoctor) {
+      allPeriodAppts = allPeriodAppts.filter(a => a.providerName === this.filterDoctor);
+      allMonthAppts = allMonthAppts.filter(a => a.providerName === this.filterDoctor);
+    }
 
-    // 2. Establecer periodo y horas (8:00 a 15:30 = 15.5)
-    this.periodSelected = this.calendarService.getWeek(firstDay);
-    this.sethoursArray(8, 15.5);
+    if (this.filterStatus) {
+      allPeriodAppts = allPeriodAppts.filter(a => a.status === this.filterStatus);
+      allMonthAppts = allMonthAppts.filter(a => a.status === this.filterStatus);
+    }
 
-    // 3. Obtener citas del periodo y llenar matriz
-    this.currentAppointments = this.calendarService.getApptBetweenPeriod();
-    
-    // Obtener citas de todo el mes
-    this.currentMonthAppointments = this.calendarService.appointmentsUser
-      .filter(a => a.dateTime.getMonth() === currentMonth && a.dateTime.getFullYear() === currentYear)
-      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+    this.currentAppointments = allPeriodAppts;
+    this.currentMonthAppointments = allMonthAppts.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
 
     this.initializeAppointmentsMap();
-
     this.cdr.detectChanges();
+  }
+
+  exportToExcel(): void {
+    if (this.currentMonthAppointments.length === 0) {
+      Swal.fire('Atención', 'No hay citas para exportar en este mes.', 'warning');
+      return;
+    }
+
+    const dataToExport = this.currentMonthAppointments.map(appt => ({
+      Fecha: this.formatFullDateTime(appt.dateTime),
+      Paciente: appt.patientName,
+      Especialista: appt.providerName,
+      Motivo: appt.reason || 'N/A',
+      Estado: this.statusLabel(appt.status)
+    }));
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook: XLSX.WorkBook = { Sheets: { 'Citas': worksheet }, SheetNames: ['Citas'] };
+    XLSX.writeFile(workbook, `Citas_${this.currentMonthCal?.monthString}.xlsx`);
+  }
+
+  exportToPDF(): void {
+    if (this.currentMonthAppointments.length === 0) {
+      Swal.fire('Atención', 'No hay citas para exportar en este mes.', 'warning');
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.text(`Reporte de Citas - ${this.currentMonthCal?.monthString}`, 14, 15);
+
+    const tableData = this.currentMonthAppointments.map(appt => [
+      this.formatFullDateTime(appt.dateTime),
+      appt.patientName,
+      appt.providerName,
+      appt.reason || 'N/A',
+      this.statusLabel(appt.status)
+    ]);
+
+    autoTable(doc, {
+      head: [['Fecha', 'Paciente', 'Especialista', 'Motivo', 'Estado']],
+      body: tableData,
+      startY: 20
+    });
+
+    doc.save(`Citas_${this.currentMonthCal?.monthString}.pdf`);
   }
 
   /**
@@ -203,11 +291,8 @@ export class Calendar implements OnInit {
     this.calendarService.selectedDay = Number(day.dayNumber);
     this.periodSelected = this.calendarService.getWeek(day);
 
-    this.currentAppointments = this.calendarService.getApptBetweenPeriod();
     this.sethoursArray(day.startDay, day.endDay);
-    this.initializeAppointmentsMap();
-
-    this.cdr.detectChanges();
+    this.applyFilters();
   }
 
   // --- LÓGICA DE AGENDAMIENTO ---
@@ -217,6 +302,32 @@ export class Calendar implements OnInit {
 
     // Si por alguna razón hacen clic en un espacio vacío del calendario, lo ignoramos
     if (!dayObj.formattedDate) {
+      return;
+    }
+
+    // Validar que no sea fecha pasada
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dayObj.yearNumber, dayObj.monthNumber, Number(dayObj.dayNumber));
+    if (target < today) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Fecha no válida',
+        text: 'No puedes agendar citas en fechas anteriores a hoy.',
+        confirmButtonColor: '#457b9d'
+      });
+      return;
+    }
+
+    // Validar que no sea sábado (6) ni domingo (0)
+    const dow = target.getDay();
+    if (dow === 0 || dow === 6) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Día no hábil',
+        text: 'Los sábados y domingos no son días de atención. Selecciona un día entre lunes y viernes.',
+        confirmButtonColor: '#457b9d'
+      });
       return;
     }
 

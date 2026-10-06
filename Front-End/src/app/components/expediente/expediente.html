@@ -1,0 +1,437 @@
+<div class="exp-page">
+
+  <!-- BACK BUTTON + HEADER -->
+  <div class="exp-topbar">
+    <button class="exp-back" (click)="goBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Mi Cuenta
+    </button>
+    <div class="exp-title">
+      <h1>Expediente Clínico</h1>
+      <p>Información médica personal y privada</p>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  @if (loading) {
+    <div class="exp-loading">
+      <div class="exp-spinner"></div>
+      <p>Cargando expediente...</p>
+    </div>
+  } @else {
+
+    <!-- TABS -->
+    <div class="exp-tabs">
+      <button class="exp-tab" [class.active]="activeTab === 'datos'" (click)="setTab('datos')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Datos Personales
+      </button>
+      <button class="exp-tab" [class.active]="activeTab === 'medico'" (click)="setTab('medico')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Antecedentes Médicos
+      </button>
+      <button class="exp-tab" [class.active]="activeTab === 'evoluciones'" (click)="setTab('evoluciones')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Notas de Evolución
+      </button>
+    </div>
+
+    <!-- TAB: DATOS PERSONALES -->
+    @if (activeTab === 'datos') {
+      <section class="exp-card">
+        <div class="exp-card-header">
+          <h2>Datos Personales</h2>
+          @if (!editingDatos) {
+            <button class="exp-btn-edit" (click)="startEditDatos()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Editar
+            </button>
+          }
+        </div>
+
+        @if (!patientDetails && !editingDatos) {
+          <p class="exp-empty">No tienes datos personales registrados aún.</p>
+        }
+
+        @if (!editingDatos && patientDetails) {
+          <div class="exp-grid">
+            <div class="exp-field">
+              <label>Nombre Completo</label>
+              <span>{{ patientDetails.nombre }} {{ patientDetails.apep }} {{ patientDetails.apem }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Fecha de Nacimiento</label>
+              <span>{{ patientDetails.nacimiento | date:'dd MMM yyyy':'UTC' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Género</label>
+              <span>{{ patientDetails.genero || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Estado Civil</label>
+              <span>{{ patientDetails.edoCivil || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Teléfono Celular</label>
+              <span>{{ patientDetails.numcel || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Teléfono Casa</label>
+              <span>{{ patientDetails.telCasa || '—' }}</span>
+            </div>
+            <div class="exp-field exp-field--full">
+              <label>Dirección</label>
+              <span>{{ patientDetails.direccion || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>C.P.</label>
+              <span>{{ patientDetails.cp || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Escolaridad</label>
+              <span>{{ patientDetails.escolaridad || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Estatura</label>
+              <span>{{ patientDetails.estatura || '—' }}</span>
+            </div>
+            <div class="exp-field">
+              <label>Peso</label>
+              <span>{{ patientDetails.peso || '—' }}</span>
+            </div>
+          </div>
+        }
+
+        <!-- FORMULARIO DE EDICIÓN -->
+        @if (editingDatos) {
+          <form class="exp-form" (ngSubmit)="saveDatos()">
+            <div class="exp-form-grid">
+              <div class="exp-form-field">
+                <label>Nombre</label>
+                <input type="text" [(ngModel)]="datosForm.nombre" name="nombre" />
+              </div>
+              <div class="exp-form-field">
+                <label>Apellido Paterno</label>
+                <input type="text" [(ngModel)]="datosForm.apep" name="apep" />
+              </div>
+              <div class="exp-form-field">
+                <label>Apellido Materno</label>
+                <input type="text" [(ngModel)]="datosForm.apem" name="apem" />
+              </div>
+              <div class="exp-form-field">
+                <label>Fecha de Nacimiento</label>
+                <input type="date" [(ngModel)]="datosForm.nacimiento" name="nacimiento" />
+              </div>
+              <div class="exp-form-field">
+                <label>Género</label>
+                <select [(ngModel)]="datosForm.genero" name="genero">
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div class="exp-form-field">
+                <label>Estado Civil</label>
+                <select [(ngModel)]="datosForm.edoCivil" name="edoCivil">
+                  <option value="Soltero(a)">Soltero(a)</option>
+                  <option value="Casado(a)">Casado(a)</option>
+                  <option value="Divorciado(a)">Divorciado(a)</option>
+                  <option value="Viudo(a)">Viudo(a)</option>
+                  <option value="Unión libre">Unión libre</option>
+                </select>
+              </div>
+              <div class="exp-form-field">
+                <label>Teléfono Celular</label>
+                <input type="tel" [(ngModel)]="datosForm.numcel" name="numcel" />
+              </div>
+              <div class="exp-form-field">
+                <label>Teléfono Casa</label>
+                <input type="tel" [(ngModel)]="datosForm.telCasa" name="telCasa" />
+              </div>
+              <div class="exp-form-field exp-form-field--full">
+                <label>Dirección</label>
+                <input type="text" [(ngModel)]="datosForm.direccion" name="direccion" />
+              </div>
+              <div class="exp-form-field">
+                <label>C.P.</label>
+                <input type="text" [(ngModel)]="datosForm.cp" name="cp" />
+              </div>
+              <div class="exp-form-field">
+                <label>Escolaridad</label>
+                <input type="text" [(ngModel)]="datosForm.escolaridad" name="escolaridad" />
+              </div>
+              <div class="exp-form-field">
+                <label>Estatura (cm)</label>
+                <input type="number" [(ngModel)]="datosForm.estatura" name="estatura" />
+              </div>
+              <div class="exp-form-field">
+                <label>Peso (kg)</label>
+                <input type="number" [(ngModel)]="datosForm.peso" name="peso" />
+              </div>
+            </div>
+            <div class="exp-form-actions">
+              <button type="button" class="exp-btn-cancel" (click)="cancelEditDatos()">Cancelar</button>
+              <button type="submit" class="exp-btn-save" [disabled]="savingDatos">
+                {{ savingDatos ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+    }
+
+    <!-- TAB: ANTECEDENTES MÉDICOS -->
+    @if (activeTab === 'medico') {
+      <section class="exp-card">
+        <div class="exp-card-header">
+          <h2>Antecedentes Médicos</h2>
+          @if (!editingMedico) {
+            <button class="exp-btn-edit" (click)="startEditMedico()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Editar
+            </button>
+          }
+        </div>
+
+        @if (!medicalHistory && !editingMedico) {
+          <p class="exp-empty">No tienes antecedentes médicos registrados.</p>
+        }
+
+        @if (!editingMedico && medicalHistory) {
+          <div class="exp-medico-view">
+            <div class="exp-grid">
+              <div class="exp-field">
+                <label>Estado de Salud General</label>
+                <span>{{ medicalHistory.salud }}</span>
+              </div>
+              <div class="exp-field">
+                <label>Padecimiento Principal</label>
+                <span>{{ medicalHistory.padecimiento || '—' }}</span>
+              </div>
+              <div class="exp-field">
+                <label>Presión Arterial</label>
+                <span>{{ medicalHistory.presionArterial }}</span>
+              </div>
+            </div>
+
+            <div class="exp-conditions">
+              <h3>Condiciones</h3>
+              <div class="exp-tags">
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.diabetes" [class.exp-tag--no]="!medicalHistory.diabetes">
+                  Diabetes {{ medicalHistory.diabetes ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.enfermedadesCardiovasculares" [class.exp-tag--no]="!medicalHistory.enfermedadesCardiovasculares">
+                  Enf. Cardiovascular {{ medicalHistory.enfermedadesCardiovasculares ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.artritis" [class.exp-tag--no]="!medicalHistory.artritis">
+                  Artritis {{ medicalHistory.artritis ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.gastritis" [class.exp-tag--no]="!medicalHistory.gastritis">
+                  Gastritis {{ medicalHistory.gastritis ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.hepatitis" [class.exp-tag--no]="!medicalHistory.hepatitis">
+                  Hepatitis {{ medicalHistory.hepatitis ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.vih" [class.exp-tag--no]="!medicalHistory.vih">
+                  VIH {{ medicalHistory.vih ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.fiebreReumatica" [class.exp-tag--no]="!medicalHistory.fiebreReumatica">
+                  Fiebre Reumática {{ medicalHistory.fiebreReumatica ? '✓' : '✗' }}
+                </span>
+                <span class="exp-tag" [class.exp-tag--yes]="medicalHistory.mareos" [class.exp-tag--no]="!medicalHistory.mareos">
+                  Mareos frecuentes {{ medicalHistory.mareos ? '✓' : '✗' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="exp-grid exp-grid--mt">
+              @if (medicalHistory.alergicoMedicamento && medicalHistory.alergicoMedicamento !== 'no') {
+                <div class="exp-field exp-field--alert">
+                  <label>⚠️ Alergias a Medicamentos</label>
+                  <span>{{ medicalHistory.alergicoMedicamento }}</span>
+                </div>
+              }
+              @if (medicalHistory.tratamiendoMedicoActual && medicalHistory.tratamiendoMedicoActual !== 'no') {
+                <div class="exp-field">
+                  <label>Tratamiento Médico Actual</label>
+                  <span>{{ medicalHistory.tratamiendoMedicoActual }}</span>
+                </div>
+              }
+              @if (medicalHistory.tomandoMedicamento && medicalHistory.tomandoMedicamento !== 'no') {
+                <div class="exp-field">
+                  <label>Medicamento Actual</label>
+                  <span>{{ medicalHistory.tomandoMedicamento }}</span>
+                </div>
+              }
+              @if (medicalHistory.adiccion && medicalHistory.adiccion !== 'no') {
+                <div class="exp-field">
+                  <label>Adicciones</label>
+                  <span>{{ medicalHistory.adiccion }}</span>
+                </div>
+              }
+              @if (medicalHistory.embarazo) {
+                <div class="exp-field">
+                  <label>Embarazo</label>
+                  <span>{{ medicalHistory.embarazo }}</span>
+                </div>
+              }
+              @if (medicalHistory.enfermedadNoMencionada) {
+                <div class="exp-field exp-field--full">
+                  <label>Otras condiciones</label>
+                  <span>{{ medicalHistory.enfermedadNoMencionada }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- FORMULARIO EDICIÓN MÉDICO -->
+        @if (editingMedico) {
+          <form class="exp-form" (ngSubmit)="saveMedico()">
+            <div class="exp-form-grid">
+              <div class="exp-form-field">
+                <label>Estado de Salud General</label>
+                <select [(ngModel)]="medicoForm.salud" name="salud">
+                  <option value="buena">Buena</option>
+                  <option value="regular">Regular</option>
+                  <option value="mala">Mala</option>
+                </select>
+              </div>
+              <div class="exp-form-field">
+                <label>Padecimiento Principal</label>
+                <input type="text" [(ngModel)]="medicoForm.padecimiento" name="padecimiento" />
+              </div>
+              <div class="exp-form-field">
+                <label>Presión Arterial</label>
+                <select [(ngModel)]="medicoForm.presionArterial" name="presionArterial">
+                  <option value="Normal">Normal</option>
+                  <option value="Alta">Alta</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+              <div class="exp-form-field exp-form-field--full">
+                <label>Alergias a medicamentos</label>
+                <input type="text" [(ngModel)]="medicoForm.alergicoMedicamento" name="alergicoMedicamento" placeholder="Escribir 'no' si ninguna" />
+              </div>
+              <div class="exp-form-field exp-form-field--full">
+                <label>Tratamiento médico actual</label>
+                <input type="text" [(ngModel)]="medicoForm.tratamiendoMedicoActual" name="tratamiendoMedicoActual" placeholder="Escribir 'no' si ninguno" />
+              </div>
+              <div class="exp-form-field exp-form-field--full">
+                <label>Medicamento(s) actuales</label>
+                <input type="text" [(ngModel)]="medicoForm.tomandoMedicamento" name="tomandoMedicamento" placeholder="Escribir 'no' si ninguno" />
+              </div>
+              <div class="exp-form-field exp-form-field--full">
+                <label>Otras condiciones no mencionadas</label>
+                <textarea [(ngModel)]="medicoForm.enfermedadNoMencionada" name="enfermedadNoMencionada" rows="2"></textarea>
+              </div>
+
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.diabetes" name="diabetes" />
+                  Diabetes
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.enfermedadesCardiovasculares" name="enfermedadesCardiovasculares" />
+                  Enfermedades Cardiovasculares
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.artritis" name="artritis" />
+                  Artritis
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.gastritis" name="gastritis" />
+                  Gastritis
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.hepatitis" name="hepatitis" />
+                  Hepatitis
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.vih" name="vih" />
+                  VIH
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.fiebreReumatica" name="fiebreReumatica" />
+                  Fiebre Reumática
+                </label>
+              </div>
+              <div class="exp-form-field">
+                <label class="exp-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="medicoForm.mareos" name="mareos" />
+                  Mareos frecuentes
+                </label>
+              </div>
+            </div>
+            <div class="exp-form-actions">
+              <button type="button" class="exp-btn-cancel" (click)="cancelEditMedico()">Cancelar</button>
+              <button type="submit" class="exp-btn-save" [disabled]="savingMedico">
+                {{ savingMedico ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+    }
+
+    <!-- TAB: NOTAS DE EVOLUCIÓN -->
+    @if (activeTab === 'evoluciones') {
+      <section class="exp-card">
+        <div class="exp-card-header">
+          <h2>Notas de Evolución</h2>
+          <span class="exp-badge">{{ evoluciones.length }} registros</span>
+        </div>
+
+        @if (loadingEvoluciones) {
+          <p class="exp-empty">Cargando notas...</p>
+        } @else if (evoluciones.length === 0) {
+          <div class="exp-empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <p>Aún no tienes notas de evolución registradas.</p>
+            <small>Aparecerán aquí después de cada consulta completada.</small>
+          </div>
+        } @else {
+          <div class="exp-timeline">
+            @for (nota of evoluciones; track nota._id) {
+              <div class="exp-timeline-item">
+                <div class="exp-timeline-dot"></div>
+                <div class="exp-timeline-content">
+                  <div class="exp-timeline-header">
+                    <span class="exp-timeline-date">{{ nota.fecha | date:'dd MMM yyyy':'UTC' }}</span>
+                    <span class="exp-timeline-doc">{{ nota.dentista }}</span>
+                  </div>
+                  @if (nota.procedimientos && nota.procedimientos.length > 0) {
+                    <div class="exp-tags exp-tags--small">
+                      @for (p of nota.procedimientos; track p) {
+                        <span class="exp-tag exp-tag--proc">{{ p }}</span>
+                      }
+                    </div>
+                  }
+                  <p class="exp-timeline-desc">{{ nota.descripcion }}</p>
+                  @if (nota.indicaciones) {
+                    <p class="exp-timeline-indic"><strong>Indicaciones:</strong> {{ nota.indicaciones }}</p>
+                  }
+                  @if (nota.costo) {
+                    <p class="exp-timeline-costo">Costo: ${{ nota.costo | number:'1.2-2' }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

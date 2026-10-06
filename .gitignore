@@ -8,4 +8,10 @@ google-calendar-prueba.json
 .angular/
 dist/
 
+# Variables de entorno
 .env
+
+# Ignorar binarios y artefactos de compilación de C# / .NET
+**/bin/
+**/obj/
+dotnet-install.ps1

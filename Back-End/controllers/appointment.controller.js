@@ -6,7 +6,7 @@ const BlockedSlot = require('../models/blockedSlot');
 const { google } = require('googleapis');
 const { enviarCorreoSMTP } = require('../services/mailer');
 const emailTemplates = require('../services/emailTemplates');
-
+const whatsappService = require('../services/whatsappService');
 
 // =================================================================================
 // CONFIGURACIÓN DE GOOGLE CALENDAR
@@ -94,6 +94,21 @@ const createAppointment = async (req, res) => {
 
         await newAppointment.save();
 
+        // Enviar notificación por WhatsApp (CDONE-37, 38, 39, 40)
+        if (contactNumber) {
+            // El enlace puede llevar a una vista de detalles o al historial del paciente
+            const magicLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/mi-cuenta`;
+            
+            // Disparamos la promesa en background para no bloquear la respuesta HTTP
+            whatsappService.sendAppointmentReminder(contactNumber, {
+                patientName: patientName || 'Paciente',
+                date: dateOnlyString,
+                time: hour,
+                providerName: providerName || 'Especialista',
+                link: magicLink
+            }).catch(e => console.error("Error asíncrono WhatsApp:", e));
+        }
+
         // 5. Correo de confirmación al paciente (no rompe la cita si falla)
         if (email) {
             try {
@@ -116,15 +131,26 @@ const createAppointment = async (req, res) => {
         // 6. Integración Google Calendar (solo si hay credenciales)
         if (GOOGLE_ENABLED && calendar) {
             try {
+                // Formateamos la fecha directamente sin convertir a UTC
+                // dateOnlyString = "2026-09-28", hour = "09:30"
+                const startString = `${dateOnlyString}T${hour}:00`;
+                
+                // Calculamos la hora de fin usando los minutos
+                const [hh, mm] = hour.split(':').map(Number);
+                const endMins = hh * 60 + mm + durationMinutes;
+                const endH = String(Math.floor(endMins / 60)).padStart(2, '0');
+                const endM = String(endMins % 60).padStart(2, '0');
+                const endString = `${dateOnlyString}T${endH}:${endM}:00`;
+
                 const event = {
                     summary: `Cita: ${patientName}`,
                     description: `Motivo: ${reason}\nDoctor: ${providerName}\nNotas: ${notes || 'Ninguna'}`,
                     start: {
-                        dateTime: newStart.toISOString(),
+                        dateTime: startString, // ej: "2026-09-28T09:30:00"
                         timeZone: 'America/Mexico_City',
                     },
                     end: {
-                        dateTime: newEnd.toISOString(),
+                        dateTime: endString, // ej: "2026-09-28T10:00:00"
                         timeZone: 'America/Mexico_City',
                     },
                 };

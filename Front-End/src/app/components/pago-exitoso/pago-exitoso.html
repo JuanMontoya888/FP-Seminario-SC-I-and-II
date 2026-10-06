@@ -1,0 +1,37 @@
+<div class="pe-page">
+  <div class="pe-card">
+
+    <!-- Ícono de estado -->
+    <div class="pe-icon">{{ estadoActual.icon }}</div>
+
+    <!-- Título y mensaje -->
+    <h1 class="pe-title" [style.color]="estadoActual.color">{{ estadoActual.title }}</h1>
+    <p class="pe-text">{{ estadoActual.text }}</p>
+
+    <!-- Folio de pago si existe -->
+    @if (paymentId) {
+      <div class="pe-folio">
+        <span class="pe-folio-label">Folio de pago:</span>
+        <span class="pe-folio-value"># {{ paymentId }}</span>
+      </div>
+    }
+
+    <!-- Acciones según el estado -->
+    <div class="pe-actions">
+      @if (status === 'approved' || status === 'pending') {
+        <button class="pe-btn pe-btn-primary" (click)="goToCalendar()">
+          Ver mis citas
+        </button>
+      }
+      @if (status === 'failure') {
+        <button class="pe-btn pe-btn-primary" (click)="retryPayment()">
+          Intentar de nuevo
+        </button>
+        <button class="pe-btn pe-btn-secondary" (click)="goToCalendar()">
+          Ir al calendario
+        </button>
+      }
+    </div>
+
+  </div>
+</div>
