@@ -2,57 +2,68 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main", "UnitTests" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
 
 jobs:
   # ─────────────────────────────────────────────
-  # JOB 1: Compilar y probar el proyecto de C#
+  # JOB 1: Compilar proyecto y ejecutar pruebas unitarias en JS
   # ─────────────────────────────────────────────
-  build-dotnet:
+  build-and-unit-tests:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup .NET 8
-      uses: actions/setup-dotnet@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        dotnet-version: 8.0.x
+        node-version: '20'
 
-    - name: Build xUnit Tests
+    - name: Install Backend Dependencies
       run: |
-        cd Tests/DentalOne.Tests
-        dotnet build --configuration Release
+        cd Back-End
+        npm install
 
-    - name: Install Playwright Browsers
+    - name: Install and Build Frontend
       run: |
-        cd Tests/DentalOne.Tests
-        dotnet build --configuration Release -o out
-        pwsh out/playwright.ps1 install chromium --with-deps
+        cd Front-End
+        npm install
+        npm run build
+
+    - name: Install Test Dependencies
+      run: |
+        cd Tests
+        npm install
+
+    - name: Run Unit Tests by Components (JS)
+      run: |
+        cd Tests
+        npm test
 
   # ─────────────────────────────────────────────
-  # JOB 2: Levantar servicios y ejecutar pruebas
+  # JOB 2: Levantar servicios y validar suite de pruebas
   # ─────────────────────────────────────────────
   integration-tests:
     runs-on: ubuntu-latest
-    needs: build-dotnet
+    needs: build-and-unit-tests
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup .NET 8
-      uses: actions/setup-dotnet@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        dotnet-version: 8.0.x
+        node-version: '20'
 
     - name: Create dummy .env for CI
       run: |
         cat > Back-End/.env << 'EOF'
         PORT=3000
         JWT_SECRET=dummy_secret_for_ci
+        MONGODB_URI=mongodb://mongodb:27017/dentalone_test
         MONGO_URI=mongodb://mongodb:27017/dentalone_test
         FRONTEND_URL=http://localhost:4200
         MP_ACCESS_TOKEN=dummy_mp_token
@@ -78,10 +89,11 @@ jobs:
           sleep 3
         done
 
-    - name: Run API Integration Tests
+    - name: Install and Run JS Tests
       run: |
-        cd Tests/DentalOne.Tests
-        dotnet test --filter "FullyQualifiedName~API" --logger "console;verbosity=normal"
+        cd Tests
+        npm install
+        npm test
 
     - name: Show backend logs if tests fail
       if: failure()

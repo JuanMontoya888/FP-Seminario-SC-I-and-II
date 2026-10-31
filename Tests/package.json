@@ -1,0 +1,17 @@
+{
+  "name": "dental-one-tests",
+  "version": "1.0.0",
+  "description": "Suite de pruebas unitarias en JavaScript para Dental-One con arquitectura plana y desacoplada y patrón AAA",
+  "private": true,
+  "scripts": {
+    "test": "jest --verbose",
+    "test:controllers": "jest unit/controllers --verbose",
+    "test:services": "jest unit/services --verbose",
+    "test:components": "jest unit/components --verbose",
+    "test:scenarios": "jest scenarios --verbose",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
