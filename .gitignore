@@ -11,7 +11,5 @@ dist/
 # Variables de entorno
 .env
 
-# Ignorar binarios y artefactos de compilación de C# / .NET
-**/bin/
-**/obj/
-dotnet-install.ps1
+# Ignorar reportes de cobertura de pruebas en JS
+coverage/
