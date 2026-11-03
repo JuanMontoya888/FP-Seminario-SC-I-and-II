@@ -36,7 +36,7 @@
       </button>
     </div>
 
-    <!-- TAB: DATOS PERSONALES -->
+    <!-- TAB: DATOS PERSONALES (CDONE-48) -->
     @if (activeTab === 'datos') {
       <section class="exp-card">
         <div class="exp-card-header">
@@ -93,46 +93,58 @@
             </div>
             <div class="exp-field">
               <label>Estatura</label>
-              <span>{{ patientDetails.estatura || '—' }}</span>
+              <span>{{ patientDetails.estatura ? patientDetails.estatura + ' cm' : '—' }}</span>
             </div>
             <div class="exp-field">
               <label>Peso</label>
-              <span>{{ patientDetails.peso || '—' }}</span>
+              <span>{{ patientDetails.peso ? patientDetails.peso + ' kg' : '—' }}</span>
             </div>
           </div>
         }
 
-        <!-- FORMULARIO DE EDICIÓN -->
+        <!-- FORMULARIO REACTIVO DE EDICIÓN (CDONE-48) -->
         @if (editingDatos) {
-          <form class="exp-form" (ngSubmit)="saveDatos()">
+          <form class="exp-form" [formGroup]="datosForm" (ngSubmit)="saveDatos()">
             <div class="exp-form-grid">
-              <div class="exp-form-field">
-                <label>Nombre</label>
-                <input type="text" [(ngModel)]="datosForm.nombre" name="nombre" />
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'nombre')">
+                <label>Nombre *</label>
+                <input type="text" formControlName="nombre" placeholder="Nombre(s)" />
+                @if (isInvalidField(datosForm, 'nombre')) {
+                  <span class="exp-error-msg">Ingresa un nombre válido (mín. 2 letras)</span>
+                }
+              </div>
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'apep')">
+                <label>Apellido Paterno *</label>
+                <input type="text" formControlName="apep" placeholder="Primer apellido" />
+                @if (isInvalidField(datosForm, 'apep')) {
+                  <span class="exp-error-msg">Ingresa el apellido paterno</span>
+                }
+              </div>
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'apem')">
+                <label>Apellido Materno *</label>
+                <input type="text" formControlName="apem" placeholder="Segundo apellido" />
+                @if (isInvalidField(datosForm, 'apem')) {
+                  <span class="exp-error-msg">Ingresa el apellido materno</span>
+                }
+              </div>
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'nacimiento')">
+                <label>Fecha de Nacimiento *</label>
+                <input type="date" formControlName="nacimiento" />
+                @if (isInvalidField(datosForm, 'nacimiento')) {
+                  <span class="exp-error-msg">Fecha de nacimiento requerida</span>
+                }
               </div>
               <div class="exp-form-field">
-                <label>Apellido Paterno</label>
-                <input type="text" [(ngModel)]="datosForm.apep" name="apep" />
-              </div>
-              <div class="exp-form-field">
-                <label>Apellido Materno</label>
-                <input type="text" [(ngModel)]="datosForm.apem" name="apem" />
-              </div>
-              <div class="exp-form-field">
-                <label>Fecha de Nacimiento</label>
-                <input type="date" [(ngModel)]="datosForm.nacimiento" name="nacimiento" />
-              </div>
-              <div class="exp-form-field">
-                <label>Género</label>
-                <select [(ngModel)]="datosForm.genero" name="genero">
+                <label>Género *</label>
+                <select formControlName="genero">
                   <option value="Masculino">Masculino</option>
                   <option value="Femenino">Femenino</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
               <div class="exp-form-field">
-                <label>Estado Civil</label>
-                <select [(ngModel)]="datosForm.edoCivil" name="edoCivil">
+                <label>Estado Civil *</label>
+                <select formControlName="edoCivil">
                   <option value="Soltero(a)">Soltero(a)</option>
                   <option value="Casado(a)">Casado(a)</option>
                   <option value="Divorciado(a)">Divorciado(a)</option>
@@ -140,33 +152,56 @@
                   <option value="Unión libre">Unión libre</option>
                 </select>
               </div>
-              <div class="exp-form-field">
-                <label>Teléfono Celular</label>
-                <input type="tel" [(ngModel)]="datosForm.numcel" name="numcel" />
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'numcel')">
+                <label>Teléfono Celular (10 dígitos) *</label>
+                <input type="tel" formControlName="numcel" placeholder="10 dígitos numéricos" />
+                @if (isInvalidField(datosForm, 'numcel')) {
+                  <span class="exp-error-msg">Debe contener exactamente 10 dígitos numéricos</span>
+                }
+              </div>
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'telCasa')">
+                <label>Teléfono Casa (Opcional)</label>
+                <input type="tel" formControlName="telCasa" placeholder="10 dígitos si aplica" />
+                @if (isInvalidField(datosForm, 'telCasa')) {
+                  <span class="exp-error-msg">Debe contener 10 dígitos si se especifica</span>
+                }
+              </div>
+              <div class="exp-form-field exp-form-field--full" [class.has-error]="isInvalidField(datosForm, 'direccion')">
+                <label>Dirección Completa *</label>
+                <input type="text" formControlName="direccion" placeholder="Calle, número, colonia, municipio" />
+                @if (isInvalidField(datosForm, 'direccion')) {
+                  <span class="exp-error-msg">La dirección es requerida</span>
+                }
+              </div>
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'cp')">
+                <label>C.P. (5 dígitos) *</label>
+                <input type="text" formControlName="cp" placeholder="Código Postal (5 dígitos)" />
+                @if (isInvalidField(datosForm, 'cp')) {
+                  <span class="exp-error-msg">Ingresa un C.P. válido de 5 dígitos</span>
+                }
               </div>
               <div class="exp-form-field">
-                <label>Teléfono Casa</label>
-                <input type="tel" [(ngModel)]="datosForm.telCasa" name="telCasa" />
+                <label>Escolaridad *</label>
+                <select formControlName="escolaridad">
+                  <option value="Básica">Básica</option>
+                  <option value="Media Superior">Media Superior</option>
+                  <option value="Superior">Superior</option>
+                  <option value="Posgrado">Posgrado</option>
+                </select>
               </div>
-              <div class="exp-form-field exp-form-field--full">
-                <label>Dirección</label>
-                <input type="text" [(ngModel)]="datosForm.direccion" name="direccion" />
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'estatura')">
+                <label>Estatura (cm) *</label>
+                <input type="number" formControlName="estatura" placeholder="Ej. 170" />
+                @if (isInvalidField(datosForm, 'estatura')) {
+                  <span class="exp-error-msg">Estatura requerida (ej. 170 cm)</span>
+                }
               </div>
-              <div class="exp-form-field">
-                <label>C.P.</label>
-                <input type="text" [(ngModel)]="datosForm.cp" name="cp" />
-              </div>
-              <div class="exp-form-field">
-                <label>Escolaridad</label>
-                <input type="text" [(ngModel)]="datosForm.escolaridad" name="escolaridad" />
-              </div>
-              <div class="exp-form-field">
-                <label>Estatura (cm)</label>
-                <input type="number" [(ngModel)]="datosForm.estatura" name="estatura" />
-              </div>
-              <div class="exp-form-field">
-                <label>Peso (kg)</label>
-                <input type="number" [(ngModel)]="datosForm.peso" name="peso" />
+              <div class="exp-form-field" [class.has-error]="isInvalidField(datosForm, 'peso')">
+                <label>Peso (kg) *</label>
+                <input type="number" formControlName="peso" placeholder="Ej. 70" />
+                @if (isInvalidField(datosForm, 'peso')) {
+                  <span class="exp-error-msg">Peso requerido (ej. 70 kg)</span>
+                }
               </div>
             </div>
             <div class="exp-form-actions">
@@ -180,7 +215,7 @@
       </section>
     }
 
-    <!-- TAB: ANTECEDENTES MÉDICOS -->
+    <!-- TAB: ANTECEDENTES MÉDICOS (CDONE-48) -->
     @if (activeTab === 'medico') {
       <section class="exp-card">
         <div class="exp-card-header">
@@ -206,7 +241,7 @@
               </div>
               <div class="exp-field">
                 <label>Padecimiento Principal</label>
-                <span>{{ medicalHistory.padecimiento || '—' }}</span>
+                <span>{{ medicalHistory.padecimiento || 'Ninguno' }}</span>
               </div>
               <div class="exp-field">
                 <label>Presión Arterial</label>
@@ -263,18 +298,6 @@
                   <span>{{ medicalHistory.tomandoMedicamento }}</span>
                 </div>
               }
-              @if (medicalHistory.adiccion && medicalHistory.adiccion !== 'no') {
-                <div class="exp-field">
-                  <label>Adicciones</label>
-                  <span>{{ medicalHistory.adiccion }}</span>
-                </div>
-              }
-              @if (medicalHistory.embarazo) {
-                <div class="exp-field">
-                  <label>Embarazo</label>
-                  <span>{{ medicalHistory.embarazo }}</span>
-                </div>
-              }
               @if (medicalHistory.enfermedadNoMencionada) {
                 <div class="exp-field exp-field--full">
                   <label>Otras condiciones</label>
@@ -285,13 +308,13 @@
           </div>
         }
 
-        <!-- FORMULARIO EDICIÓN MÉDICO -->
+        <!-- FORMULARIO REACTIVO EDICIÓN MÉDICO (CDONE-48) -->
         @if (editingMedico) {
-          <form class="exp-form" (ngSubmit)="saveMedico()">
+          <form class="exp-form" [formGroup]="medicoForm" (ngSubmit)="saveMedico()">
             <div class="exp-form-grid">
               <div class="exp-form-field">
-                <label>Estado de Salud General</label>
-                <select [(ngModel)]="medicoForm.salud" name="salud">
+                <label>Estado de Salud General *</label>
+                <select formControlName="salud">
                   <option value="buena">Buena</option>
                   <option value="regular">Regular</option>
                   <option value="mala">Mala</option>
@@ -299,11 +322,11 @@
               </div>
               <div class="exp-form-field">
                 <label>Padecimiento Principal</label>
-                <input type="text" [(ngModel)]="medicoForm.padecimiento" name="padecimiento" />
+                <input type="text" formControlName="padecimiento" placeholder="Ninguno / Diagnóstico" />
               </div>
               <div class="exp-form-field">
-                <label>Presión Arterial</label>
-                <select [(ngModel)]="medicoForm.presionArterial" name="presionArterial">
+                <label>Presión Arterial *</label>
+                <select formControlName="presionArterial">
                   <option value="Normal">Normal</option>
                   <option value="Alta">Alta</option>
                   <option value="Baja">Baja</option>
@@ -311,66 +334,66 @@
               </div>
               <div class="exp-form-field exp-form-field--full">
                 <label>Alergias a medicamentos</label>
-                <input type="text" [(ngModel)]="medicoForm.alergicoMedicamento" name="alergicoMedicamento" placeholder="Escribir 'no' si ninguna" />
+                <input type="text" formControlName="alergicoMedicamento" placeholder="Escribir 'no' si ninguna" />
               </div>
               <div class="exp-form-field exp-form-field--full">
                 <label>Tratamiento médico actual</label>
-                <input type="text" [(ngModel)]="medicoForm.tratamiendoMedicoActual" name="tratamiendoMedicoActual" placeholder="Escribir 'no' si ninguno" />
+                <input type="text" formControlName="tratamiendoMedicoActual" placeholder="Escribir 'no' si ninguno" />
               </div>
               <div class="exp-form-field exp-form-field--full">
                 <label>Medicamento(s) actuales</label>
-                <input type="text" [(ngModel)]="medicoForm.tomandoMedicamento" name="tomandoMedicamento" placeholder="Escribir 'no' si ninguno" />
+                <input type="text" formControlName="tomandoMedicamento" placeholder="Escribir 'no' si ninguno" />
               </div>
               <div class="exp-form-field exp-form-field--full">
                 <label>Otras condiciones no mencionadas</label>
-                <textarea [(ngModel)]="medicoForm.enfermedadNoMencionada" name="enfermedadNoMencionada" rows="2"></textarea>
+                <textarea formControlName="enfermedadNoMencionada" rows="2" placeholder="Describir si aplica"></textarea>
               </div>
 
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.diabetes" name="diabetes" />
+                  <input type="checkbox" formControlName="diabetes" />
                   Diabetes
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.enfermedadesCardiovasculares" name="enfermedadesCardiovasculares" />
+                  <input type="checkbox" formControlName="enfermedadesCardiovasculares" />
                   Enfermedades Cardiovasculares
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.artritis" name="artritis" />
+                  <input type="checkbox" formControlName="artritis" />
                   Artritis
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.gastritis" name="gastritis" />
+                  <input type="checkbox" formControlName="gastritis" />
                   Gastritis
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.hepatitis" name="hepatitis" />
+                  <input type="checkbox" formControlName="hepatitis" />
                   Hepatitis
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.vih" name="vih" />
+                  <input type="checkbox" formControlName="vih" />
                   VIH
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.fiebreReumatica" name="fiebreReumatica" />
+                  <input type="checkbox" formControlName="fiebreReumatica" />
                   Fiebre Reumática
                 </label>
               </div>
               <div class="exp-form-field">
                 <label class="exp-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="medicoForm.mareos" name="mareos" />
+                  <input type="checkbox" formControlName="mareos" />
                   Mareos frecuentes
                 </label>
               </div>
@@ -386,7 +409,7 @@
       </section>
     }
 
-    <!-- TAB: NOTAS DE EVOLUCIÓN -->
+    <!-- TAB: NOTAS DE EVOLUCIÓN (CDONE-49) -->
     @if (activeTab === 'evoluciones') {
       <section class="exp-card">
         <div class="exp-card-header">
@@ -400,7 +423,7 @@
           <div class="exp-empty-state">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             <p>Aún no tienes notas de evolución registradas.</p>
-            <small>Aparecerán aquí después de cada consulta completada.</small>
+            <small>Aparecerán aquí después de cada consulta completada por tu especialista.</small>
           </div>
         } @else {
           <div class="exp-timeline">
@@ -424,7 +447,7 @@
                     <p class="exp-timeline-indic"><strong>Indicaciones:</strong> {{ nota.indicaciones }}</p>
                   }
                   @if (nota.costo) {
-                    <p class="exp-timeline-costo">Costo: ${{ nota.costo | number:'1.2-2' }}</p>
+                    <p class="exp-timeline-costo">Costo: ${{ nota.costo | number:'1.2-2' }} MXN</p>
                   }
                 </div>
               </div>

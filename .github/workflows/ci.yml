@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master", "main", "UnitTests" ]
+    branches: [ "master", "main", "UnitTests", "BackEnd", "FrontEnd" ]
   pull_request:
     branches: [ "master", "main" ]
 
@@ -36,6 +36,7 @@ jobs:
       run: |
         cd Tests
         npm install
+        npm install mongoose
 
     - name: Run Unit Tests by Components (JS)
       run: |
@@ -89,11 +90,16 @@ jobs:
           sleep 3
         done
 
-    - name: Install and Run JS Tests
+    - name: Install Backend and Test Dependencies
       run: |
-        cd Tests
-        npm install
-        npm test
+        cd Back-End
+        npm ci
+        cd ../Tests
+        npm ci
+
+    - name: Run JS Tests
+      working-directory: Tests
+      run: npm test
 
     - name: Show backend logs if tests fail
       if: failure()

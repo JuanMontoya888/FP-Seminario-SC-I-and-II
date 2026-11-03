@@ -15,6 +15,9 @@ const mPagoRoutes = require('./routes/mercado_pago.routes');
 const procedureRoutes = require('./routes/procedure.routes');
 const contactRoutes = require('./routes/contact.routes');
 
+// Controlador para tareas programadas (CDONE-60)
+const { cleanupExpiredReservations } = require('./controllers/appointment.controller');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -40,12 +43,21 @@ mongoose.connect(dbURI)
         app.listen(port, () => {
             console.log(`Server listening at ${port}`);
         });
+
+        // CDONE-60: Worker periódico en segundo plano para limpiar reservas temporales vencidas
+        setInterval(async () => {
+            try {
+                await cleanupExpiredReservations();
+            } catch (cleanErr) {
+                console.error('Error en worker de limpieza de reservas expiradas:', cleanErr);
+            }
+        }, 60 * 1000); // Ejecución cada 60 segundos
     })
     .catch((err) => console.log('Error de conexión a MongoDB:', err));
 
 // 4. Montaje de Rutas
 app.use('/api', authRoutes);            // /api/register, /api/user/login, /api/user/profile
-app.use('/api', patientRoutes);         // /api/register/patientDetails, /api/get/histo, etc.
+app.use('/api', patientRoutes);         // /api/register/patientDetails, /api/get/histo, /api/register/clinicalRecord
 app.use('/api', appointmentRoutes);     // /api/register/appointment, /api/user/appointment
 app.use('/api', procedureRoutes);       // /api/procedures, /api/user/procedures, /api/admin/...
 app.use('/mercado-pago', mPagoRoutes);  // /mercado-pago/...

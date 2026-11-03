@@ -1,18 +1,18 @@
 .pe-page {
-    min-height: 80vh;
+    min-height: 85vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #f8fafc;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1rem;
 }
 
 .pe-card {
     background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    padding: 3rem 2.5rem;
-    max-width: 460px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 2.8rem 2.2rem;
+    max-width: 540px;
     width: 100%;
     text-align: center;
     display: flex;
@@ -22,71 +22,199 @@
 }
 
 .pe-icon {
-    font-size: 4rem;
+    font-size: 3.8rem;
     line-height: 1;
 }
 
 .pe-title {
     font-size: 1.6rem;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
 }
 
 .pe-text {
-    font-size: 0.97rem;
+    font-size: 0.95rem;
     color: #4b5563;
-    line-height: 1.6;
+    line-height: 1.5;
     margin: 0;
 }
 
 .pe-folio {
     background: #f1f5f9;
-    border-radius: 8px;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.88rem;
+    border-radius: 10px;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.9rem;
     color: #374151;
     display: flex;
-    gap: 0.5rem;
+    gap: 0.6rem;
     align-items: center;
+    border: 1px dashed #cbd5e1;
 }
 
 .pe-folio-label {
-    color: #6b7280;
+    color: #64748b;
+    font-weight: 500;
 }
 
 .pe-folio-value {
-    font-weight: 700;
-    color: #1f2937;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.5px;
 }
 
+/* =========================================
+   BREAKDOWN & RECEIPT SUMMARY (CDONE-61 & CDONE-66)
+   ========================================= */
+.pe-breakdown-card {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.2rem;
+    text-align: left;
+    margin-top: 0.4rem;
+}
+
+.pe-breakdown-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.8rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pe-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+}
+
+.pe-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+}
+
+.pe-label {
+    color: #64748b;
+}
+
+.pe-val {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.pe-val-bold {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.pe-badge-mode {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.pe-financial-summary {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.pe-fin-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: #475569;
+}
+
+.pe-fin-row--paid {
+    font-weight: 700;
+    color: #15803d;
+}
+
+.pe-fin-paid {
+    color: #15803d;
+    font-weight: 800;
+}
+
+.pe-fin-row--balance {
+    font-weight: 600;
+    color: #b91c1c;
+    font-size: 0.84rem;
+}
+
+.pe-fin-pending {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+/* =========================================
+   ACTIONS & BUTTONS
+   ========================================= */
 .pe-actions {
     display: flex;
     gap: 0.8rem;
     flex-wrap: wrap;
     justify-content: center;
-    margin-top: 0.5rem;
+    width: 100%;
+    margin-top: 0.6rem;
 }
 
 .pe-btn {
     border: none;
     border-radius: 50px;
-    padding: 0.65rem 1.8rem;
-    font-size: 0.95rem;
+    padding: 0.75rem 1.6rem;
+    font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .pe-btn:hover {
-    opacity: 0.85;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.pe-btn-receipt {
+    background: #1d3557;
+    color: #ffffff;
+    flex: 1 1 100%;
+}
+
+.pe-btn-receipt:hover {
+    background: #0f172a;
 }
 
 .pe-btn-primary {
-    background: #457b9d;
+    background: #009ee3;
     color: #ffffff;
+    flex: 1;
+}
+
+.pe-btn-primary:hover {
+    background: #0087c2;
 }
 
 .pe-btn-secondary {
     background: #f1f5f9;
     color: #374151;
+    flex: 1;
+}
+
+.pe-btn-secondary:hover {
+    background: #e2e8f0;
 }

@@ -59,7 +59,6 @@ const AppointmentSchema = new mongoose.Schema(
       required: [true, 'El proveedor/doctor es obligatorio'],
     },
     status: {
-      type: String,
       enum: {
         values: [
           'Scheduled',              // Agendada
@@ -72,6 +71,7 @@ const AppointmentSchema = new mongoose.Schema(
         ],
         message: '{VALUE} no es un estado válido',
       },
+      type: String,
       default: 'Scheduled',
       required: true,
     },
@@ -80,11 +80,30 @@ const AppointmentSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true, // Crea automáticamente createdAt y updatedAt
     versionKey: false, // Quita el campo __v
   }
 );
+
+// -------------------------------------------------------------
+// ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS (CDONE-50) Y TTL (CDONE-60)
+// -------------------------------------------------------------
+// 1. Optimiza la verificación de conflicto anti-solapamiento por especialista y fecha
+AppointmentSchema.index({ providerName: 1, dateTime: 1, status: 1 });
+
+// 2. Optimiza la consulta del historial de citas por usuario
+AppointmentSchema.index({ user: 1, dateTime: -1 });
+
+// 3. Optimiza la consulta general de disponibilidad para el calendario
+AppointmentSchema.index({ status: 1, dateTime: 1 });
+
+// 4. Índice TTL nativo para expiración automática de reservas temporales (CDONE-60)
+AppointmentSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('Appointment', AppointmentSchema);
