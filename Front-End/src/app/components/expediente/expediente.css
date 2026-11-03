@@ -474,3 +474,20 @@
   .exp-tab { border-bottom: none; border-left: 2px solid transparent; }
   .exp-tab.active { border-left-color: #457b9d; border-bottom: none; }
 }
+
+
+/* ============= VALIDACIONES REACTIVAS (CDONE-48) ============= */
+.exp-form-field.has-error input,
+.exp-form-field.has-error select,
+.exp-form-field.has-error textarea {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.exp-error-msg {
+  color: #dc2626;
+  font-size: 0.78rem;
+  margin-top: 4px;
+  display: block;
+  font-weight: 500;
+}

@@ -31,6 +31,39 @@ if (GOOGLE_ENABLED) {
 }
 
 // =================================================================================
+// CDONE-60: LIBERACIÓN DE RESERVAS TEMPORALES CON TIMEOUT
+// =================================================================================
+/**
+ * Cancela automáticamente cualquier cita en estado de espera ('Scheduled', 'Payment_Pending')
+ * cuyo timeout de reserva (expiresAt) ya haya expirado en el servidor.
+ */
+const cleanupExpiredReservations = async () => {
+    try {
+        const now = new Date();
+        if (typeof Appointment.updateMany === 'function') {
+            const result = await Appointment.updateMany(
+                {
+                    status: { $in: ['Scheduled', 'Payment_Pending'] },
+                    expiresAt: { $ne: null, $lt: now }
+                },
+                {
+                    status: 'Canceled',
+                    notes: 'Cancelada automáticamente: tiempo de reserva agotado',
+                    $unset: { expiresAt: 1 }
+                }
+            );
+            if (result && result.modifiedCount > 0) {
+                console.log(`[CDONE-60] Se cancelaron ${result.modifiedCount} reservas expiradas por timeout.`);
+            }
+            return result;
+        }
+    } catch (cleanErr) {
+        console.error('Error al limpiar reservas expiradas:', cleanErr);
+    }
+    return { modifiedCount: 0 };
+};
+
+// =================================================================================
 // CONTROLADORES
 // =================================================================================
 
@@ -49,6 +82,9 @@ const createAppointment = async (req, res) => {
             if (existingUser) finalPatientId = existingUser._id;
         }
 
+        // CDONE-60: Ejecutar limpieza preventiva de reservas expiradas antes de evaluar disponibilidad
+        await cleanupExpiredReservations();
+
         // 🛡️ BLOQUE DE VALIDACIÓN DE HORARIO
         const dateOnlyString = new Date(dateTime).toISOString().split('T')[0];
         const newStart = new Date(`${dateOnlyString}T${hour}:00`);
@@ -66,6 +102,7 @@ const createAppointment = async (req, res) => {
         const endOfDay = new Date(dateOnlyString);
         endOfDay.setHours(23, 59, 59, 999);
 
+        // CDONE-50: Consulta optimizada con índice compuesto (providerName + status + dateTime)
         const existingAppointments = await Appointment.find({
             providerName: providerName,
             status: { $ne: 'Canceled' },
@@ -85,21 +122,24 @@ const createAppointment = async (req, res) => {
             });
         }
 
+        // CDONE-60: Establecer timeout de reserva si requiere pago en línea (15 min)
+        const finalStatus = status || 'Scheduled';
+        const isClinicPayment = finalStatus === 'Pending_Clinic_Payment';
+        const expiresAt = isClinicPayment ? null : new Date(Date.now() + 15 * 60 * 1000);
+
         // 3. Crear la instancia del modelo
         const newAppointment = new Appointment({
             user: userId, dateTime, hour, durationMinutes, patientName,
             patientId: finalPatientId, contactNumber, email, reason,
-            providerName, status: status || 'Scheduled', notes
+            providerName, status: finalStatus, notes, expiresAt
         });
 
         await newAppointment.save();
 
         // Enviar notificación por WhatsApp (CDONE-37, 38, 39, 40)
         if (contactNumber) {
-            // El enlace puede llevar a una vista de detalles o al historial del paciente
             const magicLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/mi-cuenta`;
             
-            // Disparamos la promesa en background para no bloquear la respuesta HTTP
             whatsappService.sendAppointmentReminder(contactNumber, {
                 patientName: patientName || 'Paciente',
                 date: dateOnlyString,
@@ -131,11 +171,7 @@ const createAppointment = async (req, res) => {
         // 6. Integración Google Calendar (solo si hay credenciales)
         if (GOOGLE_ENABLED && calendar) {
             try {
-                // Formateamos la fecha directamente sin convertir a UTC
-                // dateOnlyString = "2026-09-28", hour = "09:30"
                 const startString = `${dateOnlyString}T${hour}:00`;
-                
-                // Calculamos la hora de fin usando los minutos
                 const [hh, mm] = hour.split(':').map(Number);
                 const endMins = hh * 60 + mm + durationMinutes;
                 const endH = String(Math.floor(endMins / 60)).padStart(2, '0');
@@ -146,11 +182,11 @@ const createAppointment = async (req, res) => {
                     summary: `Cita: ${patientName}`,
                     description: `Motivo: ${reason}\nDoctor: ${providerName}\nNotas: ${notes || 'Ninguna'}`,
                     start: {
-                        dateTime: startString, // ej: "2026-09-28T09:30:00"
+                        dateTime: startString,
                         timeZone: 'America/Mexico_City',
                     },
                     end: {
-                        dateTime: endString, // ej: "2026-09-28T10:00:00"
+                        dateTime: endString,
                         timeZone: 'America/Mexico_City',
                     },
                 };
@@ -183,7 +219,10 @@ const createAppointment = async (req, res) => {
 const getUserAppointments = async (req, res) => {
     try {
         const userId = req.user.id;
-        const appointments = await Appointment.find({ user: userId });
+        // CDONE-50: Consulta optimizada con índice por usuario y lean()
+        let query = Appointment.find({ user: userId });
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointments = await query;
         res.json(appointments);
     } catch (err) {
         console.error(err.message);
@@ -196,7 +235,10 @@ const getAllAppointments = async (req, res) => {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ msg: 'Acceso denegado. Se requieren permisos de administrador.' });
         }
-        const appointments = await Appointment.find({});
+        // CDONE-50: Consulta optimizada con lean()
+        let query = Appointment.find({});
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointments = await query;
         res.json(appointments);
     } catch (err) {
         console.error(err);
@@ -220,9 +262,9 @@ const cancelAppointment = async (req, res) => {
         }
 
         appointment.status = 'Canceled';
+        appointment.expiresAt = null;
         await appointment.save();
 
-        // Enviar correo de cancelación al paciente (no bloquea la operación si falla)
         if (appointment.email) {
             try {
                 const dateOnlyString = new Date(appointment.dateTime).toISOString().split('T')[0];
@@ -250,25 +292,30 @@ const cancelAppointment = async (req, res) => {
 
 // ==========================================
 // Disponibilidad: horas ocupadas (ANÓNIMAS para no-admin) + horas bloqueadas.
-// La usa el calendario del paciente para mostrar "Ocupado"/"No disponible".
 // ==========================================
 const getAvailability = async (req, res) => {
     try {
         const isAdmin = req.user.role === 'admin';
 
-        // Citas activas (no canceladas)
-        const appointments = await Appointment.find({ status: { $ne: 'Canceled' } })
+        // CDONE-60: Limpieza preventiva de reservas vencidas
+        await cleanupExpiredReservations();
+
+        // CDONE-50: Proyecciones optimizadas y lean()
+        let query = Appointment.find({ status: { $ne: 'Canceled' } })
             .select('dateTime hour durationMinutes user');
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointments = await query;
 
         const occupied = appointments.map(a => ({
             dateTime: a.dateTime,
             hour: a.hour,
             durationMinutes: a.durationMinutes,
-            // 'mine' permite que el paciente distinga sus propias citas
             mine: isAdmin ? false : String(a.user) === String(req.user.id)
         }));
 
-        const blocked = await BlockedSlot.find({}).select('date hour reason');
+        let blockedQuery = BlockedSlot.find({}).select('date hour reason');
+        if (typeof blockedQuery.lean === 'function') blockedQuery = blockedQuery.lean();
+        const blocked = await blockedQuery;
 
         res.json({
             occupied,
@@ -290,7 +337,6 @@ const blockSlot = async (req, res) => {
             return res.status(400).json({ msg: 'Se requieren fecha y hora.' });
         }
 
-        // upsert para evitar duplicados
         const slot = await BlockedSlot.findOneAndUpdate(
             { date, hour },
             { date, hour, reason: reason || '', createdBy: req.user.id },
@@ -322,14 +368,12 @@ const unblockSlot = async (req, res) => {
     }
 };
 
-// Helpers para rangos de horas (slots de 30 min)
 const toMinutes = (h) => {
     const [hh, mm] = String(h).split(':').map(Number);
     return hh * 60 + mm;
 };
 const toHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
-// Genera los slots de 30 min desde startHour (incluido) hasta endHour (excluido)
 const buildSlots = (startHour, endHour) => {
     const start = toMinutes(startHour);
     const end = toMinutes(endHour);
@@ -396,6 +440,7 @@ const unblockRange = async (req, res) => {
 };
 
 module.exports = {
+    cleanupExpiredReservations,
     createAppointment,
     getUserAppointments,
     getAllAppointments,

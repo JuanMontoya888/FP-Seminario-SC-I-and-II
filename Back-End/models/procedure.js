@@ -56,4 +56,7 @@ const procedureSchema = new Schema(
     }
 );
 
+// Índice para optimización de consultas por paciente ordenadas por fecha (CDONE-50)
+procedureSchema.index({ patient: 1, fecha: -1 });
+
 module.exports = mongoose.model('Procedure', procedureSchema);
