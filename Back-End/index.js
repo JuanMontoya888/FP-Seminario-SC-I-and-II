@@ -53,7 +53,13 @@ mongoose.connect(dbURI)
             }
         }, 60 * 1000); // Ejecución cada 60 segundos
     })
-    .catch((err) => console.log('Error de conexión a MongoDB:', err));
+    .catch((err) => {
+        // Sin base de datos el servidor no sirve: salimos con error para que el
+        // hosting (Render) lo marque como fallido y lo reinicie, en vez de quedar
+        // "vivo" sin escuchar peticiones.
+        console.error('Error de conexión a MongoDB:', err);
+        process.exit(1);
+    });
 
 // 4. Montaje de Rutas
 app.use('/api', authRoutes);            // /api/register, /api/user/login, /api/user/profile
