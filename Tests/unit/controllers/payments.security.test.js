@@ -219,6 +219,40 @@ describe('Seguridad de citas y pagos', () => {
       );
     });
 
+    test('DadoReservaVigente_CuandoSeCreaLaPreferencia_EntoncesLimitaElCheckoutAlVencimientoDeLaReserva', async () => {
+      // Arrange
+      const cita = pendingAppointment({ dateTime: '2030-01-15T00:00:00.000Z', hour: '10:00' });
+      MockAppointment.findById.mockResolvedValue(cita);
+      modelMP.crearPreferencia.mockResolvedValue({ id: 'pref_1', init_point: 'https://mp.com/init' });
+      const req = { user: { id: 'usr_1' }, body: { appointmentId: 'appt_pay_1', paymentMode: 'full' } };
+      const res = createRes();
+
+      // Act
+      await mpController.proccesPay(req, res);
+
+      // Assert
+      const datos = modelMP.crearPreferencia.mock.calls[0][0];
+      expect(datos.expiresAt).toEqual(cita.expiresAt);
+      expect(datos.offlineDeadline).toBeInstanceOf(Date);
+      expect(datos.offlineDeadline.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    test('DadoReservaVencida_CuandoIntentaPagar_EntoncesRetorna400', async () => {
+      // Arrange
+      MockAppointment.findById.mockResolvedValue(
+        pendingAppointment({ status: 'Payment_Pending', expiresAt: new Date(Date.now() - 1000) })
+      );
+      const req = { user: { id: 'usr_1' }, body: { appointmentId: 'appt_pay_1' } };
+      const res = createRes();
+
+      // Act
+      await mpController.proccesPay(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(modelMP.crearPreferencia).not.toHaveBeenCalled();
+    });
+
     test('DadoCitaDeOtroUsuario_CuandoIntentaPagarla_EntoncesRetorna403', async () => {
       // Arrange
       MockAppointment.findById.mockResolvedValue(pendingAppointment({ user: 'usr_otro' }));
@@ -302,5 +336,141 @@ describe('Seguridad de citas y pagos', () => {
       expect(MockUser.findByIdAndUpdate).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
     });
+
+    const webhookReq = () => ({ query: { 'data.id': 'pay_2', type: 'payment' }, headers: {} });
+    const citaWebhook = (overrides = {}) => ({
+      _id: 'appt_wh_1',
+      user: 'usr_1',
+      status: 'Payment_Pending',
+      dateTime: new Date('2030-01-15T00:00:00.000Z'),
+      hour: '10:00',
+      durationMinutes: 45,
+      providerName: 'Dra. Elena Sonrisa',
+      reason: 'Limpieza Dental y Revisión General',
+      notes: '',
+      amountExpected: 600,
+      ...overrides
+    });
+
+    test('DadoPagoPendienteOXXO_CuandoLlegaElWebhook_EntoncesExtiendeLaReservaHastaElVencimientoDelPago', async () => {
+      // Arrange
+      const vencimientoFicha = '2029-12-01T12:00:00.000-06:00';
+      mockPaymentGet.mockResolvedValue({
+        id: 'pay_2',
+        status: 'pending',
+        date_of_expiration: vencimientoFicha,
+        metadata: { appointment_id: 'appt_wh_1' }
+      });
+      MockAppointment.findById.mockResolvedValue(citaWebhook());
+      const res = createRes();
+
+      // Act
+      await mpController.receiveWebhook(webhookReq(), res);
+
+      // Assert
+      expect(MockAppointment.findByIdAndUpdate).toHaveBeenCalledWith('appt_wh_1', {
+        status: 'Payment_Pending',
+        expiresAt: new Date(vencimientoFicha)
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    test('DadoPagoAprobadoParaCitaCanceladaConHorarioOcupado_CuandoLlegaElWebhook_EntoncesNoConfirmaYDejaNota', async () => {
+      // Arrange
+      mockPaymentGet.mockResolvedValue({
+        id: 'pay_2',
+        status: 'approved',
+        transaction_amount: 600,
+        metadata: { appointment_id: 'appt_wh_1' }
+      });
+      MockAppointment.findById.mockResolvedValue(citaWebhook({ status: 'Canceled' }));
+      MockAppointment.find.mockResolvedValue([
+        {
+          _id: 'appt_otro_paciente',
+          dateTime: new Date('2030-01-15T00:00:00.000Z'),
+          hour: '10:30',
+          durationMinutes: 30,
+          providerName: 'Dra. Elena Sonrisa',
+          status: 'Scheduled'
+        }
+      ]);
+      const res = createRes();
+
+      // Act
+      await mpController.receiveWebhook(webhookReq(), res);
+
+      // Assert
+      expect(MockAppointment.findByIdAndUpdate).toHaveBeenCalledTimes(1);
+      expect(MockAppointment.findByIdAndUpdate).toHaveBeenCalledWith('appt_wh_1', {
+        notes: expect.stringContaining('reagendar o reembolsar')
+      });
+      expect(MockUser.findByIdAndUpdate).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    test('DadoPagoAprobadoParaCitaCanceladaConHorarioLibre_CuandoLlegaElWebhook_EntoncesConfirmaConNota', async () => {
+      // Arrange
+      mockPaymentGet.mockResolvedValue({
+        id: 'pay_2',
+        status: 'approved',
+        transaction_amount: 600,
+        metadata: { appointment_id: 'appt_wh_1' }
+      });
+      MockAppointment.findById.mockResolvedValue(citaWebhook({ status: 'Canceled' }));
+      // La propia cita (cancelada) no cuenta como conflicto
+      MockAppointment.find.mockResolvedValue([]);
+      MockAppointment.findByIdAndUpdate.mockResolvedValue(citaWebhook({ status: 'Confirmed' }));
+      MockUser.findById.mockResolvedValue({ _id: 'usr_1', email: 'ana@example.com', nombre: 'Ana' });
+      const res = createRes();
+
+      // Act
+      await mpController.receiveWebhook(webhookReq(), res);
+
+      // Assert
+      expect(MockAppointment.findByIdAndUpdate).toHaveBeenCalledWith(
+        'appt_wh_1',
+        {
+          status: 'Confirmed',
+          notes: expect.stringContaining('Reserva reactivada'),
+          $unset: { expiresAt: 1 }
+        },
+        { new: true }
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    test('DadoCitaConfirmada_CuandoLlegaUnPagoRechazadoAtrasado_EntoncesNoLaDegrada', async () => {
+      // Arrange
+      mockPaymentGet.mockResolvedValue({
+        id: 'pay_3',
+        status: 'rejected',
+        metadata: { appointment_id: 'appt_wh_1' }
+      });
+      MockAppointment.findById.mockResolvedValue(citaWebhook({ status: 'Confirmed' }));
+      const res = createRes();
+
+      // Act
+      await mpController.receiveWebhook(webhookReq(), res);
+
+      // Assert
+      expect(MockAppointment.findByIdAndUpdate).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+  });
+
+  // =========================================================================
+  // Esquema: sin índice TTL que borre citas
+  // =========================================================================
+  test('DadoEsquemaDeCitas_CuandoSeRevisanLosIndices_EntoncesNoHayIndiceTTLSobreExpiresAt', () => {
+    // Arrange
+    const RealAppointment = jest.requireActual('../../../Back-End/models/scheduling');
+
+    // Act
+    const ttl = RealAppointment.schema
+      .indexes()
+      .filter(([fields, options]) => 'expiresAt' in fields && options && options.expireAfterSeconds !== undefined);
+
+    // Assert
+    expect(ttl).toHaveLength(0);
   });
 });

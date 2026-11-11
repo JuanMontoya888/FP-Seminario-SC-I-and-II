@@ -109,7 +109,7 @@ const AppointmentSchema = new mongoose.Schema(
 );
 
 // -------------------------------------------------------------
-// ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS (CDONE-50) Y TTL (CDONE-60)
+// ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS (CDONE-50)
 // -------------------------------------------------------------
 // 1. Optimiza la verificación de conflicto anti-solapamiento por especialista y fecha
 AppointmentSchema.index({ providerName: 1, dateTime: 1, status: 1 });
@@ -120,7 +120,8 @@ AppointmentSchema.index({ user: 1, dateTime: -1 });
 // 3. Optimiza la consulta general de disponibilidad para el calendario
 AppointmentSchema.index({ status: 1, dateTime: 1 });
 
-// 4. Índice TTL nativo para expiración automática de reservas temporales (CDONE-60)
-AppointmentSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// CDONE-60: NO se usa índice TTL sobre expiresAt. El TTL borraba físicamente las
+// citas no pagadas y los pagos tardíos (OXXO/SPEI) llegaban para una cita
+// inexistente. Ahora el worker de index.js las marca como 'Canceled'.
 
 module.exports = mongoose.model('Appointment', AppointmentSchema);

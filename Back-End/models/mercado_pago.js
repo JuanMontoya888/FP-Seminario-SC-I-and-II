@@ -8,10 +8,13 @@ const client = new MercadoPagoConfig({
 // Crear instancia de Preference
 const preference = new Preference(client);
 
+// Mercado Pago espera fechas ISO 8601 con zona horaria explícita (ej. 2026-11-10T18:00:00.000+00:00)
+const toMPDate = (date) => new Date(date).toISOString().replace('Z', '+00:00');
+
 /**
  * Crea una preferencia de Checkout Pro.
- * @param {object} datos { title, amount, appointmentId, userId } — el monto ya viene
- *                       calculado por el servidor (mercado_pago.controller.js).
+ * @param {object} datos { title, amount, appointmentId, userId, expiresAt, offlineDeadline }
+ *                       — el monto ya viene calculado por el servidor (mercado_pago.controller.js).
  */
 const crearPreferencia = async (datos) => {
     try {
@@ -51,6 +54,12 @@ const crearPreferencia = async (datos) => {
             ...(!FRONTEND_URL.includes('localhost') ? { auto_return: 'approved' } : {}),
 
             ...(NOTIFICATION_URL ? { notification_url: NOTIFICATION_URL } : {}),
+
+            // CDONE-60: el checkout deja de aceptar pagos cuando vence la reserva de la cita
+            ...(datos.expiresAt ? { expires: true, expiration_date_to: toMPDate(datos.expiresAt) } : {}),
+
+            // Fecha límite para pagar fichas en efectivo / transferencia (OXXO, SPEI)
+            ...(datos.offlineDeadline ? { date_of_expiration: toMPDate(datos.offlineDeadline) } : {}),
 
         };
 

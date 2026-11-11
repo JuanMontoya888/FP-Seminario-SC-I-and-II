@@ -4,7 +4,9 @@ const Appointment = require('../models/scheduling');
 const User = require('../models/users');
 const { MercadoPagoConfig, Payment } = require('mercadopago');
 const { findTreatment, amountForMode } = require('../config/treatments');
-const { RESERVATION_MINUTES, appendNote } = require('../services/reservations');
+const {
+    RESERVATION_MINUTES, INACTIVE_STATUSES, findScheduleConflict, pendingPaymentDeadline, appendNote
+} = require('../services/reservations');
 
 // Importamos el mailer y los templates
 const { enviarCorreoSMTP } = require('../services/mailer');
@@ -87,6 +89,11 @@ const proccesPay = async (req, res) => {
             ? `Anticipo (50%) - ${treatment.reason}`
             : treatment.reason;
 
+        // Si la reserva ya venció (aunque el worker aún no la cancele) no se cobra
+        if (appointment.expiresAt && new Date(appointment.expiresAt) <= new Date()) {
+            return res.status(400).json({ msg: 'El tiempo para pagar esta reserva terminó. Agenda tu cita de nuevo.' });
+        }
+
         // CDONE-60: Si la cita estaba en Scheduled, transiciona a Payment_Pending y renueva timeout
         appointment.status = 'Payment_Pending';
         if (!appointment.expiresAt) {
@@ -108,7 +115,11 @@ const proccesPay = async (req, res) => {
             title,
             amount,
             appointmentId: String(appointment._id),
-            userId: String(userId)
+            userId: String(userId),
+            // CDONE-60: el checkout se cierra al vencer la reserva y las fichas OXXO/SPEI
+            // vencen antes de la cita
+            expiresAt: appointment.expiresAt,
+            offlineDeadline: pendingPaymentDeadline(appointment)
         });
 
         res.json({ ...preferences, amount, total, paymentMode });
@@ -148,6 +159,32 @@ const receiveWebhook = async (req, res) => {
                     return res.status(200).send("OK");
                 }
 
+                // Una cita ya pagada o atendida no se degrada por avisos atrasados o reintentos fallidos
+                if (['Confirmed', 'Completed'].includes(citaActual.status)) {
+                    console.log(`[Webhook MP] Cita ${appointmentId} ya está ${citaActual.status}; se ignora el aviso '${paymentInfo.status}' del pago ${paymentId}.`);
+                    return res.status(200).send("OK");
+                }
+
+                // CDONE-60: la reserva ya se había liberado (venció o un intento anterior se rechazó)
+                // y otro paciente pudo tomar el horario. No se confirma encima sin revisar.
+                let notaReactivada = '';
+                if (INACTIVE_STATUSES.includes(citaActual.status) && ['approved', 'pending', 'in_process'].includes(paymentInfo.status)) {
+                    const conflicto = await findScheduleConflict(citaActual, appointmentId);
+                    if (conflicto) {
+                        console.warn(`[Webhook MP] Pago ${paymentId} (${paymentInfo.status}) llegó para la cita ${appointmentId} en estado ${citaActual.status} y el horario ya está ocupado. Requiere revisión manual (reagendar o reembolsar).`);
+                        await Appointment.findByIdAndUpdate(appointmentId, {
+                            notes: appendNote(
+                                citaActual.notes,
+                                `Pago ${paymentId} (${paymentInfo.status}, $${paymentInfo.transaction_amount} MXN) llegó después de liberar la reserva y el horario ya está ocupado: reagendar o reembolsar`
+                            )
+                        });
+                        return res.status(200).send("OK");
+                    }
+                    notaReactivada = `Reserva reactivada por el pago ${paymentId} (${paymentInfo.status}) recibido después de liberarla`;
+                    console.warn(`[Webhook MP] Cita ${appointmentId} estaba ${citaActual.status}; el horario sigue libre y se reactiva por el pago ${paymentId}.`);
+                }
+                const conNota = notaReactivada ? { notes: appendNote(citaActual.notes, notaReactivada) } : {};
+
                 // Evaluamos el ESTADO del pago que nos devuelve Mercado Pago
                 switch (paymentInfo.status) {
                     case 'approved': {
@@ -170,6 +207,7 @@ const receiveWebhook = async (req, res) => {
                             appointmentId,
                             { 
                                 status: 'Confirmed',
+                                ...conNota,
                                 $unset: { expiresAt: 1 } // CDONE-60: Remueve timeout al confirmar
                             },
                             { new: true }
@@ -205,14 +243,18 @@ const receiveWebhook = async (req, res) => {
                     }
 
                     case 'pending':
-                    case 'in_process':
-                        // CASO: CONT (Pendiente de pago)
+                    case 'in_process': {
+                        // CASO: CONT (Pendiente de pago). OXXO, SPEI o pagos en revisión pueden tardar
+                        // horas: se extiende la reserva hasta el vencimiento del pago (sin pasar de la cita)
+                        // para que el worker no la cancele mientras tanto.
+                        const nuevoVencimiento = pendingPaymentDeadline(citaActual, paymentInfo.date_of_expiration);
                         await Appointment.findByIdAndUpdate(
                             appointmentId,
-                            { status: 'Payment_Pending' }
+                            { status: 'Payment_Pending', expiresAt: nuevoVencimiento, ...conNota }
                         );
-                        console.log(`Pago PENDIENTE para la cita ${appointmentId}.`);
+                        console.log(`Pago PENDIENTE para la cita ${appointmentId}. Reserva apartada hasta ${nuevoVencimiento.toISOString()}.`);
                         break;
+                    }
 
                     case 'rejected':
                         // CASOS: OTHE, FUND, SECU, CALL, etc. (Rechazado)

@@ -49,9 +49,28 @@ const findScheduleConflict = async ({ providerName, dateTime, hour, durationMinu
  * Fecha y hora de inicio de la cita (para no extender una reserva más allá de la cita misma).
  */
 const appointmentStart = (cita) => {
-    const dateOnlyString = new Date(cita.dateTime).toISOString().split('T')[0];
+    const fecha = new Date(cita?.dateTime);
+    if (isNaN(fecha.getTime())) return null;
+    const dateOnlyString = fecha.toISOString().split('T')[0];
     const start = new Date(`${dateOnlyString}T${cita.hour}:00`);
     return isNaN(start.getTime()) ? null : start;
+};
+
+/**
+ * Hasta cuándo se aparta el horario de un pago que puede tardar (OXXO, SPEI o en revisión):
+ * la fecha de vencimiento que informe Mercado Pago o, si no viene, OFFLINE_PAYMENT_HOURS
+ * a partir de ahora. Nunca pasa del inicio de la cita.
+ * @param {object} cita cita con dateTime y hour
+ * @param {string|Date|null} fechaMP date_of_expiration del pago en Mercado Pago (opcional)
+ */
+const pendingPaymentDeadline = (cita, fechaMP = null) => {
+    let deadline = fechaMP ? new Date(fechaMP) : null;
+    if (!deadline || isNaN(deadline.getTime())) {
+        deadline = new Date(Date.now() + OFFLINE_PAYMENT_HOURS * 60 * 60 * 1000);
+    }
+    const inicio = appointmentStart(cita);
+    if (inicio && inicio < deadline) deadline = inicio;
+    return deadline;
 };
 
 /**
@@ -65,5 +84,6 @@ module.exports = {
     INACTIVE_STATUSES,
     findScheduleConflict,
     appointmentStart,
+    pendingPaymentDeadline,
     appendNote
 };
