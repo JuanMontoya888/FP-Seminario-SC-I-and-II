@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const User = require('../models/users');
 const Appointment = require('../models/scheduling');
 const BlockedSlot = require('../models/blockedSlot');
@@ -252,6 +253,34 @@ const getUserAppointments = async (req, res) => {
     }
 };
 
+// ==========================================
+// Una cita del usuario autenticado (solo el dueño o un admin). La usa la página
+// de resultado del pago para mostrar el estado REAL de la cita y no confiar en
+// los parámetros de la URL de regreso de Mercado Pago.
+// ==========================================
+const getUserAppointmentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ msg: 'ID de cita inválido.' });
+        }
+
+        let query = Appointment.findById(id);
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointment = await query;
+
+        // 404 también si es de otro usuario, para no revelar qué citas existen
+        if (!appointment || (String(appointment.user) !== String(req.user.id) && req.user.role !== 'admin')) {
+            return res.status(404).json({ msg: 'Cita no encontrada.' });
+        }
+
+        res.json(appointment);
+    } catch (err) {
+        console.error('Error al obtener la cita:', err);
+        res.status(500).json({ msg: 'Error al obtener la cita.' });
+    }
+};
+
 const getAllAppointments = async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
@@ -494,6 +523,7 @@ module.exports = {
     createAppointment,
     getTreatments,
     getUserAppointments,
+    getUserAppointmentById,
     getAllAppointments,
     cancelAppointment,
     getAvailability,

@@ -167,6 +167,48 @@ describe('Unit Controllers - Appointments Controller Tests', () => {
     expect(Appointment.find).not.toHaveBeenCalled();
   });
 
+  test('DadoCitaPropia_CuandoConsultaGetUserAppointmentById_EntoncesRetornaLaCita', async () => {
+    // Arrange
+    const cita = { _id: '64b7f0c2a1b2c3d4e5f60718', user: 'user_123', status: 'Confirmed' };
+    Appointment.findById.mockResolvedValue(cita);
+    const req = { user: { id: 'user_123', role: 'user' }, params: { id: '64b7f0c2a1b2c3d4e5f60718' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getUserAppointmentById(req, res);
+
+    // Assert
+    expect(Appointment.findById).toHaveBeenCalledWith('64b7f0c2a1b2c3d4e5f60718');
+    expect(res.json).toHaveBeenCalledWith(cita);
+  });
+
+  test('DadoCitaDeOtroUsuario_CuandoConsultaGetUserAppointmentById_EntoncesRetorna404', async () => {
+    // Arrange
+    Appointment.findById.mockResolvedValue({ _id: '64b7f0c2a1b2c3d4e5f60718', user: 'otro_usuario' });
+    const req = { user: { id: 'user_123', role: 'user' }, params: { id: '64b7f0c2a1b2c3d4e5f60718' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getUserAppointmentById(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ msg: 'Cita no encontrada.' });
+  });
+
+  test('DadoIdInvalido_CuandoConsultaGetUserAppointmentById_EntoncesRetorna400', async () => {
+    // Arrange
+    const req = { user: { id: 'user_123', role: 'user' }, params: { id: 'no-es-un-id' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getUserAppointmentById(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(Appointment.findById).not.toHaveBeenCalled();
+  });
+
   test.each(nonCancellableStatuses)(
     'DadoCitaEnEstado ($status)_CuandoAdminIntentaCancelar_EntoncesRetorna400BadRequest',
     async ({ status }) => {

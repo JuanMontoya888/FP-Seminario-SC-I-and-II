@@ -22,6 +22,9 @@ router.post('/register/appointment', authMiddleware, appointmentController.creat
 // Obtener todas las citas del usuario autenticado
 router.get('/user/appointment', authMiddleware, appointmentController.getUserAppointments);
 
+// Obtener UNA cita del usuario autenticado (estado real del pago)
+router.get('/user/appointment/:id', authMiddleware, appointmentController.getUserAppointmentById);
+
 // Obtener TODAS las citas globales (Solo para rol Admin)
 router.get('/admin/appointments', authMiddleware, adminMiddleware, appointmentController.getAllAppointments);
 

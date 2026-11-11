@@ -7,6 +7,9 @@
     <!-- Título y mensaje -->
     <h1 class="pe-title" [style.color]="estadoActual.color">{{ estadoActual.title }}</h1>
     <p class="pe-text">{{ estadoActual.text }}</p>
+    @if (verifying) {
+      <p class="pe-text">Verificando el estado de tu pago...</p>
+    }
 
     <!-- Folio de pago -->
     @if (paymentId) {
@@ -61,7 +64,8 @@
     <!-- Acciones según el estado -->
     <div class="pe-actions">
       @if (status === 'approved' || status === 'pending') {
-        <!-- BOTÓN DESCARGAR COMPROBANTE (CDONE-61 & CDONE-64) -->
+        <!-- BOTÓN DESCARGAR COMPROBANTE (CDONE-61 & CDONE-64): solo con pago confirmado por el servidor -->
+        @if (receiptAvailable) {
         <button class="pe-btn pe-btn-receipt" (click)="downloadReceipt()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -70,6 +74,7 @@
           </svg>
           Descargar Comprobante Oficial (PDF)
         </button>
+        }
 
         <button class="pe-btn pe-btn-primary" (click)="goToCalendar()">
           Ver mis citas

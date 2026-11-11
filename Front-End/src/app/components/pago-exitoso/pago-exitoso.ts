@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
+import { AppointmentsService } from '../../services/appointments.service';
+
+type EstadoPago = 'approved' | 'pending' | 'failure';
 
 @Component({
   selector: 'app-pago-exitoso',
@@ -12,12 +15,21 @@ import Swal from 'sweetalert2';
   templateUrl: './pago-exitoso.html',
   styleUrl: './pago-exitoso.css'
 })
-export class PagoExitoso implements OnInit {
+export class PagoExitoso implements OnInit, OnDestroy {
 
-  status: string = '';
+  status: EstadoPago = 'pending';
   paymentId: string = '';
   merchantOrderId: string = '';
   pagoInfo: any = null;
+
+  // Estado confirmado por el servidor (no por los parámetros de la URL)
+  verifying = false;
+  receiptAvailable = false;
+
+  // Reintentos mientras llega el webhook de Mercado Pago (pago aprobado pero cita aún pendiente)
+  private readonly maxVerifyAttempts = 5;
+  private readonly verifyDelayMs = 3000;
+  private verifyTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly estados: Record<string, { icon: string; title: string; text: string; color: string }> = {
     approved: {
@@ -44,22 +56,23 @@ export class PagoExitoso implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private appointmentsService: AppointmentsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    // Parámetros devueltos por Mercado Pago
-    this.status = this.route.snapshot.queryParamMap.get('collection_status')
-                || this.route.snapshot.queryParamMap.get('status')
-                || 'approved'; // Por defecto approved si viene del flujo exitoso
+    // Parámetros devueltos por Mercado Pago. Solo son una pista: el estado real
+    // se confirma con el backend (lo actualiza el webhook).
+    const params = this.route.snapshot.queryParamMap;
+    const mpStatus = params.get('collection_status') || params.get('status');
+    const pagoId = params.get('collection_id') || params.get('payment_id');
 
-    this.paymentId = this.route.snapshot.queryParamMap.get('collection_id')
-                   || this.route.snapshot.queryParamMap.get('payment_id')
-                   || 'MP-' + Math.floor(100000000 + Math.random() * 900000000);
+    // MP manda 'null' cuando el usuario abandona el checkout
+    this.paymentId = pagoId && pagoId !== 'null' ? pagoId : '';
+    this.merchantOrderId = params.get('merchant_order_id') || '';
 
-    this.merchantOrderId = this.route.snapshot.queryParamMap.get('merchant_order_id') || '';
-
-    this.estadoActual = this.estados[this.status] ?? this.estados['approved'];
+    this.setStatus(this.mapMpStatus(mpStatus));
 
     // Recuperamos los datos de la cita y checkout guardados en localStorage (CDONE-61, CDONE-64, CDONE-66)
     const stored = localStorage.getItem('citaPagoInfo');
@@ -70,32 +83,101 @@ export class PagoExitoso implements OnInit {
         console.error('Error parseando citaPagoInfo', e);
       }
     }
+
+    if (this.pagoInfo?.appointmentId) {
+      this.verifyWithServer(mpStatus, 1);
+    } else if (this.status === 'approved') {
+      // Sin cita que verificar no se muestra como éxito
+      this.setStatus('pending');
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.verifyTimer) clearTimeout(this.verifyTimer);
+  }
+
+  /** Estado que reporta Mercado Pago en la URL de regreso. Lo desconocido cuenta como fallo. */
+  private mapMpStatus(mpStatus: string | null): EstadoPago {
+    switch (mpStatus) {
+      case 'approved':
+        return 'approved';
+      case 'pending':
+      case 'in_process':
+        return 'pending';
+      default:
+        // rejected, cancelled, 'null' (checkout abandonado) o cualquier otro valor
+        return 'failure';
+    }
+  }
+
+  private setStatus(status: EstadoPago): void {
+    this.status = status;
+    this.estadoActual = this.estados[status];
+  }
+
+  /** Consulta la cita en el backend y muestra su estado real (CDONE-58). */
+  private verifyWithServer(mpStatus: string | null, attempt: number): void {
+    this.verifying = true;
+    this.appointmentsService.getAppointmentById(this.pagoInfo.appointmentId).subscribe({
+      next: (cita) => {
+        this.applyServerAmounts(cita);
+
+        if (cita.status === 'Confirmed' || cita.status === 'Completed') {
+          this.verifying = false;
+          this.receiptAvailable = true;
+          this.setStatus('approved');
+        } else if (cita.status === 'Canceled' || cita.status === 'Payment_Failed') {
+          this.verifying = false;
+          this.setStatus('failure');
+        } else if (mpStatus === 'approved' && attempt < this.maxVerifyAttempts) {
+          // MP ya aprobó pero el webhook aún no confirma la cita: reintentamos
+          this.setStatus('pending');
+          this.verifyTimer = setTimeout(() => this.verifyWithServer(mpStatus, attempt + 1), this.verifyDelayMs);
+        } else {
+          this.verifying = false;
+          this.setStatus(this.status === 'failure' ? 'failure' : 'pending');
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('No se pudo verificar el estado de la cita:', err);
+        this.verifying = false;
+        // Sin confirmación del servidor nunca se muestra como pagado
+        if (this.status === 'approved') this.setStatus('pending');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /** Usa los montos calculados por el servidor para el resumen y el comprobante. */
+  private applyServerAmounts(cita: any): void {
+    if (!this.pagoInfo || typeof cita?.price !== 'number' || typeof cita?.amountExpected !== 'number') return;
+    this.pagoInfo = {
+      ...this.pagoInfo,
+      totalPrice: cita.price,
+      paidAmount: cita.amountExpected,
+      pendingBalance: cita.price - cita.amountExpected,
+      paymentMode: cita.paymentMode === 'partial' ? 'Pago Parcial (Anticipo 50%)' : 'Pago Completo (100%)'
+    };
   }
 
   /**
    * Generación y Descarga de Comprobante Oficial en PDF (CDONE-61 & CDONE-64)
    */
   downloadReceipt(): void {
+    // Solo hay comprobante cuando el servidor confirmó el pago
+    if (!this.receiptAvailable || !this.pagoInfo) return;
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
 
-    const info = this.pagoInfo || {
-      treatmentName: 'Consulta Dental Especializada',
-      doctor: 'Especialista Dental ONE',
-      patientName: 'Paciente Registrado',
-      patientEmail: 'paciente@dentalone.com',
-      dateTime: new Date().toISOString().split('T')[0],
-      hour: '10:00',
-      totalPrice: 950,
-      paidAmount: 950,
-      pendingBalance: 0,
-      paymentMode: 'Pago Completo (100%)'
-    };
+    const info = this.pagoInfo;
 
-    const folio = this.paymentId || 'DO-' + Date.now().toString().slice(-6);
+    // Folio: el ID real del pago en Mercado Pago o, si no vino en la URL, el de la cita
+    const folio = this.paymentId || `CITA-${String(info.appointmentId).slice(-8)}`;
 
     // 1. ENCABEZADO INSTITUCIONAL
     doc.setFillColor(29, 53, 87); // Azul marino elegante (#1d3557)
