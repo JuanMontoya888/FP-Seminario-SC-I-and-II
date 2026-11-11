@@ -10,6 +10,7 @@ import { UserService } from '../../services/user.service';
 declare const google: any;
 import { HttpClient } from '@angular/common/http';
 import { AfterViewInit } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-log-in',
@@ -25,8 +26,7 @@ export class LogIn implements AfterViewInit{
   loginForm!: FormGroup;
   showPassword = false;
   //para el google sign in
-  //private backendUrl = 'https://dental-one-final.onrender.com/api/login';
-  private backendUrl = 'http://localhost:3000/api/login';
+  private backendUrl = `${environment.apiUrl}/api/login`;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -175,7 +175,7 @@ export class LogIn implements AfterViewInit{
         context: "signin",
         // añadimos el callback, asegurando el contexto (this)
         callback: this.handleCredentialResponse.bind(this),
-        login_uri: "http://localhost:3000/api/login",
+        login_uri: `${environment.apiUrl}/api/login`,
         auto_select: true,
         itp_support: true
       });

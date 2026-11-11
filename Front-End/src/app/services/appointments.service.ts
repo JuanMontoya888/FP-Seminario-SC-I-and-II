@@ -3,14 +3,14 @@ import { HttpClient, HttpHeaders } from '@angular/common/http'; // Importar Http
 import { UserService } from './user.service';
 import { Appointment } from '../models/appointment';
 import { map, tap } from 'rxjs/operators'; // Importar operadores RxJS
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppointmentsService {
   // Tu URL del backend
-  //private apiUrl = 'https://dental-one-final.onrender.com/api/user/appointment';
-  private apiUrl = 'http://localhost:3000/api/user/appointment';
+  private apiUrl = `${environment.apiUrl}/api/user/appointment`;
 
   // La Signal que alimenta tu calendario
   public appointmentsArray: WritableSignal<Array<Appointment>> = signal([]);

@@ -4,6 +4,7 @@ import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, 
 import Swal from 'sweetalert2';
 import { HttpClient} from '@angular/common/http';
 import { Router } from "@angular/router";
+import { environment } from '../../../environments/environment';
 
 //datos obtenidos del register
   interface userProfile {
@@ -22,10 +23,8 @@ export class FormularioInicial {
   //Formulario
   generalForm!: FormGroup;
 
-  //private profileUrl = 'https://dental-one-final.onrender.com/api/user/profile';
-  //private profileDataUrl = 'https://dental-one-final.onrender.com/api/register/patientDetails';
-  private profileUrl = 'http://localhost:3000/api/user/profile';
-  private profileDataUrl = 'http://localhost:3000/api/register/patientDetails';
+  private profileUrl = `${environment.apiUrl}/api/user/profile`;
+  private profileDataUrl = `${environment.apiUrl}/api/register/patientDetails`;
   //selectores
   escolaridades: any[] = [];
   civil : any [] = [];
@@ -102,7 +101,7 @@ export class FormularioInicial {
   }
 
   loadPatientDetails(): void {
-    this.http.get('http://localhost:3000/api/get/patientDetails').subscribe({
+    this.http.get(`${environment.apiUrl}/api/get/patientDetails`).subscribe({
       next: (data: any)=> {
         console.log('Patient Details: ', data);
         if (data && data.nacimiento) {

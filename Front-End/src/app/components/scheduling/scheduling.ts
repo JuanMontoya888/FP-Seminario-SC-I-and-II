@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 
 import Swal from 'sweetalert2';
 import { ScheduleService } from '../../services/schedule.service';
+import { environment } from '../../../environments/environment';
 
 export interface TreatmentOption {
   reason: string;
@@ -27,8 +28,8 @@ export interface TreatmentOption {
 })
 export class Scheduling implements OnInit {
 
-  private urlScheduling = 'http://localhost:3000/api/register/appointment';
-  private profileUrl = 'http://localhost:3000/api/user/profile';
+  private urlScheduling = `${environment.apiUrl}/api/register/appointment`;
+  private profileUrl = `${environment.apiUrl}/api/user/profile`;
 
   // Gate de pago según el tipo de paciente (CDONE-59)
   patientType: string | null = null;
@@ -99,7 +100,7 @@ export class Scheduling implements OnInit {
   }
 
   fetchPatientDetails(): void {
-    this.http.get<any>('http://localhost:3000/api/get/patientDetails').subscribe({
+    this.http.get<any>(`${environment.apiUrl}/api/get/patientDetails`).subscribe({
       next: (details) => {
         if (details && details.numcel) {
           this.schedulForm.patchValue({ contactNumber: details.numcel });

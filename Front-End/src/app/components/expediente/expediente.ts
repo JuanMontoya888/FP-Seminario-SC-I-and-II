@@ -4,8 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { environment } from '../../../environments/environment';
 
-const API = 'http://localhost:3000/api';
+const API = `${environment.apiUrl}/api`;
 
 @Component({
   selector: 'app-expediente',
