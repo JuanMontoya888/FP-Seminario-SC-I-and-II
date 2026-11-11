@@ -228,12 +228,12 @@ const receiveWebhook = async (req, res) => {
                                 if (usuario) {
                                     const monto = paymentInfo.transaction_amount || 0;
                                     const concepto = paymentInfo.description || citaPagada.reason || 'Cita dental';
-                                    await enviarCorreoSMTP({
+                                    // Sin await: MP espera un 200 rápido
+                                    enviarCorreoSMTP({
                                         to: usuario.email,
                                         subject: 'Comprobante de pago - Dental One',
                                         html: emailTemplates.pagoRecibido(usuario.nombre, monto, concepto)
                                     });
-                                    console.log(`Correo de pago enviado a ${usuario.email}`);
                                 }
                             } catch (mailErr) {
                                 console.error('Error enviando correo de pago aprobado:', mailErr);
@@ -274,12 +274,12 @@ const receiveWebhook = async (req, res) => {
                                 const usuario = await User.findById(citaRechazada.user);
                                 if (usuario) {
                                     const concepto = paymentInfo.description || citaRechazada.reason || 'Cita dental';
-                                    await enviarCorreoSMTP({
+                                    // Sin await: MP espera un 200 rápido
+                                    enviarCorreoSMTP({
                                         to: usuario.email,
                                         subject: 'Pago no procesado - Dental One',
                                         html: emailTemplates.pagoRechazado(usuario.nombre, concepto)
                                     });
-                                    console.log(`Correo de pago rechazado enviado a ${usuario.email}`);
                                 }
                             } catch (mailErr) {
                                 console.error('Error enviando correo de pago rechazado:', mailErr);

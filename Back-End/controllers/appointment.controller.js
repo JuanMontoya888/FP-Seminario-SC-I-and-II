@@ -158,32 +158,29 @@ const createAppointment = async (req, res) => {
         if (contactNumber) {
             const magicLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/mi-cuenta`;
             
-            whatsappService.sendAppointmentReminder(contactNumber, {
+            // Sin await (fire-and-forget): Twilio no frena la respuesta
+            Promise.resolve(whatsappService.sendAppointmentReminder(contactNumber, {
                 patientName: patientName || 'Paciente',
                 date: dateOnlyString,
                 time: hour,
                 providerName: providerName || 'Especialista',
                 link: magicLink
-            }).catch(e => console.error("Error asíncrono WhatsApp:", e));
+            })).catch(e => console.error("Error asíncrono WhatsApp:", e));
         }
 
-        // 5. Correo de confirmación al paciente (no rompe la cita si falla)
+        // 5. Correo de confirmación al paciente (sin await: no rompe ni frena la cita si falla)
         if (email) {
-            try {
-                await enviarCorreoSMTP({
-                    to: email,
-                    subject: 'Tu cita en Dental One',
-                    html: emailTemplates.citaConfirmada({
-                        patientName,
-                        dateOnlyString,
-                        hour,
-                        providerName,
-                        reason
-                    })
-                });
-            } catch (mailError) {
-                console.error('Error enviando correo de confirmación de cita:', mailError);
-            }
+            enviarCorreoSMTP({
+                to: email,
+                subject: 'Tu cita en Dental One',
+                html: emailTemplates.citaConfirmada({
+                    patientName,
+                    dateOnlyString,
+                    hour,
+                    providerName,
+                    reason
+                })
+            });
         }
 
         // 6. Integración Google Calendar (solo si hay credenciales)
@@ -319,7 +316,8 @@ const cancelAppointment = async (req, res) => {
         if (appointment.email) {
             try {
                 const dateOnlyString = new Date(appointment.dateTime).toISOString().split('T')[0];
-                await enviarCorreoSMTP({
+                // Sin await: el aviso por correo no frena la respuesta
+                enviarCorreoSMTP({
                     to: appointment.email,
                     subject: 'Cita cancelada - Dental One',
                     html: emailTemplates.citaCancelada({
@@ -330,7 +328,7 @@ const cancelAppointment = async (req, res) => {
                     })
                 });
             } catch (mailErr) {
-                console.error('Error enviando correo de cancelación:', mailErr);
+                console.error('Error preparando correo de cancelación:', mailErr);
             }
         }
 

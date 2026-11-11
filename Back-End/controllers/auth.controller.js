@@ -41,10 +41,10 @@ const register = async (req, res) => {
         });
         await user.save();
 
-        // Enviar correo de verificación
+        // Enviar correo de verificación (sin await: no frena la respuesta; los errores se registran en el log)
         const verificationUrl = `${BACKEND_URL}/api/verify-email/${verificationToken}`;
 
-        await enviarCorreoSMTP({
+        enviarCorreoSMTP({
             to: email,
             subject: 'Verifica tu correo electrónico - Dental One',
             html: emailTemplates.verificacionCorreo(nombre, verificationUrl)
@@ -247,16 +247,12 @@ const verifyEmail = async (req, res) => {
         user.verificationToken = null;
         await user.save();
 
-        // Enviar correo de bienvenida (no bloquea la verificación si falla)
-        try {
-            await enviarCorreoSMTP({
-                to: user.email,
-                subject: '¡Bienvenido a Dental One!',
-                html: emailTemplates.bienvenida(user.nombre)
-            });
-        } catch (mailErr) {
-            console.error('Error enviando correo de bienvenida:', mailErr);
-        }
+        // Enviar correo de bienvenida (sin await: no bloquea la verificación si falla)
+        enviarCorreoSMTP({
+            to: user.email,
+            subject: '¡Bienvenido a Dental One!',
+            html: emailTemplates.bienvenida(user.nombre)
+        });
 
         res.status(200).send(`
             <div style="text-align: center; font-family: sans-serif; margin-top: 50px;">
@@ -290,10 +286,10 @@ const resendVerificationEmail = async (req, res) => {
         user.verificationToken = verificationToken;
         await user.save();
 
-        // Enviar el correo de verificación con template unificado
+        // Enviar el correo de verificación con template unificado (sin await)
         const verificationUrl = `${BACKEND_URL}/api/verify-email/${verificationToken}`;
 
-        await enviarCorreoSMTP({
+        enviarCorreoSMTP({
             to: email,
             subject: 'Reenvío de Verificación de correo electrónico - Dental One',
             html: emailTemplates.verificacionCorreo(user.nombre, verificationUrl)
@@ -324,7 +320,8 @@ const forgotPassword = async (req, res) => {
 
         const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
 
-        await enviarCorreoSMTP({
+        // Sin await: la respuesta es la misma exista o no el correo
+        enviarCorreoSMTP({
             to: email,
             subject: 'Restablecer contraseña - Dental One',
             html: emailTemplates.recuperarContrasena(user.nombre, resetUrl)

@@ -123,6 +123,23 @@ describe('Seguridad de citas y pagos', () => {
       expect(res.status).toHaveBeenCalledWith(201);
     });
 
+    test('DadoCorreoQueNuncaTermina_CuandoSeCreaLaCita_EntoncesRespondeSinEsperarlo', async () => {
+      // Arrange
+      const { enviarCorreoSMTP } = require('../../../Back-End/services/mailer');
+      const whatsappService = require('../../../Back-End/services/whatsappService');
+      enviarCorreoSMTP.mockReturnValueOnce(new Promise(() => {}));
+      whatsappService.sendAppointmentReminder.mockReturnValueOnce(new Promise(() => {}));
+      const req = { user: { id: 'usr_1' }, body: { ...baseBody } };
+      const res = createRes();
+
+      // Act
+      await appointmentController.createAppointment(req, res);
+
+      // Assert
+      expect(enviarCorreoSMTP).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
     test('DadoTratamientoInexistente_CuandoSeCreaLaCita_EntoncesRetorna400', async () => {
       // Arrange
       const req = { user: { id: 'usr_1' }, body: { ...baseBody, reason: 'Tratamiento gratis' } };
