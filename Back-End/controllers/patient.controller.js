@@ -3,15 +3,22 @@ const User = require('../models/users');
 const PatientDetails = require('../models/patientDetails');
 const MedicalHistory = require('../models/medicalHistory');
 
+// Quita del body los campos que identifican al dueño del documento: el usuario
+// SIEMPRE sale del token (req.user.id), así nadie puede escribir datos de otro.
+const sinCamposProtegidos = (datos = {}) => {
+    const { _id, user, email, ...resto } = datos || {};
+    return resto;
+};
+
 const upsertPatientDetails = async (req, res) => {
     try {
         const {
-            email, nombre, apep, apem, direccion, cp, telCasa, numcel, 
+            nombre, apep, apem, direccion, cp, telCasa, numcel, 
             escolaridad, edoCivil, estatura, peso, nacimiento, genero
         } = req.body;
 
-        const userId = req.user?.id;
-        const user = userId ? await User.findById(userId) : await User.findOne({ email });
+        // La ruta exige authMiddleware: el usuario sale del token, nunca del email del body
+        const user = await User.findById(req.user.id);
 
         if (!user) {
             return res.status(404).json({
@@ -22,7 +29,7 @@ const upsertPatientDetails = async (req, res) => {
         // Definir los datos a insertar o actualizar
         const updatePayload = {
             user: user._id, // Enlace por ID
-            email: email || user.email,
+            email: user.email,
             nombre, apep, apem, direccion, cp, telCasa, 
             numcel, escolaridad, edoCivil, estatura, peso, nacimiento, genero
         };
@@ -76,7 +83,7 @@ const upsertMedicalHistory = async (req, res) => {
         // Ejecutar upsert usando spread operator para capturar todos los campos
         const patientHisto = await MedicalHistory.findOneAndUpdate(
             { user: userId },
-            { user: userId, ...req.body },
+            { ...sinCamposProtegidos(req.body), user: userId },
             {
                 new: true,
                 upsert: true,
@@ -134,7 +141,7 @@ const saveCompleteClinicalRecord = async (req, res) => {
         if (pData) {
             updatedDetails = await PatientDetails.findOneAndUpdate(
                 { user: userId },
-                { user: userId, email: user.email, ...pData },
+                { ...sinCamposProtegidos(pData), user: userId, email: user.email },
                 { new: true, upsert: true, runValidators: true, ...sessionOpt }
             );
 
@@ -148,7 +155,7 @@ const saveCompleteClinicalRecord = async (req, res) => {
         if (mData) {
             updatedHistory = await MedicalHistory.findOneAndUpdate(
                 { user: userId },
-                { user: userId, ...mData },
+                { ...sinCamposProtegidos(mData), user: userId },
                 { new: true, upsert: true, runValidators: true, ...sessionOpt }
             );
         }

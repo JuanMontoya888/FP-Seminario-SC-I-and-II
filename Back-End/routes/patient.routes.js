@@ -7,7 +7,8 @@ const authMiddleware = require('../middlewares/auth.middleware');
 // ==========================================
 // RUTAS DE REGISTRO / ACTUALIZACIÓN (Upsert)
 // ==========================================
-router.post('/register/patientDetails', patientController.upsertPatientDetails);
+// Requiere token: el paciente se identifica por req.user.id, nunca por el email del body
+router.post('/register/patientDetails', authMiddleware, patientController.upsertPatientDetails);
 router.post('/register/histo', authMiddleware, patientController.upsertMedicalHistory);
 
 // Guardado consolidado y transaccional del expediente clínico (CDONE-55)

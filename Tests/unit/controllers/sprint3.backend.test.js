@@ -216,6 +216,76 @@ describe('Sprint 3 Backend Deliverables Validation', () => {
     });
   });
 
+  describe('Protección de datos del paciente', () => {
+    test('DadoRutaRegisterPatientDetails_CuandoSeRevisaSuCadena_EntoncesExigeAuthMiddleware', () => {
+      // Arrange
+      const patientRoutes = require('../../../Back-End/routes/patient.routes');
+      const authMiddleware = require('../../../Back-End/middlewares/auth.middleware');
+
+      // Act
+      const layer = patientRoutes.stack.find(
+        (l) => l.route && l.route.path === '/register/patientDetails' && l.route.methods.post
+      );
+      const handlers = layer.route.stack.map((s) => s.handle);
+
+      // Assert
+      expect(handlers[0]).toBe(authMiddleware);
+    });
+
+    test('DadoBodyConOtroUserYEmail_CuandoUpsertPatientDetails_EntoncesUsaElUsuarioDelToken', async () => {
+      // Arrange
+      const mockUserDoc = { _id: 'usr_token', email: 'dueno@example.com', patientDetails: 'pd_1', save: mockUserSave };
+      MockUser.findById.mockResolvedValue(mockUserDoc);
+      MockPatientDetails.findOneAndUpdate.mockResolvedValue({ _id: 'pd_1' });
+      const req = {
+        user: { id: 'usr_token' },
+        body: { email: 'victima@example.com', user: 'usr_victima', nombre: 'Intruso' }
+      };
+      const res = createRes();
+
+      // Act
+      await patientController.upsertPatientDetails(req, res);
+
+      // Assert
+      expect(MockUser.findOne).not.toHaveBeenCalled();
+      expect(MockPatientDetails.findOneAndUpdate).toHaveBeenCalledWith(
+        { user: 'usr_token' },
+        expect.objectContaining({ user: 'usr_token', email: 'dueno@example.com' }),
+        expect.any(Object)
+      );
+    });
+
+    test('DadoExpedienteConUserYEmailAjenos_CuandoSaveCompleteClinicalRecord_EntoncesNoSobrescribeElDueno', async () => {
+      // Arrange
+      MockUser.findById.mockResolvedValue({ _id: 'usr_token', email: 'dueno@example.com', patientDetails: 'pd_1', save: mockUserSave });
+      MockPatientDetails.findOneAndUpdate.mockResolvedValue({ _id: 'pd_1' });
+      MockMedicalHistory.findOneAndUpdate.mockResolvedValue({ _id: 'mh_1' });
+      const req = {
+        user: { id: 'usr_token' },
+        body: {
+          patientDetails: { user: 'usr_victima', email: 'victima@example.com', nombre: 'Carlos' },
+          medicalHistory: { user: 'usr_victima', salud: 'Buena' }
+        }
+      };
+      const res = createRes();
+
+      // Act
+      await patientController.saveCompleteClinicalRecord(req, res);
+
+      // Assert
+      expect(MockPatientDetails.findOneAndUpdate).toHaveBeenCalledWith(
+        { user: 'usr_token' },
+        { nombre: 'Carlos', user: 'usr_token', email: 'dueno@example.com' },
+        expect.any(Object)
+      );
+      expect(MockMedicalHistory.findOneAndUpdate).toHaveBeenCalledWith(
+        { user: 'usr_token' },
+        { salud: 'Buena', user: 'usr_token' },
+        expect.any(Object)
+      );
+    });
+  });
+
   // =========================================================================
   // CDONE-58: Integración del SDK de Mercado Pago e Idempotencia
   // =========================================================================
