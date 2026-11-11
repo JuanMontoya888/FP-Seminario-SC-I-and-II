@@ -7,6 +7,7 @@ const { google } = require('googleapis');
 const { enviarCorreoSMTP } = require('../services/mailer');
 const emailTemplates = require('../services/emailTemplates');
 const whatsappService = require('../services/whatsappService');
+const { INACTIVE_STATUSES, findScheduleConflict } = require('../services/reservations');
 
 // =================================================================================
 // CONFIGURACIÓN DE GOOGLE CALENDAR
@@ -82,13 +83,11 @@ const createAppointment = async (req, res) => {
             if (existingUser) finalPatientId = existingUser._id;
         }
 
-        // CDONE-60: Ejecutar limpieza preventiva de reservas expiradas antes de evaluar disponibilidad
-        await cleanupExpiredReservations();
+        // CDONE-60: las reservas vencidas las cancela el worker periódico de index.js
+        // (ya no se ejecuta la limpieza en cada petición).
 
         // 🛡️ BLOQUE DE VALIDACIÓN DE HORARIO
         const dateOnlyString = new Date(dateTime).toISOString().split('T')[0];
-        const newStart = new Date(`${dateOnlyString}T${hour}:00`);
-        const newEnd = new Date(newStart.getTime() + durationMinutes * 60000);
 
         // 🚫 ¿Esa hora está bloqueada por el administrador?
         const bloqueado = await BlockedSlot.findOne({ date: dateOnlyString, hour });
@@ -98,23 +97,8 @@ const createAppointment = async (req, res) => {
             });
         }
 
-        const startOfDay = new Date(dateOnlyString);
-        const endOfDay = new Date(dateOnlyString);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        // CDONE-50: Consulta optimizada con índice compuesto (providerName + status + dateTime)
-        const existingAppointments = await Appointment.find({
-            providerName: providerName,
-            status: { $ne: 'Canceled' },
-            dateTime: { $gte: startOfDay, $lte: endOfDay }
-        });
-
-        const conflict = existingAppointments.find(app => {
-            const appDateStr = new Date(app.dateTime).toISOString().split('T')[0];
-            const appStart = new Date(`${appDateStr}T${app.hour}:00`);
-            const appEnd = new Date(appStart.getTime() + app.durationMinutes * 60000);
-            return (newStart < appEnd && newEnd > appStart);
-        });
+        // Las citas canceladas o con pago rechazado no ocupan el horario
+        const conflict = await findScheduleConflict({ providerName, dateTime, hour, durationMinutes });
 
         if (conflict) {
             return res.status(409).json({
@@ -290,18 +274,42 @@ const cancelAppointment = async (req, res) => {
     }
 };
 
+// Convierte 'YYYY-MM-DD' en la medianoche UTC de ese día (así se guardan las fechas de las citas).
+// Devuelve null si no viene el valor y undefined si el formato es inválido.
+const parseDay = (value) => {
+    if (!value) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return undefined;
+    const day = new Date(`${value}T00:00:00.000Z`);
+    return isNaN(day.getTime()) ? undefined : day;
+};
+
 // ==========================================
 // Disponibilidad: horas ocupadas (ANÓNIMAS para no-admin) + horas bloqueadas.
+// Solo devuelve fechas desde hoy (o el rango ?from=YYYY-MM-DD&to=YYYY-MM-DD).
 // ==========================================
 const getAvailability = async (req, res) => {
     try {
         const isAdmin = req.user.role === 'admin';
+        const { from, to } = req.query || {};
 
-        // CDONE-60: Limpieza preventiva de reservas vencidas
-        await cleanupExpiredReservations();
+        let fromDay = parseDay(from);
+        const toDay = parseDay(to);
+        if (fromDay === undefined || toDay === undefined) {
+            return res.status(400).json({ msg: 'Las fechas from/to deben tener formato YYYY-MM-DD.' });
+        }
+        if (!fromDay) {
+            // Por defecto desde AYER (UTC): las citas se guardan a medianoche UTC y en México
+            // (UTC-6) "hoy" puede seguir siendo el día anterior en UTC.
+            fromDay = new Date();
+            fromDay.setUTCHours(0, 0, 0, 0);
+            fromDay.setUTCDate(fromDay.getUTCDate() - 1);
+        }
 
-        // CDONE-50: Proyecciones optimizadas y lean()
-        let query = Appointment.find({ status: { $ne: 'Canceled' } })
+        const dateFilter = { $gte: fromDay };
+        if (toDay) dateFilter.$lte = new Date(toDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+        // CDONE-50: Proyecciones optimizadas y lean(). Canceladas y con pago rechazado no ocupan horario.
+        let query = Appointment.find({ status: { $nin: INACTIVE_STATUSES }, dateTime: dateFilter })
             .select('dateTime hour durationMinutes user');
         if (typeof query.lean === 'function') query = query.lean();
         const appointments = await query;
@@ -313,7 +321,11 @@ const getAvailability = async (req, res) => {
             mine: isAdmin ? false : String(a.user) === String(req.user.id)
         }));
 
-        let blockedQuery = BlockedSlot.find({}).select('date hour reason');
+        // BlockedSlot.date es texto 'YYYY-MM-DD', así que la comparación de cadenas respeta el orden
+        const blockedFilter = { date: { $gte: fromDay.toISOString().split('T')[0] } };
+        if (toDay) blockedFilter.date.$lte = toDay.toISOString().split('T')[0];
+
+        let blockedQuery = BlockedSlot.find(blockedFilter).select('date hour reason');
         if (typeof blockedQuery.lean === 'function') blockedQuery = blockedQuery.lean();
         const blocked = await blockedQuery;
 

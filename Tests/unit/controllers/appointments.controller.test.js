@@ -94,7 +94,10 @@ describe('Unit Controllers - Appointments Controller Tests', () => {
     await appointmentController.getAvailability(req, res);
 
     // Assert
-    expect(Appointment.find).toHaveBeenCalledWith({ status: { $ne: 'Canceled' } });
+    expect(Appointment.find).toHaveBeenCalledWith({
+      status: { $nin: ['Canceled', 'Payment_Failed'] },
+      dateTime: { $gte: expect.any(Date) }
+    });
     expect(res.json).toHaveBeenCalledWith({
       occupied: [
         {
@@ -106,6 +109,44 @@ describe('Unit Controllers - Appointments Controller Tests', () => {
       ],
       blocked: [{ date: '2026-10-30', hour: '12:00', reason: 'Comida' }]
     });
+  });
+
+  test('DadoRangoFromTo_CuandoConsultaGetAvailability_EntoncesFiltraCitasYBloqueosPorFecha', async () => {
+    // Arrange
+    const req = {
+      user: { id: 'user_123', role: 'patient' },
+      query: { from: '2026-11-01', to: '2026-11-30' }
+    };
+    const res = createMockRes();
+    Appointment.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+    BlockedSlot.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+
+    // Act
+    await appointmentController.getAvailability(req, res);
+
+    // Assert
+    expect(Appointment.find).toHaveBeenCalledWith({
+      status: { $nin: ['Canceled', 'Payment_Failed'] },
+      dateTime: {
+        $gte: new Date('2026-11-01T00:00:00.000Z'),
+        $lte: new Date('2026-11-30T23:59:59.999Z')
+      }
+    });
+    expect(BlockedSlot.find).toHaveBeenCalledWith({ date: { $gte: '2026-11-01', $lte: '2026-11-30' } });
+    expect(res.json).toHaveBeenCalledWith({ occupied: [], blocked: [] });
+  });
+
+  test('DadoFechaConFormatoInvalido_CuandoConsultaGetAvailability_EntoncesRetorna400', async () => {
+    // Arrange
+    const req = { user: { id: 'user_123', role: 'patient' }, query: { from: '01/11/2026' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getAvailability(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(Appointment.find).not.toHaveBeenCalled();
   });
 
   test('DadoUsuarioNoAdmin_CuandoIntentaObtenerTodasLasCitasGlobales_EntoncesRetorna403Forbidden', async () => {

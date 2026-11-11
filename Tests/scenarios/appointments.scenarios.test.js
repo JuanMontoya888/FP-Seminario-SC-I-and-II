@@ -119,6 +119,10 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
     await appointmentController.createAppointment(req, res);
 
     // Assert
+    // Las citas canceladas o con pago rechazado no deben bloquear el horario
+    expect(Appointment.find).toHaveBeenCalledWith(
+      expect.objectContaining({ status: { $nin: ['Canceled', 'Payment_Failed'] } })
+    );
     expect(res.status).toHaveBeenCalledWith(409);
     expect(res.json).toHaveBeenCalledWith({
       msg: 'El especialista Dra. Lopez ya tiene una cita ocupada a las 10:00. Por favor selecciona otro horario.'

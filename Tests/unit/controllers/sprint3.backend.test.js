@@ -126,7 +126,10 @@ describe('Sprint 3 Backend Deliverables Validation', () => {
       await appointmentController.getAvailability(req, res);
 
       // Assert
-      expect(MockAppointment.find).toHaveBeenCalledWith({ status: { $ne: 'Canceled' } });
+      expect(MockAppointment.find).toHaveBeenCalledWith({
+        status: { $nin: ['Canceled', 'Payment_Failed'] },
+        dateTime: { $gte: expect.any(Date) }
+      });
       expect(mockChain.select).toHaveBeenCalledWith('dateTime hour durationMinutes user');
       expect(mockChain.lean).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalled();
