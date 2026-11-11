@@ -20,8 +20,11 @@ const crearPreferencia = async (datos) => {
     try {
         // Base del front-end para las URLs de retorno (local o producción)
         const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
-        // URL pública del webhook (en local, la URL de ngrok; en prod, tu dominio del backend)
-        const NOTIFICATION_URL = process.env.MP_NOTIFICATION_URL;
+        // URL pública del webhook (en local, la URL de ngrok; en prod, tu dominio del backend).
+        // Si no se define, se arma con BACKEND_URL siempre que no sea localhost.
+        const BACKEND_URL = (process.env.BACKEND_URL || '').replace(/\/+$/, '');
+        const NOTIFICATION_URL = process.env.MP_NOTIFICATION_URL
+            || (BACKEND_URL && !BACKEND_URL.includes('localhost') ? `${BACKEND_URL}/mercado-pago/webhook` : undefined);
 
         const preferenceData = {
             items: [
