@@ -266,7 +266,8 @@ describe('Sprint 3 Backend Deliverables Validation', () => {
         _id: 'appt_pendiente_1',
         status: 'Payment_Pending',
         user: 'usr_paciente_3',
-        reason: 'Limpieza dental'
+        reason: 'Cita de valoración',
+        amountExpected: 950
       });
       MockAppointment.findByIdAndUpdate.mockResolvedValue({
         _id: 'appt_pendiente_1',
@@ -310,7 +311,7 @@ describe('Sprint 3 Backend Deliverables Validation', () => {
           durationMinutes: 30,
           patientName: 'Roberto Ruiz',
           email: 'roberto@example.com',
-          reason: 'Valoración general',
+          reason: 'Cita de valoración',
           providerName: 'Dra. Elena Sonrisa'
         }
       };
@@ -344,13 +345,15 @@ describe('Sprint 3 Backend Deliverables Validation', () => {
           durationMinutes: 30,
           patientName: 'Sofia Gomez',
           email: 'sofia@example.com',
-          reason: 'Ajuste de brackets',
+          reason: 'Ajuste de Brackets (Ortodoncia)',
           providerName: 'Dra. Sofía Frenillos',
           status: 'Pending_Clinic_Payment'
         }
       };
       const res = createRes();
       MockUser.findOne.mockResolvedValue({ _id: 'usr_timeout_2' });
+      // Solo quien tiene canPayAtClinic puede pedir pago en clínica
+      MockUser.findById.mockResolvedValue({ _id: 'usr_timeout_2', canPayAtClinic: true });
       MockBlockedSlot.findOne.mockResolvedValue(null);
       MockAppointment.find.mockResolvedValue([]);
       MockAppointment.updateMany.mockResolvedValue({ modifiedCount: 0 });

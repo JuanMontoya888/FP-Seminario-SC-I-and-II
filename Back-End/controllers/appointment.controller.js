@@ -7,7 +7,12 @@ const { google } = require('googleapis');
 const { enviarCorreoSMTP } = require('../services/mailer');
 const emailTemplates = require('../services/emailTemplates');
 const whatsappService = require('../services/whatsappService');
-const { INACTIVE_STATUSES, findScheduleConflict } = require('../services/reservations');
+const { RESERVATION_MINUTES, INACTIVE_STATUSES, findScheduleConflict } = require('../services/reservations');
+const { TREATMENTS, findTreatment } = require('../config/treatments');
+
+// Estados que el paciente puede pedir al crear una cita. 'Confirmed' solo lo pone
+// el webhook de Mercado Pago tras validar el pago.
+const ALLOWED_CREATE_STATUSES = ['Scheduled', 'Pending_Clinic_Payment'];
 
 // =================================================================================
 // CONFIGURACIÓN DE GOOGLE CALENDAR
@@ -72,10 +77,38 @@ const createAppointment = async (req, res) => {
     try {
         const userId = req.user.id;
 
+        // durationMinutes y providerName del body se ignoran: salen del catálogo
         let {
-            dateTime, hour, durationMinutes, patientName, patientId,
-            contactNumber, email, reason, providerName, status, notes
+            dateTime, hour, patientName, patientId,
+            contactNumber, email, reason, status, notes
         } = req.body;
+
+        if (!dateTime || isNaN(new Date(dateTime).getTime()) || !hour) {
+            return res.status(400).json({ msg: 'La fecha y la hora de la cita son obligatorias.' });
+        }
+
+        // El tratamiento define duración, especialista y precio (fuente: config/treatments.js)
+        const treatment = findTreatment(reason);
+        if (!treatment) {
+            return res.status(400).json({ msg: 'El tratamiento seleccionado no es válido.' });
+        }
+        const durationMinutes = treatment.duration;
+        const providerName = treatment.assignDoctor;
+
+        // CDONE-59: no se confía en el estado que manda el cliente
+        const finalStatus = status || 'Scheduled';
+        if (!ALLOWED_CREATE_STATUSES.includes(finalStatus)) {
+            return res.status(400).json({ msg: 'Estado de cita no permitido.' });
+        }
+        const isClinicPayment = finalStatus === 'Pending_Clinic_Payment';
+        if (isClinicPayment) {
+            const owner = await User.findById(userId);
+            if (!owner || owner.canPayAtClinic !== true) {
+                return res.status(403).json({
+                    msg: 'Tu primera cita debe pagarse en línea. Después podrás pagar directamente en la clínica.'
+                });
+            }
+        }
 
         let finalPatientId = patientId;
         if (!finalPatientId && email) {
@@ -107,15 +140,15 @@ const createAppointment = async (req, res) => {
         }
 
         // CDONE-60: Establecer timeout de reserva si requiere pago en línea (15 min)
-        const finalStatus = status || 'Scheduled';
-        const isClinicPayment = finalStatus === 'Pending_Clinic_Payment';
-        const expiresAt = isClinicPayment ? null : new Date(Date.now() + 15 * 60 * 1000);
+        const expiresAt = isClinicPayment ? null : new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
 
         // 3. Crear la instancia del modelo
         const newAppointment = new Appointment({
             user: userId, dateTime, hour, durationMinutes, patientName,
             patientId: finalPatientId, contactNumber, email, reason,
-            providerName, status: finalStatus, notes, expiresAt
+            providerName, status: finalStatus, notes, expiresAt,
+            price: treatment.price,
+            paymentMode: isClinicPayment ? 'clinic' : null
         });
 
         await newAppointment.save();
@@ -198,6 +231,11 @@ const createAppointment = async (req, res) => {
         }
         res.status(500).json({ msg: 'Error interno del servidor.' });
     }
+};
+
+// Catálogo de tratamientos (precio, duración y especialista) para el formulario de agendamiento
+const getTreatments = (req, res) => {
+    res.json(TREATMENTS);
 };
 
 const getUserAppointments = async (req, res) => {
@@ -454,6 +492,7 @@ const unblockRange = async (req, res) => {
 module.exports = {
     cleanupExpiredReservations,
     createAppointment,
+    getTreatments,
     getUserAppointments,
     getAllAppointments,
     cancelAppointment,

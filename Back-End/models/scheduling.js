@@ -84,6 +84,23 @@ const AppointmentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // --- Datos de cobro calculados en el servidor (nunca vienen del cliente) ---
+    // Precio total del tratamiento según el catálogo (config/treatments.js)
+    price: {
+      type: Number,
+      default: null,
+    },
+    // Modalidad elegida: 'full' (100% en línea), 'partial' (anticipo 50%), 'clinic' (en recepción)
+    paymentMode: {
+      type: String,
+      enum: ['full', 'partial', 'clinic'],
+      default: null,
+    },
+    // Monto que Mercado Pago debe cobrar; el webhook lo compara con transaction_amount
+    amountExpected: {
+      type: Number,
+      default: null,
+    },
   },
   {
     timestamps: true, // Crea automáticamente createdAt y updatedAt

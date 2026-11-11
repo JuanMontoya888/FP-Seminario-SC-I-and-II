@@ -6,6 +6,13 @@ const authMiddleware = require('../middlewares/auth.middleware');
 const adminMiddleware = require('../middlewares/admin.middleware');
 
 // ==========================================
+// RUTAS PÚBLICAS
+// ==========================================
+
+// Catálogo de tratamientos con precio y duración (el precio real se calcula en el servidor)
+router.get('/treatments', appointmentController.getTreatments);
+
+// ==========================================
 // RUTAS PROTEGIDAS (Requieren Token)
 // ==========================================
 

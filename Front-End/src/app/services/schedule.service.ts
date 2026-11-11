@@ -16,31 +16,15 @@ export class ScheduleService {
     ) { }
 
     /**
-     * @param title consulta a realizar
-     * @param price precio de la consulta
+     * Crea la orden de pago de una cita. El backend calcula el monto a partir del
+     * tratamiento de la cita (no se manda precio ni título desde aquí).
      * @param appointmentId ID de la cita creada en la base de datos
+     * @param paymentMode 'full' (100%) o 'partial' (anticipo 50%)
      */
-    processPay(title: string, price: number, appointmentId: string): Observable<any> {
+    processPay(appointmentId: string, paymentMode: 'full' | 'partial'): Observable<any> {
         if (!this.userService.isLoggedIn()) return throwError(() => new Error('User not logged in'));
 
-        // Obtenemos el usuario logueado
-        const user = this.userService.userLogged()!!;
-
-        // Construimos el cuerpo con TODOS los datos necesarios
-        const body = {
-            // Datos del Producto (Item)
-            title: title,
-            price: price,
-
-            // Datos del Pagador (Payer)
-            name: user.name,
-            lastname: user.lastname,
-            email: user.email,
-            idUser: user.idUser,
-
-            // NUEVO: Enviamos el ID de la cita al backend
-            appointmentId: appointmentId
-        }
+        const body = { appointmentId, paymentMode };
 
         const token = this.userService.getToken();
         const headers = new HttpHeaders({

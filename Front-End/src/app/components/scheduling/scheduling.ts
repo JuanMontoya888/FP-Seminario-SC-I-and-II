@@ -1,4 +1,4 @@
-import { Component, effect, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../../services/user.service';
@@ -30,6 +30,7 @@ export class Scheduling implements OnInit {
 
   private urlScheduling = `${environment.apiUrl}/api/register/appointment`;
   private profileUrl = `${environment.apiUrl}/api/user/profile`;
+  private treatmentsUrl = `${environment.apiUrl}/api/treatments`;
 
   // Gate de pago según el tipo de paciente (CDONE-59)
   patientType: string | null = null;
@@ -49,31 +50,17 @@ export class Scheduling implements OnInit {
     { value: 'Completed' },
   ];
 
-  reasonSchedule: TreatmentOption[] = [
-    {
-      reason: 'Cita de valoración',
-      duration: 30,
-      assignDoctor: 'Dra. Elena Sonrisa',
-      price: 950,
-      description: 'Incluye: valoración del estado de salud bucal general, toma de imágenes en zonas problema y toma radiográfica de ser necesario.'
-    },
-    { reason: 'Restauraciones', duration: 60, assignDoctor: 'Dr. Roberto Molar', price: 950 },
-    { reason: 'Limpieza Dental y Revisión General', duration: 45, assignDoctor: 'Dra. Elena Sonrisa', price: 600 },
-    { reason: 'Resina (Empaste por caries)', duration: 60, assignDoctor: 'Dr. Roberto Molar', price: 850 },
-    { reason: 'Ajuste de Brackets (Ortodoncia)', duration: 20, assignDoctor: 'Dra. Sofía Frenillos', price: 500 },
-    { reason: 'Extracción Simple / Muela', duration: 45, assignDoctor: 'Dr. Roberto Molar', price: 1200 },
-    { reason: 'Blanqueamiento Dental', duration: 60, assignDoctor: 'Dra. Elena Sonrisa', price: 2500 },
-    { reason: 'Endodoncia (Tratamiento de conducto)', duration: 90, assignDoctor: 'Dr. Carlos Raíz', price: 3800 },
-    { reason: 'Valoración para Implante', duration: 30, assignDoctor: 'Dr. Javier Cirujano', price: 300 },
-    { reason: 'Urgencia Dental (Dolor agudo)', duration: 30, assignDoctor: 'Dra. Elena Sonrisa', price: 500 }
-  ];
+  // Catálogo de tratamientos: se carga del backend (GET /api/treatments), que es
+  // quien define precio y duración. El cobro real también se calcula en el servidor.
+  reasonSchedule: TreatmentOption[] = [];
 
   constructor(
     private formBuilder: FormBuilder,
     private routerSchedule: Router,
     public userService: UserService,
     private http: HttpClient,
-    private scheduleService: ScheduleService
+    private scheduleService: ScheduleService,
+    private cdr: ChangeDetectorRef
   ) {
     this.generateTimeSlots();
 
@@ -95,8 +82,32 @@ export class Scheduling implements OnInit {
 
   ngOnInit(): void {
     this.initializeFormSync();
+    this.loadTreatments();
     this.fetchPaymentEligibility();
     this.fetchPatientDetails();
+  }
+
+  /** Carga el catálogo de tratamientos del backend y muestra el formulario. */
+  loadTreatments(): void {
+    this.http.get<TreatmentOption[]>(this.treatmentsUrl).subscribe({
+      next: (treatments) => {
+        this.reasonSchedule = treatments || [];
+        const first = this.reasonSchedule[0];
+        if (first && !this.schedulForm.get('reason')?.value) {
+          this.schedulForm.patchValue({
+            reason: first.reason,
+            durationMinutes: first.duration,
+            providerName: first.assignDoctor
+          });
+        }
+        this.isFormReady = this.reasonSchedule.length > 0;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('No se pudo cargar el catálogo de tratamientos:', err);
+        Swal.fire('Error', 'No se pudo cargar la lista de tratamientos. Intenta de nuevo más tarde.', 'error');
+      }
+    });
   }
 
   fetchPatientDetails(): void {
@@ -114,12 +125,13 @@ export class Scheduling implements OnInit {
     this.http.get<any>(this.profileUrl).subscribe({
       next: (profile) => {
         this.patientType = profile?.patientType ?? null;
-        this.canPayAtClinic = !!profile?.canPayAtClinic;
+        this.canPayAtClinic = profile?.canPayAtClinic === true;
 
         // Si no puede pagar en clínica, asegurar que no esté seleccionada esa opción
         if (!this.canPayAtClinic && this.selectedPaymentMode === 'clinic') {
           this.selectedPaymentMode = 'full';
         }
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('No se pudo obtener el perfil para el pago:', err);
@@ -166,18 +178,17 @@ export class Scheduling implements OnInit {
     this.schedulForm = this.formBuilder.group({
       dateTime: [preSelectedDate, [Validators.required]],
       hour: [preSelectedHour, [Validators.required]],
-      durationMinutes: [this.reasonSchedule[0].duration, [Validators.required, Validators.min(1)]],
+      durationMinutes: [null, [Validators.required, Validators.min(1)]],
       patientName: ['', [Validators.required, Validators.minLength(2)]],
       patientId: ['', []],
       contactNumber: ['', [Validators.required]],
       email: ['', [Validators.required]],
-      reason: [this.reasonSchedule[0].reason, [Validators.required, Validators.minLength(5)]],
-      providerName: [this.reasonSchedule[0].assignDoctor, [Validators.required]],
+      reason: ['', [Validators.required, Validators.minLength(5)]],
+      providerName: ['', [Validators.required]],
       status: ['Scheduled', [Validators.required]],
       notes: ['', []],
     });
-
-    this.isFormReady = true;
+    // isFormReady se activa cuando llega el catálogo de tratamientos (loadTreatments)
   }
 
   changeValue(event: Event): void {
@@ -206,7 +217,9 @@ export class Scheduling implements OnInit {
   }
 
   selectPaymentMode(mode: 'full' | 'partial' | 'clinic'): void {
-    if (mode === 'clinic' && !this.canPayAtClinic && this.patientType === 'new') {
+    // Sin permiso explícito (paciente nuevo o tipo aún sin elegir) no se puede pagar en clínica;
+    // el backend también lo valida.
+    if (mode === 'clinic' && !this.canPayAtClinic) {
       Swal.fire({
         icon: 'info',
         title: 'Primera cita en línea',
@@ -340,18 +353,8 @@ export class Scheduling implements OnInit {
       didOpen: () => Swal.showLoading()
     });
 
-    const paymentTitle = mode === 'partial' 
-      ? `Anticipo (50%) - ${selectedTreatment.reason}` 
-      : selectedTreatment.reason;
-
-    const notesText = mode === 'partial'
-      ? `${formData.notes ? formData.notes + ' · ' : ''}Anticipo en línea: $${amountToPay} MXN (Saldo restante a pagar en clínica: $${remainingBalance} MXN)`
-      : `${formData.notes ? formData.notes + ' · ' : ''}Pago total en línea: $${amountToPay} MXN`;
-
-    const payload = {
-      ...formData,
-      notes: notesText
-    };
+    // El detalle del cobro lo agrega el backend a las notas al crear el pago
+    const payload = { ...formData };
 
     // 1. Guardamos la cita en la base de datos
     this.http.post(this.urlScheduling, payload).subscribe({
@@ -376,19 +379,26 @@ export class Scheduling implements OnInit {
         };
         localStorage.setItem('citaPagoInfo', JSON.stringify(citaPagoInfo));
 
-        // 2. Generamos la orden de pago en Mercado Pago
-        this.scheduleService.processPay(paymentTitle, amountToPay, appointmentId).subscribe({
+        // 2. Generamos la orden de pago en Mercado Pago (el backend calcula el monto)
+        this.scheduleService.processPay(appointmentId, mode).subscribe({
           next: (payRes: any) => {
             if (!payRes.init_point) {
               Swal.fire('Error', 'No se recibió el enlace de pago de Mercado Pago', 'error');
               return;
+            }
+            // Montos confirmados por el servidor para el comprobante
+            if (typeof payRes.amount === 'number' && typeof payRes.total === 'number') {
+              citaPagoInfo.totalPrice = payRes.total;
+              citaPagoInfo.paidAmount = payRes.amount;
+              citaPagoInfo.pendingBalance = payRes.total - payRes.amount;
+              localStorage.setItem('citaPagoInfo', JSON.stringify(citaPagoInfo));
             }
             localStorage.removeItem('cita');
             window.location.href = payRes.init_point;
           },
           error: (err) => {
             console.error(err);
-            Swal.fire('Error', 'No se pudo generar la orden de pago', 'error');
+            Swal.fire('Error', err.error?.msg || 'No se pudo generar la orden de pago', 'error');
           }
         });
       },
@@ -431,8 +441,10 @@ export class Scheduling implements OnInit {
         console.error(err);
         if (err.status === 409) {
           Swal.fire('Horario no disponible', err.error?.msg || 'El horario ya fue reservado.', 'warning');
+        } else if (err.status === 403) {
+          Swal.fire('Pago en línea requerido', err.error?.msg || 'Tu primera cita debe pagarse en línea.', 'info');
         } else {
-          Swal.fire('Error', 'No se pudo registrar la cita', 'error');
+          Swal.fire('Error', err.error?.msg || 'No se pudo registrar la cita', 'error');
         }
       }
     });

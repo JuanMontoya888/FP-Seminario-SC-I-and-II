@@ -8,6 +8,11 @@ const client = new MercadoPagoConfig({
 // Crear instancia de Preference
 const preference = new Preference(client);
 
+/**
+ * Crea una preferencia de Checkout Pro.
+ * @param {object} datos { title, amount, appointmentId, userId } — el monto ya viene
+ *                       calculado por el servidor (mercado_pago.controller.js).
+ */
 const crearPreferencia = async (datos) => {
     try {
         // Base del front-end para las URLs de retorno (local o producción)
@@ -20,17 +25,19 @@ const crearPreferencia = async (datos) => {
                 {
                     title: datos.title,
                     quantity: 1,
-                    unit_price: Number(datos.price),
+                    unit_price: Number(datos.amount),
                     currency_id: 'MXN'
                 }
             ],
-            external_reference: datos.idUser,
+            // ID del usuario autenticado (req.user.id), no el que mande el cliente
+            external_reference: datos.userId,
 
             // -----------------------------------------------------
             // METADATA: Información oculta que viaja con el pago
             // -----------------------------------------------------
             metadata: {
-                appointment_id: datos.appointmentId
+                appointment_id: datos.appointmentId,
+                expected_amount: Number(datos.amount)
             },
 
             back_urls: {

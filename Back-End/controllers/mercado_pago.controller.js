@@ -3,6 +3,8 @@ const modelMP = require('../models/mercado_pago');
 const Appointment = require('../models/scheduling');
 const User = require('../models/users');
 const { MercadoPagoConfig, Payment } = require('mercadopago');
+const { findTreatment, amountForMode } = require('../config/treatments');
+const { RESERVATION_MINUTES, appendNote } = require('../services/reservations');
 
 // Importamos el mailer y los templates
 const { enviarCorreoSMTP } = require('../services/mailer');
@@ -42,41 +44,74 @@ const verifyWebhookSignature = (req) => {
     return expected === v1;
 };
 
+/**
+ * Crea la preferencia de pago de una cita (CDONE-58, CDONE-66).
+ * Body: { appointmentId, paymentMode: 'full' | 'partial' }.
+ * El monto se calcula aquí a partir del tratamiento de la cita; se ignoran
+ * price, title e idUser que pudiera mandar el cliente.
+ */
 const proccesPay = async (req, res) => {
     try {
-        const data = req.body;
+        const { appointmentId } = req.body || {};
+        const paymentMode = req.body?.paymentMode === 'partial' ? 'partial' : 'full';
         const userId = req.user.id; // Disponible gracias al authMiddleware
 
-        // Validar que el appointmentId exista y pertenezca al usuario
-        if (data.appointmentId) {
-            const appointment = await Appointment.findById(data.appointmentId);
-
-            if (!appointment) {
-                return res.status(404).json({ msg: 'La cita no fue encontrada.' });
-            }
-
-            if (String(appointment.user) !== String(userId)) {
-                return res.status(403).json({ msg: 'No tienes permiso para pagar esta cita.' });
-            }
-
-            if (['Confirmed', 'Canceled'].includes(appointment.status)) {
-                return res.status(400).json({ msg: 'Esta cita ya fue pagada o cancelada.' });
-            }
-
-            // CDONE-60: Si la cita estaba en Scheduled, transiciona a Payment_Pending y renueva timeout
-            if (appointment.status === 'Scheduled') {
-                appointment.status = 'Payment_Pending';
-                if (!appointment.expiresAt) {
-                    appointment.expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-                }
-                await appointment.save();
-            }
+        if (!appointmentId) {
+            return res.status(400).json({ msg: 'Falta el ID de la cita a pagar.' });
         }
 
-        // Crear la preferencia en Mercado Pago (CDONE-58)
-        const preferences = await modelMP.crearPreferencia(data);
+        // Validar que la cita exista y pertenezca al usuario
+        const appointment = await Appointment.findById(appointmentId);
 
-        res.json(preferences);
+        if (!appointment) {
+            return res.status(404).json({ msg: 'La cita no fue encontrada.' });
+        }
+
+        if (String(appointment.user) !== String(userId)) {
+            return res.status(403).json({ msg: 'No tienes permiso para pagar esta cita.' });
+        }
+
+        // Solo se pagan en línea las citas recién apartadas o con pago pendiente
+        if (!['Scheduled', 'Payment_Pending'].includes(appointment.status)) {
+            return res.status(400).json({ msg: 'Esta cita ya fue pagada, cancelada o se paga en clínica.' });
+        }
+
+        // El precio sale del catálogo del servidor, nunca del cliente
+        const treatment = findTreatment(appointment.reason);
+        if (!treatment) {
+            return res.status(400).json({ msg: 'El tratamiento de la cita no tiene un precio configurado.' });
+        }
+        const total = treatment.price;
+        const amount = amountForMode(total, paymentMode);
+        const title = paymentMode === 'partial'
+            ? `Anticipo (50%) - ${treatment.reason}`
+            : treatment.reason;
+
+        // CDONE-60: Si la cita estaba en Scheduled, transiciona a Payment_Pending y renueva timeout
+        appointment.status = 'Payment_Pending';
+        if (!appointment.expiresAt) {
+            appointment.expiresAt = new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
+        }
+        appointment.price = total;
+        appointment.paymentMode = paymentMode;
+        appointment.amountExpected = amount;
+        appointment.notes = appendNote(
+            appointment.notes,
+            paymentMode === 'partial'
+                ? `Anticipo en línea: $${amount} MXN (saldo a pagar en clínica: $${total - amount} MXN)`
+                : `Pago total en línea: $${amount} MXN`
+        );
+        await appointment.save();
+
+        // Crear la preferencia en Mercado Pago (CDONE-58)
+        const preferences = await modelMP.crearPreferencia({
+            title,
+            amount,
+            appointmentId: String(appointment._id),
+            userId: String(userId)
+        });
+
+        res.json({ ...preferences, amount, total, paymentMode });
     } catch (error) {
         console.error("Error al crear preferencia MP:", error);
         res.status(500).send("Error al crear preferencia");
@@ -115,7 +150,21 @@ const receiveWebhook = async (req, res) => {
 
                 // Evaluamos el ESTADO del pago que nos devuelve Mercado Pago
                 switch (paymentInfo.status) {
-                    case 'approved':
+                    case 'approved': {
+                        // El monto cobrado debe coincidir con el calculado en proccesPay
+                        const esperado = Number(citaActual.amountExpected);
+                        const cobrado = Number(paymentInfo.transaction_amount);
+                        if (!esperado || !(Math.abs(cobrado - esperado) < 0.01)) {
+                            console.warn(`[Webhook MP] Pago ${paymentId} de $${cobrado} no coincide con el esperado ($${esperado || 'desconocido'}) para la cita ${appointmentId}. No se confirma.`);
+                            await Appointment.findByIdAndUpdate(appointmentId, {
+                                notes: appendNote(
+                                    citaActual.notes,
+                                    `Pago ${paymentId} aprobado por $${cobrado} MXN pero se esperaban $${esperado || '?'} MXN: revisar manualmente`
+                                )
+                            });
+                            break;
+                        }
+
                         // CASO: APRO (Pago aprobado) - Liberamos timeout y confirmamos cita
                         const citaPagada = await Appointment.findByIdAndUpdate(
                             appointmentId,
@@ -153,6 +202,7 @@ const receiveWebhook = async (req, res) => {
                             }
                         }
                         break;
+                    }
 
                     case 'pending':
                     case 'in_process':
