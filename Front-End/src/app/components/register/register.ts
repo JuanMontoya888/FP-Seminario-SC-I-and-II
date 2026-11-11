@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core'; // Añadido OnInit
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms'; // Añadidos ValidatorFn, AbstractControl, ValidationErrors
 import { Router } from "@angular/router";
 import Swal from 'sweetalert2';
+import { environment } from '../../../environments/environment';
 
 
 // Expresión regular para contraseña
@@ -40,8 +41,7 @@ export class Register implements OnInit {
   registerForm!: FormGroup;
   showPassword = false;
   showConfirmPassword = false;
-  //private registerUrl = 'https://dental-one-final.onrender.com/api/register'
-  private registerUrl = 'http://localhost:3000/api/register'
+  private registerUrl = `${environment.apiUrl}/api/register`
 
   constructor(private http: HttpClient, private router: Router, private builder: FormBuilder) {}
 

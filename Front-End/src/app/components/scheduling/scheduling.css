@@ -360,3 +360,103 @@
         max-width: none;
     }
 }
+
+
+/* =========================================
+   CHECKOUT MODES & CARDS (CDONE-59 & CDONE-66)
+   ========================================= */
+.checkout-modes-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+.checkout-mode-card {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.checkout-mode-card:hover {
+    border-color: #009ee3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 158, 227, 0.12);
+}
+
+.checkout-mode-card.selected {
+    border-color: #009ee3;
+    background: #f0f9ff;
+    box-shadow: 0 4px 14px rgba(0, 158, 227, 0.18);
+}
+
+.mode-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.mode-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    display: inline-block;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkout-mode-card.selected .mode-radio {
+    border-color: #009ee3;
+}
+
+.checkout-mode-card.selected .mode-radio::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #009ee3;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+}
+
+.mode-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.mode-desc {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.4;
+    margin: 0 0 10px 0;
+    flex-grow: 1;
+}
+
+.mode-price {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0077b6;
+    text-align: right;
+}
+
+.checkout-hint {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #1e40af;
+    margin: 0.5rem 0 1.2rem 0;
+    line-height: 1.45;
+}

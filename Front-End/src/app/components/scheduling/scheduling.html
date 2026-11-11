@@ -10,7 +10,7 @@
 
         <div class="formulario-card">
             <p class="aviso-formulario">
-                Complete los campos habilitados. Los detalles del servicio se calcularán automáticamente.
+                Complete los campos habilitados. Los detalles del servicio y montos de checkout se calculan automáticamente.
             </p>
 
             <form [formGroup]="schedulForm" class="generalForm">
@@ -113,7 +113,51 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN 4: Notas -->
+                <!-- SECCIÓN 4: Modalidad de Pago y Checkout (CDONE-59 & CDONE-66) -->
+                <hr class="divider">
+                <h3 class="section-title">Modalidad de Pago y Checkout</h3>
+                
+                <div class="checkout-modes-container">
+                    <!-- Opción 1: Pago Total -->
+                    <div class="checkout-mode-card" [class.selected]="selectedPaymentMode === 'full'" (click)="selectPaymentMode('full')">
+                        <div class="mode-header">
+                            <span class="mode-radio" [class.checked]="selectedPaymentMode === 'full'"></span>
+                            <span class="mode-title">Pago Total en Línea</span>
+                        </div>
+                        <p class="mode-desc">Liquida el monto completo del tratamiento vía Mercado Pago.</p>
+                        <div class="mode-price">${{ getSelectedTreatment().price }} MXN</div>
+                    </div>
+
+                    <!-- Opción 2: Pago Parcial (Anticipo 50%) -->
+                    <div class="checkout-mode-card" [class.selected]="selectedPaymentMode === 'partial'" (click)="selectPaymentMode('partial')">
+                        <div class="mode-header">
+                            <span class="mode-radio" [class.checked]="selectedPaymentMode === 'partial'"></span>
+                            <span class="mode-title">Pago Parcial (Anticipo 50%)</span>
+                        </div>
+                        <p class="mode-desc">Reserva con el 50% y liquida el restante de ${{ getRemainingBalance() }} MXN en clínica.</p>
+                        <div class="mode-price">${{ getAdvanceAmount() }} MXN</div>
+                    </div>
+
+                    <!-- Opción 3: Pago en Clínica -->
+                    @if (canPayAtClinic) {
+                    <div class="checkout-mode-card" [class.selected]="selectedPaymentMode === 'clinic'" (click)="selectPaymentMode('clinic')">
+                        <div class="mode-header">
+                            <span class="mode-radio" [class.checked]="selectedPaymentMode === 'clinic'"></span>
+                            <span class="mode-title">Pagar en la Clínica</span>
+                        </div>
+                        <p class="mode-desc">Reserva ahora y liquida los ${{ getSelectedTreatment().price }} MXN en recepción.</p>
+                        <div class="mode-price">$0 MXN hoy</div>
+                    </div>
+                    }
+                </div>
+
+                @if (!canPayAtClinic && patientType === 'new') {
+                    <p class="checkout-hint">
+                        💡 <strong>Nota para nuevos pacientes:</strong> Tu primera consulta requiere confirmación con Pago Total o Anticipo en línea. A partir de tu segunda cita podrás elegir pago en recepción.
+                    </p>
+                }
+
+                <!-- SECCIÓN 5: Notas -->
                 <div class="form-grid full-width" style="margin-top: 15px;">
                     <div class="general-label-input col-span-full">
                         <label class="custom-field one">
@@ -124,7 +168,7 @@
                 </div>
 
                 <button type="submit" (click)="submitSchedule()" class="btn-primary" [disabled]="schedulForm.invalid">
-                    Confirmar Cita
+                    Confirmar Cita y Proceder al Pago
                 </button>
             </form>
         </div>

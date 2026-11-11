@@ -57,11 +57,13 @@ const createProcedure = async (req, res) => {
 };
 
 // ==========================================
-// Obtener los procedimientos del paciente autenticado
+// Obtener los procedimientos del paciente autenticado (CDONE-50: lean + index)
 // ==========================================
 const getMyProcedures = async (req, res) => {
     try {
-        const procedures = await Procedure.find({ patient: req.user.id }).sort({ fecha: -1 });
+        let query = Procedure.find({ patient: req.user.id }).sort({ fecha: -1 });
+        if (typeof query.lean === 'function') query = query.lean();
+        const procedures = await query;
         res.json(procedures);
     } catch (err) {
         console.error('Error al obtener procedimientos del paciente:', err);
@@ -77,7 +79,9 @@ const getPatientProcedures = async (req, res) => {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ msg: 'Acceso denegado.' });
         }
-        const procedures = await Procedure.find({ patient: req.params.patientId }).sort({ fecha: -1 });
+        let query = Procedure.find({ patient: req.params.patientId }).sort({ fecha: -1 });
+        if (typeof query.lean === 'function') query = query.lean();
+        const procedures = await query;
         res.json(procedures);
     } catch (err) {
         console.error('Error al obtener procedimientos del paciente:', err);
@@ -93,9 +97,11 @@ const listPatients = async (req, res) => {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ msg: 'Acceso denegado.' });
         }
-        const patients = await User.find({ role: { $ne: 'admin' } })
+        let query = User.find({ role: { $ne: 'admin' } })
             .select('nombre apellidos email')
             .sort({ nombre: 1 });
+        if (typeof query.lean === 'function') query = query.lean();
+        const patients = await query;
         res.json(patients);
     } catch (err) {
         console.error('Error al obtener pacientes:', err);

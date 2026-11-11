@@ -5,6 +5,7 @@ import { tap, map, catchError } from 'rxjs/operators';
 import { differenceInHours } from 'date-fns';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -16,8 +17,7 @@ export class UserService {
   public isLoggedIn: WritableSignal<boolean> = signal(false);
   public userLogged: WritableSignal<User | null> = signal(null);
 
-  //private loginURL = 'https://dental-one-final.onrender.com/api/user/login';
-  private loginURL = 'http://localhost:3000/api/user/login';
+  private loginURL = `${environment.apiUrl}/api/user/login`;
 
   constructor(private http: HttpClient) {
     this.users = USERS_;
@@ -72,17 +72,17 @@ export class UserService {
   }
 
   resendVerificationEmail(email: string): Observable<any> {
-    const url = 'http://localhost:3000/api/resend-verification';
+    const url = `${environment.apiUrl}/api/resend-verification`;
     return this.http.post<any>(url, { email });
   }
 
   forgotPassword(email: string): Observable<any> {
-    const url = 'http://localhost:3000/api/forgot-password';
+    const url = `${environment.apiUrl}/api/forgot-password`;
     return this.http.post<any>(url, { email });
   }
 
   resetPassword(token: string, password: string): Observable<any> {
-    const url = `http://localhost:3000/api/reset-password/${token}`;
+    const url = `${environment.apiUrl}/api/reset-password/${token}`;
     return this.http.post<any>(url, { password });
   }
 

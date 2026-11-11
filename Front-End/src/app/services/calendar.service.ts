@@ -16,6 +16,7 @@ import {
 
 import { Day_Cl, Month_Cl } from '../models/calendar';
 import { Appointment } from '../models/appointment';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
@@ -23,14 +24,12 @@ import { Appointment } from '../models/appointment';
 export class CalendarService {
     
     // --- URLs del API ---
-    // (descomenta las de producción al desplegar)
-    //private userUrl = 'https://dental-one-final.onrender.com/api/user/appointment';
-    //private adminUrl = 'https://dental-one-final.onrender.com/api/admin/appointments';
-    private userUrl = 'http://localhost:3000/api/user/appointment';
-    private adminUrl = 'http://localhost:3000/api/admin/appointments';
-    private availabilityUrl = 'http://localhost:3000/api/availability';
-    private blockUrl = 'http://localhost:3000/api/admin/block-slot';
-    private apiBase = 'http://localhost:3000/api';
+    // (la base del backend se define en src/environments)
+    private userUrl = `${environment.apiUrl}/api/user/appointment`;
+    private adminUrl = `${environment.apiUrl}/api/admin/appointments`;
+    private availabilityUrl = `${environment.apiUrl}/api/availability`;
+    private blockUrl = `${environment.apiUrl}/api/admin/block-slot`;
+    private apiBase = `${environment.apiUrl}/api`;
 
     // Horas bloqueadas por el admin (date 'YYYY-MM-DD' + hour 'HH:MM')
     public blockedSlots: Array<{ date: string, hour: string, reason?: string }> = [];

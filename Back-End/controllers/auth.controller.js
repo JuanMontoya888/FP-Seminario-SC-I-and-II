@@ -15,6 +15,10 @@ if (!jwtSecret) {
     throw new Error('Falta la variable de entorno JWT_SECRET. Configúrala en tu archivo .env o en el panel de tu hosting.');
 }
 
+// URLs públicas para los enlaces de los correos (en producción se configuran en el hosting)
+const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:4200').replace(/\/+$/, '');
+
 const register = async (req, res) => {
     try {
         const { nombre, apellidos, email, password } = req.body;
@@ -37,10 +41,10 @@ const register = async (req, res) => {
         });
         await user.save();
 
-        // Enviar correo de verificación
-        const verificationUrl = `http://localhost:3000/api/verify-email/${verificationToken}`;
+        // Enviar correo de verificación (sin await: no frena la respuesta; los errores se registran en el log)
+        const verificationUrl = `${BACKEND_URL}/api/verify-email/${verificationToken}`;
 
-        await enviarCorreoSMTP({
+        enviarCorreoSMTP({
             to: email,
             subject: 'Verifica tu correo electrónico - Dental One',
             html: emailTemplates.verificacionCorreo(nombre, verificationUrl)
@@ -95,7 +99,11 @@ const login = async (req, res) => {
             jwtSecret,
             { expiresIn: '1h' },
             (err, token) => {
-                if (err) throw err;
+                // Un throw aquí no lo atrapa el try/catch (es un callback): respondemos 500
+                if (err) {
+                    console.error('Error al firmar el JWT:', err.message);
+                    return res.status(500).json({ msg: 'Error en el servidor al iniciar sesión.' });
+                }
 
                 // 5. Respondemos al Frontend
                 res.json({
@@ -169,7 +177,6 @@ const setPatientType = async (req, res) => {
 };
 
 const googleLogin = async (req, res) => {
-    console.log('Token recibido. Se intentará redirigir:', req.body.token);
     try {
         const ticket = await client.verifyIdToken({
             idToken: req.body.token,
@@ -194,7 +201,10 @@ const googleLogin = async (req, res) => {
                 jwtSecret,
                 { expiresIn: '1h' },
                 (err, token) => {
-                    if (err) throw err;
+                    if (err) {
+                        console.error('Error al firmar el JWT (Google):', err.message);
+                        return res.status(500).json({ msg: 'Error en el servidor al iniciar sesión.' });
+                    }
                     res.json({
                         msg: 'Inicio de sesion exitoso',
                         token: token,
@@ -237,23 +247,19 @@ const verifyEmail = async (req, res) => {
         user.verificationToken = null;
         await user.save();
 
-        // Enviar correo de bienvenida (no bloquea la verificación si falla)
-        try {
-            await enviarCorreoSMTP({
-                to: user.email,
-                subject: '¡Bienvenido a Dental One!',
-                html: emailTemplates.bienvenida(user.nombre)
-            });
-        } catch (mailErr) {
-            console.error('Error enviando correo de bienvenida:', mailErr);
-        }
+        // Enviar correo de bienvenida (sin await: no bloquea la verificación si falla)
+        enviarCorreoSMTP({
+            to: user.email,
+            subject: '¡Bienvenido a Dental One!',
+            html: emailTemplates.bienvenida(user.nombre)
+        });
 
         res.status(200).send(`
             <div style="text-align: center; font-family: sans-serif; margin-top: 50px;">
                 <h1 style="color: green;">¡Correo verificado con éxito!</h1>
                 <p>Ya puedes cerrar esta ventana e iniciar sesión en tu cuenta de Dental One.</p>
                 <br>
-                <a href="http://localhost:4200/log-in" style="padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Ir a Iniciar Sesión</a>
+                <a href="${FRONTEND_URL}/log-in" style="padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Ir a Iniciar Sesión</a>
             </div>
         `);
     } catch (error) {
@@ -280,10 +286,10 @@ const resendVerificationEmail = async (req, res) => {
         user.verificationToken = verificationToken;
         await user.save();
 
-        // Enviar el correo de verificación con template unificado
-        const verificationUrl = `http://localhost:3000/api/verify-email/${verificationToken}`;
+        // Enviar el correo de verificación con template unificado (sin await)
+        const verificationUrl = `${BACKEND_URL}/api/verify-email/${verificationToken}`;
 
-        await enviarCorreoSMTP({
+        enviarCorreoSMTP({
             to: email,
             subject: 'Reenvío de Verificación de correo electrónico - Dental One',
             html: emailTemplates.verificacionCorreo(user.nombre, verificationUrl)
@@ -312,9 +318,10 @@ const forgotPassword = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
         await user.save();
 
-        const resetUrl = `http://localhost:4200/reset-password/${resetToken}`;
+        const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
 
-        await enviarCorreoSMTP({
+        // Sin await: la respuesta es la misma exista o no el correo
+        enviarCorreoSMTP({
             to: email,
             subject: 'Restablecer contraseña - Dental One',
             html: emailTemplates.recuperarContrasena(user.nombre, resetUrl)

@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const User = require('../models/users');
 const Appointment = require('../models/scheduling');
 const BlockedSlot = require('../models/blockedSlot');
@@ -7,6 +8,12 @@ const { google } = require('googleapis');
 const { enviarCorreoSMTP } = require('../services/mailer');
 const emailTemplates = require('../services/emailTemplates');
 const whatsappService = require('../services/whatsappService');
+const { RESERVATION_MINUTES, INACTIVE_STATUSES, findScheduleConflict } = require('../services/reservations');
+const { TREATMENTS, findTreatment } = require('../config/treatments');
+
+// Estados que el paciente puede pedir al crear una cita. 'Confirmed' solo lo pone
+// el webhook de Mercado Pago tras validar el pago.
+const ALLOWED_CREATE_STATUSES = ['Scheduled', 'Pending_Clinic_Payment'];
 
 // =================================================================================
 // CONFIGURACIÓN DE GOOGLE CALENDAR
@@ -31,6 +38,39 @@ if (GOOGLE_ENABLED) {
 }
 
 // =================================================================================
+// CDONE-60: LIBERACIÓN DE RESERVAS TEMPORALES CON TIMEOUT
+// =================================================================================
+/**
+ * Cancela automáticamente cualquier cita en estado de espera ('Scheduled', 'Payment_Pending')
+ * cuyo timeout de reserva (expiresAt) ya haya expirado en el servidor.
+ */
+const cleanupExpiredReservations = async () => {
+    try {
+        const now = new Date();
+        if (typeof Appointment.updateMany === 'function') {
+            const result = await Appointment.updateMany(
+                {
+                    status: { $in: ['Scheduled', 'Payment_Pending'] },
+                    expiresAt: { $ne: null, $lt: now }
+                },
+                {
+                    status: 'Canceled',
+                    notes: 'Cancelada automáticamente: tiempo de reserva agotado',
+                    $unset: { expiresAt: 1 }
+                }
+            );
+            if (result && result.modifiedCount > 0) {
+                console.log(`[CDONE-60] Se cancelaron ${result.modifiedCount} reservas expiradas por timeout.`);
+            }
+            return result;
+        }
+    } catch (cleanErr) {
+        console.error('Error al limpiar reservas expiradas:', cleanErr);
+    }
+    return { modifiedCount: 0 };
+};
+
+// =================================================================================
 // CONTROLADORES
 // =================================================================================
 
@@ -38,10 +78,38 @@ const createAppointment = async (req, res) => {
     try {
         const userId = req.user.id;
 
+        // durationMinutes y providerName del body se ignoran: salen del catálogo
         let {
-            dateTime, hour, durationMinutes, patientName, patientId,
-            contactNumber, email, reason, providerName, status, notes
+            dateTime, hour, patientName, patientId,
+            contactNumber, email, reason, status, notes
         } = req.body;
+
+        if (!dateTime || isNaN(new Date(dateTime).getTime()) || !hour) {
+            return res.status(400).json({ msg: 'La fecha y la hora de la cita son obligatorias.' });
+        }
+
+        // El tratamiento define duración, especialista y precio (fuente: config/treatments.js)
+        const treatment = findTreatment(reason);
+        if (!treatment) {
+            return res.status(400).json({ msg: 'El tratamiento seleccionado no es válido.' });
+        }
+        const durationMinutes = treatment.duration;
+        const providerName = treatment.assignDoctor;
+
+        // CDONE-59: no se confía en el estado que manda el cliente
+        const finalStatus = status || 'Scheduled';
+        if (!ALLOWED_CREATE_STATUSES.includes(finalStatus)) {
+            return res.status(400).json({ msg: 'Estado de cita no permitido.' });
+        }
+        const isClinicPayment = finalStatus === 'Pending_Clinic_Payment';
+        if (isClinicPayment) {
+            const owner = await User.findById(userId);
+            if (!owner || owner.canPayAtClinic !== true) {
+                return res.status(403).json({
+                    msg: 'Tu primera cita debe pagarse en línea. Después podrás pagar directamente en la clínica.'
+                });
+            }
+        }
 
         let finalPatientId = patientId;
         if (!finalPatientId && email) {
@@ -49,10 +117,11 @@ const createAppointment = async (req, res) => {
             if (existingUser) finalPatientId = existingUser._id;
         }
 
+        // CDONE-60: las reservas vencidas las cancela el worker periódico de index.js
+        // (ya no se ejecuta la limpieza en cada petición).
+
         // 🛡️ BLOQUE DE VALIDACIÓN DE HORARIO
         const dateOnlyString = new Date(dateTime).toISOString().split('T')[0];
-        const newStart = new Date(`${dateOnlyString}T${hour}:00`);
-        const newEnd = new Date(newStart.getTime() + durationMinutes * 60000);
 
         // 🚫 ¿Esa hora está bloqueada por el administrador?
         const bloqueado = await BlockedSlot.findOne({ date: dateOnlyString, hour });
@@ -62,22 +131,8 @@ const createAppointment = async (req, res) => {
             });
         }
 
-        const startOfDay = new Date(dateOnlyString);
-        const endOfDay = new Date(dateOnlyString);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        const existingAppointments = await Appointment.find({
-            providerName: providerName,
-            status: { $ne: 'Canceled' },
-            dateTime: { $gte: startOfDay, $lte: endOfDay }
-        });
-
-        const conflict = existingAppointments.find(app => {
-            const appDateStr = new Date(app.dateTime).toISOString().split('T')[0];
-            const appStart = new Date(`${appDateStr}T${app.hour}:00`);
-            const appEnd = new Date(appStart.getTime() + app.durationMinutes * 60000);
-            return (newStart < appEnd && newEnd > appStart);
-        });
+        // Las citas canceladas o con pago rechazado no ocupan el horario
+        const conflict = await findScheduleConflict({ providerName, dateTime, hour, durationMinutes });
 
         if (conflict) {
             return res.status(409).json({
@@ -85,57 +140,53 @@ const createAppointment = async (req, res) => {
             });
         }
 
+        // CDONE-60: Establecer timeout de reserva si requiere pago en línea (15 min)
+        const expiresAt = isClinicPayment ? null : new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
+
         // 3. Crear la instancia del modelo
         const newAppointment = new Appointment({
             user: userId, dateTime, hour, durationMinutes, patientName,
             patientId: finalPatientId, contactNumber, email, reason,
-            providerName, status: status || 'Scheduled', notes
+            providerName, status: finalStatus, notes, expiresAt,
+            price: treatment.price,
+            paymentMode: isClinicPayment ? 'clinic' : null
         });
 
         await newAppointment.save();
 
         // Enviar notificación por WhatsApp (CDONE-37, 38, 39, 40)
         if (contactNumber) {
-            // El enlace puede llevar a una vista de detalles o al historial del paciente
             const magicLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/mi-cuenta`;
             
-            // Disparamos la promesa en background para no bloquear la respuesta HTTP
-            whatsappService.sendAppointmentReminder(contactNumber, {
+            // Sin await (fire-and-forget): Twilio no frena la respuesta
+            Promise.resolve(whatsappService.sendAppointmentReminder(contactNumber, {
                 patientName: patientName || 'Paciente',
                 date: dateOnlyString,
                 time: hour,
                 providerName: providerName || 'Especialista',
                 link: magicLink
-            }).catch(e => console.error("Error asíncrono WhatsApp:", e));
+            })).catch(e => console.error("Error asíncrono WhatsApp:", e));
         }
 
-        // 5. Correo de confirmación al paciente (no rompe la cita si falla)
+        // 5. Correo de confirmación al paciente (sin await: no rompe ni frena la cita si falla)
         if (email) {
-            try {
-                await enviarCorreoSMTP({
-                    to: email,
-                    subject: 'Tu cita en Dental One',
-                    html: emailTemplates.citaConfirmada({
-                        patientName,
-                        dateOnlyString,
-                        hour,
-                        providerName,
-                        reason
-                    })
-                });
-            } catch (mailError) {
-                console.error('Error enviando correo de confirmación de cita:', mailError);
-            }
+            enviarCorreoSMTP({
+                to: email,
+                subject: 'Tu cita en Dental One',
+                html: emailTemplates.citaConfirmada({
+                    patientName,
+                    dateOnlyString,
+                    hour,
+                    providerName,
+                    reason
+                })
+            });
         }
 
         // 6. Integración Google Calendar (solo si hay credenciales)
         if (GOOGLE_ENABLED && calendar) {
             try {
-                // Formateamos la fecha directamente sin convertir a UTC
-                // dateOnlyString = "2026-09-28", hour = "09:30"
                 const startString = `${dateOnlyString}T${hour}:00`;
-                
-                // Calculamos la hora de fin usando los minutos
                 const [hh, mm] = hour.split(':').map(Number);
                 const endMins = hh * 60 + mm + durationMinutes;
                 const endH = String(Math.floor(endMins / 60)).padStart(2, '0');
@@ -146,11 +197,11 @@ const createAppointment = async (req, res) => {
                     summary: `Cita: ${patientName}`,
                     description: `Motivo: ${reason}\nDoctor: ${providerName}\nNotas: ${notes || 'Ninguna'}`,
                     start: {
-                        dateTime: startString, // ej: "2026-09-28T09:30:00"
+                        dateTime: startString,
                         timeZone: 'America/Mexico_City',
                     },
                     end: {
-                        dateTime: endString, // ej: "2026-09-28T10:00:00"
+                        dateTime: endString,
                         timeZone: 'America/Mexico_City',
                     },
                 };
@@ -180,14 +231,50 @@ const createAppointment = async (req, res) => {
     }
 };
 
+// Catálogo de tratamientos (precio, duración y especialista) para el formulario de agendamiento
+const getTreatments = (req, res) => {
+    res.json(TREATMENTS);
+};
+
 const getUserAppointments = async (req, res) => {
     try {
         const userId = req.user.id;
-        const appointments = await Appointment.find({ user: userId });
+        // CDONE-50: Consulta optimizada con índice por usuario y lean()
+        let query = Appointment.find({ user: userId });
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointments = await query;
         res.json(appointments);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor al obtener citas');
+    }
+};
+
+// ==========================================
+// Una cita del usuario autenticado (solo el dueño o un admin). La usa la página
+// de resultado del pago para mostrar el estado REAL de la cita y no confiar en
+// los parámetros de la URL de regreso de Mercado Pago.
+// ==========================================
+const getUserAppointmentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ msg: 'ID de cita inválido.' });
+        }
+
+        let query = Appointment.findById(id);
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointment = await query;
+
+        // 404 también si es de otro usuario, para no revelar qué citas existen
+        if (!appointment || (String(appointment.user) !== String(req.user.id) && req.user.role !== 'admin')) {
+            return res.status(404).json({ msg: 'Cita no encontrada.' });
+        }
+
+        res.json(appointment);
+    } catch (err) {
+        console.error('Error al obtener la cita:', err);
+        res.status(500).json({ msg: 'Error al obtener la cita.' });
     }
 };
 
@@ -196,7 +283,10 @@ const getAllAppointments = async (req, res) => {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ msg: 'Acceso denegado. Se requieren permisos de administrador.' });
         }
-        const appointments = await Appointment.find({});
+        // CDONE-50: Consulta optimizada con lean()
+        let query = Appointment.find({});
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointments = await query;
         res.json(appointments);
     } catch (err) {
         console.error(err);
@@ -220,13 +310,14 @@ const cancelAppointment = async (req, res) => {
         }
 
         appointment.status = 'Canceled';
+        appointment.expiresAt = null;
         await appointment.save();
 
-        // Enviar correo de cancelación al paciente (no bloquea la operación si falla)
         if (appointment.email) {
             try {
                 const dateOnlyString = new Date(appointment.dateTime).toISOString().split('T')[0];
-                await enviarCorreoSMTP({
+                // Sin await: el aviso por correo no frena la respuesta
+                enviarCorreoSMTP({
                     to: appointment.email,
                     subject: 'Cita cancelada - Dental One',
                     html: emailTemplates.citaCancelada({
@@ -237,7 +328,7 @@ const cancelAppointment = async (req, res) => {
                     })
                 });
             } catch (mailErr) {
-                console.error('Error enviando correo de cancelación:', mailErr);
+                console.error('Error preparando correo de cancelación:', mailErr);
             }
         }
 
@@ -248,27 +339,60 @@ const cancelAppointment = async (req, res) => {
     }
 };
 
+// Convierte 'YYYY-MM-DD' en la medianoche UTC de ese día (así se guardan las fechas de las citas).
+// Devuelve null si no viene el valor y undefined si el formato es inválido.
+const parseDay = (value) => {
+    if (!value) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return undefined;
+    const day = new Date(`${value}T00:00:00.000Z`);
+    return isNaN(day.getTime()) ? undefined : day;
+};
+
 // ==========================================
 // Disponibilidad: horas ocupadas (ANÓNIMAS para no-admin) + horas bloqueadas.
-// La usa el calendario del paciente para mostrar "Ocupado"/"No disponible".
+// Solo devuelve fechas desde hoy (o el rango ?from=YYYY-MM-DD&to=YYYY-MM-DD).
 // ==========================================
 const getAvailability = async (req, res) => {
     try {
         const isAdmin = req.user.role === 'admin';
+        const { from, to } = req.query || {};
 
-        // Citas activas (no canceladas)
-        const appointments = await Appointment.find({ status: { $ne: 'Canceled' } })
+        let fromDay = parseDay(from);
+        const toDay = parseDay(to);
+        if (fromDay === undefined || toDay === undefined) {
+            return res.status(400).json({ msg: 'Las fechas from/to deben tener formato YYYY-MM-DD.' });
+        }
+        if (!fromDay) {
+            // Por defecto desde AYER (UTC): las citas se guardan a medianoche UTC y en México
+            // (UTC-6) "hoy" puede seguir siendo el día anterior en UTC.
+            fromDay = new Date();
+            fromDay.setUTCHours(0, 0, 0, 0);
+            fromDay.setUTCDate(fromDay.getUTCDate() - 1);
+        }
+
+        const dateFilter = { $gte: fromDay };
+        if (toDay) dateFilter.$lte = new Date(toDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+        // CDONE-50: Proyecciones optimizadas y lean(). Canceladas y con pago rechazado no ocupan horario.
+        let query = Appointment.find({ status: { $nin: INACTIVE_STATUSES }, dateTime: dateFilter })
             .select('dateTime hour durationMinutes user');
+        if (typeof query.lean === 'function') query = query.lean();
+        const appointments = await query;
 
         const occupied = appointments.map(a => ({
             dateTime: a.dateTime,
             hour: a.hour,
             durationMinutes: a.durationMinutes,
-            // 'mine' permite que el paciente distinga sus propias citas
             mine: isAdmin ? false : String(a.user) === String(req.user.id)
         }));
 
-        const blocked = await BlockedSlot.find({}).select('date hour reason');
+        // BlockedSlot.date es texto 'YYYY-MM-DD', así que la comparación de cadenas respeta el orden
+        const blockedFilter = { date: { $gte: fromDay.toISOString().split('T')[0] } };
+        if (toDay) blockedFilter.date.$lte = toDay.toISOString().split('T')[0];
+
+        let blockedQuery = BlockedSlot.find(blockedFilter).select('date hour reason');
+        if (typeof blockedQuery.lean === 'function') blockedQuery = blockedQuery.lean();
+        const blocked = await blockedQuery;
 
         res.json({
             occupied,
@@ -290,7 +414,6 @@ const blockSlot = async (req, res) => {
             return res.status(400).json({ msg: 'Se requieren fecha y hora.' });
         }
 
-        // upsert para evitar duplicados
         const slot = await BlockedSlot.findOneAndUpdate(
             { date, hour },
             { date, hour, reason: reason || '', createdBy: req.user.id },
@@ -322,14 +445,12 @@ const unblockSlot = async (req, res) => {
     }
 };
 
-// Helpers para rangos de horas (slots de 30 min)
 const toMinutes = (h) => {
     const [hh, mm] = String(h).split(':').map(Number);
     return hh * 60 + mm;
 };
 const toHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
-// Genera los slots de 30 min desde startHour (incluido) hasta endHour (excluido)
 const buildSlots = (startHour, endHour) => {
     const start = toMinutes(startHour);
     const end = toMinutes(endHour);
@@ -396,8 +517,11 @@ const unblockRange = async (req, res) => {
 };
 
 module.exports = {
+    cleanupExpiredReservations,
     createAppointment,
+    getTreatments,
     getUserAppointments,
+    getUserAppointmentById,
     getAllAppointments,
     cancelAppointment,
     getAvailability,

@@ -18,29 +18,20 @@ const submitContactForm = async (req, res) => {
         });
         await newContact.save();
 
-        // 2. Enviar correo al administrador de la clínica
-        try {
-            await enviarCorreoSMTP({
-                to: process.env.EMAIL_USER, // El mismo correo de la clínica recibe las notificaciones
-                subject: `Nuevo mensaje de contacto: ${asunto} - Dental One`,
-                html: emailTemplates.contactoAdmin({ nombre, email, celular, asunto, mensaje })
-            });
-            console.log('Correo de notificación al admin enviado exitosamente.');
-        } catch (mailErr) {
-            console.error('Error enviando correo de contacto al admin:', mailErr);
-        }
+        // 2. Enviar correo al administrador de la clínica (sin await: el mailer registra los errores)
+        // CONTACT_EMAIL permite recibir los avisos en otra cuenta (si no, la del remitente)
+        enviarCorreoSMTP({
+            to: process.env.CONTACT_EMAIL || process.env.EMAIL_USER,
+            subject: `Nuevo mensaje de contacto: ${asunto} - Dental One`,
+            html: emailTemplates.contactoAdmin({ nombre, email, celular, asunto, mensaje })
+        });
 
-        // 3. Enviar acuse de recibo automático al paciente
-        try {
-            await enviarCorreoSMTP({
-                to: email,
-                subject: 'Hemos recibido tu mensaje - Dental One',
-                html: emailTemplates.contactoPaciente(nombre)
-            });
-            console.log('Correo de acuse al paciente enviado exitosamente.');
-        } catch (mailErr) {
-            console.error('Error enviando correo de acuse al paciente:', mailErr);
-        }
+        // 3. Enviar acuse de recibo automático al paciente (sin await)
+        enviarCorreoSMTP({
+            to: email,
+            subject: 'Hemos recibido tu mensaje - Dental One',
+            html: emailTemplates.contactoPaciente(nombre)
+        });
 
         // 4. Responder al cliente
         res.status(201).json({ msg: 'Mensaje enviado exitosamente. Nos pondremos en contacto contigo pronto.' });

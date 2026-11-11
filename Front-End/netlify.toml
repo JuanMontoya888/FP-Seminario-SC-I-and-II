@@ -1,0 +1,15 @@
+# Configuración de Netlify (en el panel: Base directory = Front-End)
+[build]
+  command = "npm run build"
+  publish = "dist/Dental-One/browser"
+
+[build.environment]
+  # Angular 21 requiere Node ^20.19 / ^22.12 / >=24
+  NODE_VERSION = "22"
+
+# SPA: cualquier ruta (/calendar, /pago-exitoso, ...) se sirve con index.html
+# para que la resuelva el router de Angular.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

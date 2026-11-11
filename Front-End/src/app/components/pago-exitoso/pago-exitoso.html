@@ -7,22 +7,80 @@
     <!-- Título y mensaje -->
     <h1 class="pe-title" [style.color]="estadoActual.color">{{ estadoActual.title }}</h1>
     <p class="pe-text">{{ estadoActual.text }}</p>
+    @if (verifying) {
+      <p class="pe-text">Verificando el estado de tu pago...</p>
+    }
 
-    <!-- Folio de pago si existe -->
+    <!-- Folio de pago -->
     @if (paymentId) {
       <div class="pe-folio">
-        <span class="pe-folio-label">Folio de pago:</span>
-        <span class="pe-folio-value"># {{ paymentId }}</span>
+        <span class="pe-folio-label">Folio Oficial de Pago:</span>
+        <span class="pe-folio-value">#{{ paymentId }}</span>
+      </div>
+    }
+
+    <!-- DESGLOSE VISUAL DEL COMPROBANTE Y PAGO (CDONE-61, CDONE-64, CDONE-66) -->
+    @if (pagoInfo && (status === 'approved' || status === 'pending')) {
+      <div class="pe-breakdown-card">
+        <h3 class="pe-breakdown-title">Resumen de tu Consulta</h3>
+        <div class="pe-grid">
+          <div class="pe-item">
+            <span class="pe-label">Tratamiento:</span>
+            <span class="pe-val pe-val-bold">{{ pagoInfo.treatmentName }}</span>
+          </div>
+          <div class="pe-item">
+            <span class="pe-label">Especialista:</span>
+            <span class="pe-val">{{ pagoInfo.doctor }}</span>
+          </div>
+          <div class="pe-item">
+            <span class="pe-label">Fecha y Hora:</span>
+            <span class="pe-val">{{ pagoInfo.dateTime }} a las {{ pagoInfo.hour }} hrs</span>
+          </div>
+          <div class="pe-item">
+            <span class="pe-label">Modalidad:</span>
+            <span class="pe-val pe-badge-mode">{{ pagoInfo.paymentMode }}</span>
+          </div>
+        </div>
+
+        <div class="pe-financial-summary">
+          <div class="pe-fin-row">
+            <span>Costo Total del Tratamiento:</span>
+            <span>${{ pagoInfo.totalPrice | number:'1.2-2' }} MXN</span>
+          </div>
+          <div class="pe-fin-row pe-fin-row--paid">
+            <span>Monto Pagado en Línea:</span>
+            <span class="pe-fin-paid">${{ pagoInfo.paidAmount | number:'1.2-2' }} MXN</span>
+          </div>
+          @if (pagoInfo.pendingBalance > 0) {
+            <div class="pe-fin-row pe-fin-row--balance">
+              <span>Saldo Pendiente a liquidar en clínica:</span>
+              <span class="pe-fin-pending">${{ pagoInfo.pendingBalance | number:'1.2-2' }} MXN</span>
+            </div>
+          }
+        </div>
       </div>
     }
 
     <!-- Acciones según el estado -->
     <div class="pe-actions">
       @if (status === 'approved' || status === 'pending') {
+        <!-- BOTÓN DESCARGAR COMPROBANTE (CDONE-61 & CDONE-64): solo con pago confirmado por el servidor -->
+        @if (receiptAvailable) {
+        <button class="pe-btn pe-btn-receipt" (click)="downloadReceipt()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Descargar Comprobante Oficial (PDF)
+        </button>
+        }
+
         <button class="pe-btn pe-btn-primary" (click)="goToCalendar()">
           Ver mis citas
         </button>
       }
+
       @if (status === 'failure') {
         <button class="pe-btn pe-btn-primary" (click)="retryPayment()">
           Intentar de nuevo

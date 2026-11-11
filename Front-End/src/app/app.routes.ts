@@ -44,5 +44,7 @@ export const routes: Routes = [
     {path: 'registrar-procedimiento', component: RegistrarProcedimiento, canActivate: [authGuard]},
     {path: 'tipo-paciente', component: TipoPaciente, canActivate: [authGuard]},
     {path: 'ayudando-a-sonreir', component: AyudandoASonreir},
-    {path: 'pago-exitoso', component: PagoExitoso}
+    {path: 'pago-exitoso', component: PagoExitoso},
+    // Cualquier ruta desconocida regresa al inicio
+    {path: '**', redirectTo: ''}
 ];

@@ -59,7 +59,6 @@ const AppointmentSchema = new mongoose.Schema(
       required: [true, 'El proveedor/doctor es obligatorio'],
     },
     status: {
-      type: String,
       enum: {
         values: [
           'Scheduled',              // Agendada
@@ -72,6 +71,7 @@ const AppointmentSchema = new mongoose.Schema(
         ],
         message: '{VALUE} no es un estado válido',
       },
+      type: String,
       default: 'Scheduled',
       required: true,
     },
@@ -80,11 +80,48 @@ const AppointmentSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
+    // --- Datos de cobro calculados en el servidor (nunca vienen del cliente) ---
+    // Precio total del tratamiento según el catálogo (config/treatments.js)
+    price: {
+      type: Number,
+      default: null,
+    },
+    // Modalidad elegida: 'full' (100% en línea), 'partial' (anticipo 50%), 'clinic' (en recepción)
+    paymentMode: {
+      type: String,
+      enum: ['full', 'partial', 'clinic'],
+      default: null,
+    },
+    // Monto que Mercado Pago debe cobrar; el webhook lo compara con transaction_amount
+    amountExpected: {
+      type: Number,
+      default: null,
+    },
   },
   {
     timestamps: true, // Crea automáticamente createdAt y updatedAt
     versionKey: false, // Quita el campo __v
   }
 );
+
+// -------------------------------------------------------------
+// ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS (CDONE-50)
+// -------------------------------------------------------------
+// 1. Optimiza la verificación de conflicto anti-solapamiento por especialista y fecha
+AppointmentSchema.index({ providerName: 1, dateTime: 1, status: 1 });
+
+// 2. Optimiza la consulta del historial de citas por usuario
+AppointmentSchema.index({ user: 1, dateTime: -1 });
+
+// 3. Optimiza la consulta general de disponibilidad para el calendario
+AppointmentSchema.index({ status: 1, dateTime: 1 });
+
+// CDONE-60: NO se usa índice TTL sobre expiresAt. El TTL borraba físicamente las
+// citas no pagadas y los pagos tardíos (OXXO/SPEI) llegaban para una cita
+// inexistente. Ahora el worker de index.js las marca como 'Canceled'.
 
 module.exports = mongoose.model('Appointment', AppointmentSchema);

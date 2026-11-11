@@ -94,7 +94,10 @@ describe('Unit Controllers - Appointments Controller Tests', () => {
     await appointmentController.getAvailability(req, res);
 
     // Assert
-    expect(Appointment.find).toHaveBeenCalledWith({ status: { $ne: 'Canceled' } });
+    expect(Appointment.find).toHaveBeenCalledWith({
+      status: { $nin: ['Canceled', 'Payment_Failed'] },
+      dateTime: { $gte: expect.any(Date) }
+    });
     expect(res.json).toHaveBeenCalledWith({
       occupied: [
         {
@@ -106,6 +109,44 @@ describe('Unit Controllers - Appointments Controller Tests', () => {
       ],
       blocked: [{ date: '2026-10-30', hour: '12:00', reason: 'Comida' }]
     });
+  });
+
+  test('DadoRangoFromTo_CuandoConsultaGetAvailability_EntoncesFiltraCitasYBloqueosPorFecha', async () => {
+    // Arrange
+    const req = {
+      user: { id: 'user_123', role: 'patient' },
+      query: { from: '2026-11-01', to: '2026-11-30' }
+    };
+    const res = createMockRes();
+    Appointment.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+    BlockedSlot.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+
+    // Act
+    await appointmentController.getAvailability(req, res);
+
+    // Assert
+    expect(Appointment.find).toHaveBeenCalledWith({
+      status: { $nin: ['Canceled', 'Payment_Failed'] },
+      dateTime: {
+        $gte: new Date('2026-11-01T00:00:00.000Z'),
+        $lte: new Date('2026-11-30T23:59:59.999Z')
+      }
+    });
+    expect(BlockedSlot.find).toHaveBeenCalledWith({ date: { $gte: '2026-11-01', $lte: '2026-11-30' } });
+    expect(res.json).toHaveBeenCalledWith({ occupied: [], blocked: [] });
+  });
+
+  test('DadoFechaConFormatoInvalido_CuandoConsultaGetAvailability_EntoncesRetorna400', async () => {
+    // Arrange
+    const req = { user: { id: 'user_123', role: 'patient' }, query: { from: '01/11/2026' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getAvailability(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(Appointment.find).not.toHaveBeenCalled();
   });
 
   test('DadoUsuarioNoAdmin_CuandoIntentaObtenerTodasLasCitasGlobales_EntoncesRetorna403Forbidden', async () => {
@@ -124,6 +165,48 @@ describe('Unit Controllers - Appointments Controller Tests', () => {
       msg: 'Acceso denegado. Se requieren permisos de administrador.'
     });
     expect(Appointment.find).not.toHaveBeenCalled();
+  });
+
+  test('DadoCitaPropia_CuandoConsultaGetUserAppointmentById_EntoncesRetornaLaCita', async () => {
+    // Arrange
+    const cita = { _id: '64b7f0c2a1b2c3d4e5f60718', user: 'user_123', status: 'Confirmed' };
+    Appointment.findById.mockResolvedValue(cita);
+    const req = { user: { id: 'user_123', role: 'user' }, params: { id: '64b7f0c2a1b2c3d4e5f60718' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getUserAppointmentById(req, res);
+
+    // Assert
+    expect(Appointment.findById).toHaveBeenCalledWith('64b7f0c2a1b2c3d4e5f60718');
+    expect(res.json).toHaveBeenCalledWith(cita);
+  });
+
+  test('DadoCitaDeOtroUsuario_CuandoConsultaGetUserAppointmentById_EntoncesRetorna404', async () => {
+    // Arrange
+    Appointment.findById.mockResolvedValue({ _id: '64b7f0c2a1b2c3d4e5f60718', user: 'otro_usuario' });
+    const req = { user: { id: 'user_123', role: 'user' }, params: { id: '64b7f0c2a1b2c3d4e5f60718' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getUserAppointmentById(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ msg: 'Cita no encontrada.' });
+  });
+
+  test('DadoIdInvalido_CuandoConsultaGetUserAppointmentById_EntoncesRetorna400', async () => {
+    // Arrange
+    const req = { user: { id: 'user_123', role: 'user' }, params: { id: 'no-es-un-id' } };
+    const res = createMockRes();
+
+    // Act
+    await appointmentController.getUserAppointmentById(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(Appointment.findById).not.toHaveBeenCalled();
   });
 
   test.each(nonCancellableStatuses)(

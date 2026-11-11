@@ -68,8 +68,8 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
         durationMinutes: 30,
         patientName: 'Juan Pérez',
         email: 'juan@example.com',
-        reason: 'Limpieza dental',
-        providerName: 'Dr. Juan'
+        reason: 'Limpieza Dental y Revisión General',
+        providerName: 'Dra. Elena Sonrisa'
       }
     };
     const res = createMockRes();
@@ -98,8 +98,8 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
         durationMinutes: 30,
         patientName: 'María López',
         email: 'maria@example.com',
-        reason: 'Ortodoncia',
-        providerName: 'Dra. Lopez'
+        reason: 'Ajuste de Brackets (Ortodoncia)',
+        providerName: 'Dra. Sofía Frenillos'
       }
     };
     const res = createMockRes();
@@ -110,7 +110,7 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
         dateTime: new Date('2026-11-15T10:00:00.000Z'),
         hour: '10:00',
         durationMinutes: 30,
-        providerName: 'Dra. Lopez',
+        providerName: 'Dra. Sofía Frenillos',
         status: 'Scheduled'
       }
     ]);
@@ -119,9 +119,13 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
     await appointmentController.createAppointment(req, res);
 
     // Assert
+    // Las citas canceladas o con pago rechazado no deben bloquear el horario
+    expect(Appointment.find).toHaveBeenCalledWith(
+      expect.objectContaining({ status: { $nin: ['Canceled', 'Payment_Failed'] } })
+    );
     expect(res.status).toHaveBeenCalledWith(409);
     expect(res.json).toHaveBeenCalledWith({
-      msg: 'El especialista Dra. Lopez ya tiene una cita ocupada a las 10:00. Por favor selecciona otro horario.'
+      msg: 'El especialista Dra. Sofía Frenillos ya tiene una cita ocupada a las 10:00. Por favor selecciona otro horario.'
     });
     expect(mockAppointmentSave).not.toHaveBeenCalled();
   });
@@ -137,8 +141,8 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
         patientName: 'Carlos Ruiz',
         contactNumber: '5512345678',
         email: 'carlos@example.com',
-        reason: 'Valoración general',
-        providerName: 'Dr. Juan'
+        reason: 'Cita de valoración',
+        providerName: 'Dra. Elena Sonrisa'
       }
     };
     const res = createMockRes();
@@ -158,7 +162,7 @@ describe('Scenarios - Appointments Complex Behavior Flows', () => {
         appointment: expect.objectContaining({
           patientName: 'Carlos Ruiz',
           hour: '11:00',
-          providerName: 'Dr. Juan',
+          providerName: 'Dra. Elena Sonrisa',
           status: 'Scheduled'
         })
       })

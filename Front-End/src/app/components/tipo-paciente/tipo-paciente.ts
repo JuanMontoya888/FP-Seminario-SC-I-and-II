@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-tipo-paciente',
@@ -11,8 +12,7 @@ import Swal from 'sweetalert2';
   styleUrl: './tipo-paciente.css',
 })
 export class TipoPaciente {
-  //private apiUrl = 'https://dental-one-final.onrender.com/api/user/patient-type';
-  private apiUrl = 'http://localhost:3000/api/user/patient-type';
+  private apiUrl = `${environment.apiUrl}/api/user/patient-type`;
 
   saving = false;
 
