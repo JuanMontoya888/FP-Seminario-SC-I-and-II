@@ -75,6 +75,9 @@
           Descargar Comprobante Oficial (PDF)
         </button>
         }
+        @if (invoiceAppointmentId) {
+          <a class="pe-btn pe-btn-secondary" [routerLink]="['/solicitar-factura', invoiceAppointmentId]">Solicitar factura</a>
+        }
 
         <button class="pe-btn pe-btn-primary" (click)="goToCalendar()">
           Ver mis citas

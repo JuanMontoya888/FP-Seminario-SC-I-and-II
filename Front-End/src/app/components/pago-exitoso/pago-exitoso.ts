@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -11,7 +11,7 @@ type EstadoPago = 'approved' | 'pending' | 'failure';
 @Component({
   selector: 'app-pago-exitoso',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './pago-exitoso.html',
   styleUrl: './pago-exitoso.css'
 })
@@ -25,6 +25,7 @@ export class PagoExitoso implements OnInit, OnDestroy {
   // Estado confirmado por el servidor (no por los parámetros de la URL)
   verifying = false;
   receiptAvailable = false;
+  invoiceAppointmentId = '';
 
   // Reintentos mientras llega el webhook de Mercado Pago (pago aprobado pero cita aún pendiente)
   private readonly maxVerifyAttempts = 5;
@@ -125,6 +126,9 @@ export class PagoExitoso implements OnInit, OnDestroy {
         if (cita.status === 'Confirmed' || cita.status === 'Completed') {
           this.verifying = false;
           this.receiptAvailable = true;
+          if (['full', 'partial'].includes(cita.paymentMode) && cita.amountExpected > 0) {
+            this.invoiceAppointmentId = cita._id;
+          }
           this.setStatus('approved');
         } else if (cita.status === 'Canceled' || cita.status === 'Payment_Failed') {
           this.verifying = false;
