@@ -1,0 +1,250 @@
+<main class="operations">
+  <header><h1>Administración de la clínica</h1><p>Finanzas e inventario</p></header>
+  <nav aria-label="Módulos de administración">
+    @for (tab of [['accounts','Cuentas'],['report','Reportes'],['bank','Conciliación'],['invoices','Facturación'],['stock','Inventario'],['suppliers','Compras y activos']]; track tab[0]) {
+      <button type="button" [disabled]="busy()" [attr.aria-pressed]="view === tab[0]" (click)="openView(tab[0])">{{ tab[1] }}</button>
+    }
+  </nav>
+  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (status()) { <p role="status">{{ status() }}</p> }
+  @if (busy()) { <p role="status">Procesando…</p> }
+  @if (form(); as current) {
+    <form class="panel editor" #editor="ngForm" (ngSubmit)="editor.valid && save(current)">
+      <h2>{{ current.title }}</h2>
+      @if (current.path === '/invoices') {
+        <label>Cargar XML e identificar el comprobante
+          <input type="file" accept=".xml,application/xml,text/xml" [disabled]="busy()" (change)="uploadInvoice($event, current)">
+        </label>
+      }
+      <div class="fields">
+        @for (input of current.fields; track input.key) {
+          <label>{{ input.label }}
+            @if (input.options; as entries) {
+              <select [name]="input.key" [(ngModel)]="current.values[input.key]" [required]="!input.optional">
+                <option value="" disabled>Selecciona</option>
+                @for (entry of entries; track entry.value) { <option [value]="entry.value">{{ entry.label }}</option> }
+              </select>
+            } @else if (input.type === 'textarea') {
+              <textarea [name]="input.key" [(ngModel)]="current.values[input.key]" rows="5" [required]="!input.optional"></textarea>
+            } @else if (input.type === 'number') {
+              <input type="number" min="0" step="1" [name]="input.key" [(ngModel)]="current.values[input.key]" [required]="!input.optional">
+            } @else {
+              <input [type]="input.type || 'text'" [name]="input.key" [(ngModel)]="current.values[input.key]" [required]="!input.optional">
+            }
+          </label>
+        }
+      </div>
+      <div class="actions"><button class="primary" [disabled]="busy() || editor.invalid">Guardar</button>
+        <button type="button" (click)="form.set(null)" [disabled]="busy()">Cerrar</button></div>
+    </form>
+  }
+
+  @switch (view) {
+    @case ('accounts') {
+      <section class="panel">
+        <div class="heading"><h2>Cuentas por cobrar y pagar</h2><button class="primary" (click)="account()">Registrar operación</button></div>
+        <label>Mostrar
+          <select [(ngModel)]="filter"><option value="all">Todas</option><option value="income">Cuentas por cobrar y cotizaciones</option>
+            <option value="expenses">Cuentas por pagar</option><option value="overdue">Cartera vencida</option></select>
+        </label>
+        <div class="table"><table>
+          <thead><tr><th>Operación</th><th>Fecha / vencimiento</th><th>Importe</th><th>Saldo</th><th>Acciones</th></tr></thead>
+          <tbody>
+            @for (row of visibleAccounts(); track row._id) {
+              <tr>
+                <td><strong>{{ row.party }}</strong><small>{{ label(row.kind) }} · {{ row.description }}</small></td>
+                <td>{{ row.date }}<small>{{ row.due }}</small></td>
+                <td>{{ row.amount / 100 | currency:'MXN' }}</td>
+                <td>
+                  @if (row.kind !== 'quote') {
+                    {{ (row.amount - row.paid) / 100 | currency:'MXN' }}
+                    @if (row.due < today && row.paid < row.amount) { <small class="alert">Vencido</small> }
+                  } @else { — }
+                </td>
+                <td>
+                  @if (row.kind === 'quote') { <button (click)="convert(row)">Convertir en venta</button> }
+                  @else if (row.paid < row.amount) { <button (click)="payment(row)">{{ row.kind === 'sale' ? 'Abonar' : 'Pagar' }}</button> }
+                  @for (entry of row.payments; track entry._id) {
+                    <small>{{ entry.date }} · {{ entry.amount / 100 | currency:'MXN' }} · {{ entry.reference }}</small>
+                  }
+                </td>
+              </tr>
+            } @empty { <tr><td colspan="5">Sin operaciones para este filtro.</td></tr> }
+          </tbody>
+        </table></div>
+      </section>
+    }
+    @case ('report') {
+      <section class="panel">
+        <div class="heading"><h2>Reportes financieros internos</h2><button class="primary" (click)="journalEntry()">Registrar asiento</button></div>
+        <form class="actions" (ngSubmit)="refreshReport()">
+          <label>Desde<input type="date" name="from" [(ngModel)]="from" required></label>
+          <label>Hasta<input type="date" name="to" [(ngModel)]="to" required></label>
+          <button class="primary" [disabled]="busy()">Consultar</button>
+        </form>
+        @if (report(); as data) {
+          <div class="cards">
+            <article><h3>Estado de resultados del periodo</h3>
+              <p>Ventas {{ data.sales / 100 | currency:'MXN' }} · Egresos {{ data.costs / 100 | currency:'MXN' }}</p>
+              <strong>Resultado {{ data.profit / 100 | currency:'MXN' }}</strong>
+            </article>
+            <article><h3>Balance general interno al cierre</h3>
+              <p><strong>Activos {{ data.totalAssets / 100 | currency:'MXN' }}</strong>
+                <small>Caja y bancos {{ data.cashAsset / 100 | currency:'MXN' }} · Por cobrar {{ data.receivables / 100 | currency:'MXN' }}</small>
+                <small>Inventario {{ data.inventory / 100 | currency:'MXN' }} · Activo fijo {{ data.fixedAssets / 100 | currency:'MXN' }} · Otros {{ data.otherAssets / 100 | currency:'MXN' }}</small>
+              </p>
+              <p><strong>Pasivos {{ data.totalLiabilities / 100 | currency:'MXN' }}</strong>
+                <small>Por pagar {{ data.payables / 100 | currency:'MXN' }} · Sobregiro contable {{ data.overdraft / 100 | currency:'MXN' }} · Otros {{ data.otherLiabilities / 100 | currency:'MXN' }}</small>
+              </p>
+              <p><strong>Capital contable {{ data.equity / 100 | currency:'MXN' }}</strong>
+                <small>Capital aportado {{ data.capital / 100 | currency:'MXN' }} · Resultado acumulado {{ data.retained / 100 | currency:'MXN' }}</small>
+              </p>
+              <small>Cartera vencida {{ data.overdue / 100 | currency:'MXN' }}</small>
+            </article>
+          </div>
+          <p>Los reportes se calculan con las operaciones y asientos capturados en este módulo. Registra saldos iniciales, capitalización de compras, depreciación e impuestos mediante asientos. El valor físico del almacén se consulta por separado en Inventario.</p>
+          <label>Indicador
+            <select [(ngModel)]="chart" (ngModelChange)="chartDetail = ''">
+              <option value="trend">Ventas por mes</option><option value="categories">Egresos por categoría</option><option value="debtors">Principales deudores</option>
+            </select>
+          </label>
+          @for (bar of data[chart]; track bar.label) {
+            <button class="bar-row" (click)="chartDetail = bar.label">
+              <span>{{ bar.label }}</span><span class="bar"><i [class.negative]="bar.amount < 0" [style.width.%]="width(bar, data[chart])"></i></span>
+              <strong>{{ bar.amount / 100 | currency:'MXN' }}</strong>
+            </button>
+          } @empty { <p>Sin datos para este indicador.</p> }
+          @if (chartDetail) { <p aria-live="polite">Selección: {{ chartDetail }}</p> }
+          <details><summary>Últimos asientos manuales</summary>
+            @for (entry of journal(); track entry._id) {
+              <p>{{ entry.date }} · {{ entry.description }} · Debe {{ label(entry.debit) }} · Haber {{ label(entry.credit) }} · {{ entry.amount / 100 | currency:'MXN' }}</p>
+            } @empty { <p>Sin asientos manuales.</p> }
+          </details>
+        }
+      </section>
+    }
+    @case ('bank') {
+      <section class="panel">
+        <h2>Conciliación bancaria</h2>
+        <p>CSV con columnas fecha, importe y referencia. Usa AAAA-MM-DD y un importe negativo para retiros. Cada referencia debe ser única dentro de la cuenta.</p>
+        <div class="actions"><label>Cuenta bancaria<input [(ngModel)]="bankAccount" placeholder="Nombre o alias"></label>
+          <label>Importar estado de cuenta<input type="file" accept=".csv,text/csv" [disabled]="busy() || !bankAccount.trim()" (change)="importBank($event)"></label>
+        </div>
+        <div class="table"><table>
+          <thead><tr><th>Fecha</th><th>Cuenta / referencia</th><th>Importe</th><th>Conciliación</th></tr></thead>
+          <tbody>
+            @for (row of bank(); track row._id) {
+              <tr><td>{{ row.date }}</td><td>{{ row.bankAccount }} · {{ row.reference }}</td><td>{{ row.amount / 100 | currency:'MXN' }}</td>
+                <td>
+                  @if (row.match) { Conciliado }
+                  @else if (candidates(row); as matches) {
+                    @if (matches.length) {
+                      <select #candidate aria-label="Abono o pago compatible">
+                        @for (match of matches; track match.value) { <option [value]="match.value">{{ match.label }}</option> }
+                      </select>
+                      <button [disabled]="busy()" (click)="match(row, candidate.value)">Conciliar</button>
+                    } @else { Sin pago compatible }
+                  }
+                </td></tr>
+            } @empty { <tr><td colspan="4">Sin movimientos importados.</td></tr> }
+          </tbody>
+        </table></div>
+      </section>
+    }
+    @case ('invoices') {
+      <section class="panel">
+        <div class="heading"><h2>Archivo fiscal</h2><button class="primary" (click)="invoice()">Archivar XML</button></div>
+        <p>Archivo interno de facturas y complementos ya generados. La emisión, el timbrado, la cancelación y la validación fiscal requieren un servicio externo configurado.</p>
+        @for (row of invoices(); track row._id) {
+          <article class="line"><span>{{ row.date }} · {{ row.direction === 'received' ? 'Recibido' : 'Emitido externamente' }} ·
+            {{ row.kind === 'payment' ? 'Complemento de pago' : 'Factura' }}<small>{{ row.uuid }}</small></span>
+            <button (click)="downloadInvoice(row)" [disabled]="busy()">Descargar XML</button></article>
+        } @empty { <p>Sin comprobantes archivados.</p> }
+      </section>
+    }
+    @case ('stock') {
+      <section class="panel">
+        <div class="heading"><h2>Inventario</h2><button class="primary" (click)="item()">Registrar insumo</button></div>
+        <p>Valor de existencias físicas a costo de lote <strong>{{ inventoryValue() / 100 | currency:'MXN' }}</strong></p>
+        <details>
+          <summary>Consumo, mermas y rotación</summary>
+          <div class="actions">
+            <label>Desde<input type="date" [(ngModel)]="inventoryFrom"></label>
+            <label>Hasta<input type="date" [(ngModel)]="inventoryTo"></label>
+          </div>
+          @if (inventoryFrom && inventoryTo && inventoryFrom <= inventoryTo && inventoryTo <= today) {
+            @let inventory = inventoryReport();
+            <p>Consumo {{ inventory.use / 100 | currency:'MXN' }} · Mermas {{ inventory.loss / 100 | currency:'MXN' }}</p>
+            <p>Rotación estimada {{ inventory.turnover === null ? 'sin saldo promedio' : inventory.turnover.toFixed(2) + ' veces' }}.</p>
+            <small>Consumo a costo de lote dividido entre el promedio del valor físico inicial y final del periodo.</small>
+          } @else { <p>Selecciona un periodo válido.</p> }
+        </details>
+        @for (item of stock().items; track item._id) {
+          <article class="stock-item">
+            <div class="heading">
+              <div><h3>{{ item.name }}</h3><small>{{ item.sku }} · {{ item.category }} · {{ available(item) }} {{ item.unit }} disponibles · mín. {{ item.minimum }} / máx. {{ item.maximum }}</small></div>
+              <div class="actions"><button (click)="limits(item)">Ajustar límites</button><button (click)="lot(item)">Crear lote</button><button (click)="order(item)" [disabled]="!stock().suppliers.length">Orden de compra</button></div>
+            </div>
+            @if (available(item) <= item.minimum) { <p class="alert">Reordenar insumo.</p> }
+            @if (available(item) > item.maximum) { <p class="alert">Existencia por encima del máximo.</p> }
+            @if (lastPrices(item); as prices) {
+              @if (prices.length) {
+                <details><summary>Últimos precios por proveedor</summary>
+                  <ul>
+                    @for (price of prices; track price._id) {
+                      <li>{{ title(stock().suppliers, price.supplier) }} · {{ price.unitCost / 100 | currency:'MXN' }} por {{ item.unit }} · {{ price.date }}</li>
+                    }
+                  </ul>
+                </details>
+              }
+            }
+            @for (lot of lots(item); track lot._id) {
+              <div class="line"><span><strong>Lote {{ lot.code }}</strong> · {{ lot.quantity }} {{ item.unit }}
+                @if (lot.expiry) {
+                  <small [class.alert]="daysTo(lot.expiry) <= 30 && lot.quantity > 0">
+                    Caduca {{ lot.expiry }} {{ daysTo(lot.expiry) < 0 ? '· Vencido' : daysTo(lot.expiry) <= 30 ? '· Próximo a vencer' : '' }}
+                  </small>
+                }
+              </span><div class="actions"><button (click)="movement(lot)">Movimiento</button><button (click)="openLot.set(openLot()?._id === lot._id ? null : lot)">Historial</button></div></div>
+              @if (openLot()?._id === lot._id) {
+                <ul>
+                  @for (entry of lot.movements; track entry._id) {
+                    <li>{{ entry.date }} · {{ label(entry.type) }} · {{ entry.quantity }} · saldo {{ entry.quantityAfter }} · {{ entry.note }}
+                      @if (entry.procedure) { · Procedimiento {{ entry.procedure }} }
+                    </li>
+                  } @empty { <li>Sin movimientos.</li> }
+                </ul>
+              }
+            } @empty { <p>Sin lotes. Crea un lote para registrar existencias.</p> }
+          </article>
+        } @empty { <p>Sin insumos registrados.</p> }
+      </section>
+    }
+    @case ('suppliers') {
+      <section class="panel">
+        <div class="heading"><h2>Proveedores</h2><button class="primary" (click)="supplier()">Registrar proveedor</button></div>
+        @for (row of stock().suppliers; track row._id) { <p>{{ row.name }} · {{ row.contact }} · {{ row.leadDays }} días de entrega</p> }
+        <h3>Órdenes de compra</h3>
+        <p>Genera órdenes desde cada insumo. Los precios unitarios y fechas estimadas quedan en el historial.</p>
+        @for (row of stock().orders; track row._id) {
+          <article class="line"><span>{{ row.date }} · {{ title(stock().suppliers, row.supplier) }} · {{ title(stock().items, row.item) }}</span>
+            <span>{{ row.quantity }} × {{ row.unitCost / 100 | currency:'MXN' }} · Entrega estimada {{ row.arrival }}</span></article>
+        } @empty { <p>Sin órdenes.</p> }
+      </section>
+      <section class="panel">
+        <div class="heading"><h2>Activos e instrumental</h2><button class="primary" (click)="asset()">Registrar equipo</button></div>
+        @for (row of stock().assets; track row._id) {
+          <article class="line"><span><strong>{{ row.name }}</strong> · {{ row.category }} · Serie {{ row.serial }}</span>
+            <span>Garantía {{ row.warranty }} <small [class.alert]="daysTo(row.maintenance) <= 30">Mantenimiento {{ row.maintenance }}</small></span>
+            <button (click)="maintenance(row)">Registrar mantenimiento</button>
+            @if (row.services.length) {
+              <details><summary>Historial de mantenimiento</summary><ul>
+                @for (entry of row.services; track entry._id) { <li>{{ entry.date }} · {{ entry.note }} · Próximo {{ entry.next }}</li> }
+              </ul></details>
+            }
+          </article>
+        } @empty { <p>Sin activos registrados.</p> }
+      </section>
+    }
+  }
+</main>

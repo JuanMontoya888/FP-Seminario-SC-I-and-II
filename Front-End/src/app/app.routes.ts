@@ -1,4 +1,6 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
+import { environment } from '../environments/environment';
 import { Home } from './components/home/home';
 import { AboutUs } from './components/about-us/about-us';
 import { Services } from './components/services/services';
@@ -21,6 +23,14 @@ import { PagoExitoso } from './components/pago-exitoso/pago-exitoso';
 
 //Importamos el guard
 import { authGuard } from './guards/auth.guard';
+import { UserService } from './services/user.service';
+
+const loadCadCam = () => import('./components/cad-cam/cad-cam').then(module => module.CadCam);
+
+function adminOnly() {
+    const user = inject(UserService);
+    return (user.getToken() && user.isAdmin) || inject(Router).createUrlTree(['/']);
+}
 
 export const routes: Routes = [
     {path: '', component: Home},
@@ -42,6 +52,17 @@ export const routes: Routes = [
     {path: 'paciente', component: Paciente, canActivate: [authGuard]},
     {path: 'expediente', component: Expediente, canActivate: [authGuard]},
     {path: 'registrar-procedimiento', component: RegistrarProcedimiento, canActivate: [authGuard]},
+    {
+        path: 'cad-cam',
+        loadComponent: loadCadCam,
+        canActivate: [adminOnly]
+    },
+    {
+        path: 'administracion',
+        loadComponent: () => import('./components/operations/operations').then(module => module.Operations),
+        canActivate: [adminOnly]
+    },
+    ...(environment.production ? [] : [{path: 'cad-cam-demo', loadComponent: loadCadCam}]),
     {path: 'tipo-paciente', component: TipoPaciente, canActivate: [authGuard]},
     {path: 'ayudando-a-sonreir', component: AyudandoASonreir},
     {path: 'pago-exitoso', component: PagoExitoso},
