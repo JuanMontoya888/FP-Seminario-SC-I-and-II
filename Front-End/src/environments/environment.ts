@@ -3,5 +3,5 @@
 // Si tu servicio de Render tiene otro nombre, cámbiala aquí.
 export const environment = {
   production: true,
-  apiUrl: 'https://dental-one-final.onrender.com'
+  apiUrl: 'https://fp-seminario-sc-i-and-ii.onrender.com'
 };
