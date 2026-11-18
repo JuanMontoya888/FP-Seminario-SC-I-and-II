@@ -89,6 +89,10 @@
                                         @if (appt.providerName) {
                                         <span class="event-provider">{{ appt.providerName }}</span>
                                         }
+                                        @if (!isAdmin && appt._id && (appt.status === 'Confirmed' || appt.status === 'Completed')
+                                          && (appt.paymentMode === 'full' || appt.paymentMode === 'partial') && (appt.amountExpected ?? 0) > 0) {
+                                          <a [routerLink]="['/solicitar-factura', appt._id]">Solicitar factura</a>
+                                        }
                                     </div>
                                 </div>
                             </div>

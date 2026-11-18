@@ -15,6 +15,7 @@ const mPagoRoutes = require('./routes/mercado_pago.routes');
 const procedureRoutes = require('./routes/procedure.routes');
 const contactRoutes = require('./routes/contact.routes');
 const operationsRoutes = require('./routes/operations.routes');
+const invoiceRequestRoutes = require('./routes/invoiceRequest.routes');
 
 // Controlador para tareas programadas (CDONE-60)
 const { cleanupExpiredReservations } = require('./controllers/appointment.controller');
@@ -83,3 +84,4 @@ app.use('/api', procedureRoutes);       // /api/procedures, /api/user/procedures
 app.use('/mercado-pago', mPagoRoutes);  // /mercado-pago/...
 app.use('/api/contact', contactRoutes); // /api/contact/...
 app.use('/api/admin/operations', operationsRoutes);
+app.use('/api/user/invoice-request', invoiceRequestRoutes);

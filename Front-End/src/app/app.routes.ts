@@ -66,6 +66,11 @@ export const routes: Routes = [
     {path: 'tipo-paciente', component: TipoPaciente, canActivate: [authGuard]},
     {path: 'ayudando-a-sonreir', component: AyudandoASonreir},
     {path: 'pago-exitoso', component: PagoExitoso},
+    {
+        path: 'solicitar-factura/:id',
+        loadComponent: () => import('./components/invoice-request/invoice-request').then(page => page.InvoiceRequest),
+        canActivate: [authGuard]
+    },
     // Cualquier ruta desconocida regresa al inicio
     {path: '**', redirectTo: ''}
 ];

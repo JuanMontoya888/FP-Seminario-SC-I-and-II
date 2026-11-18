@@ -152,6 +152,8 @@ fecha,importe,referencia
 
 ## API
 
+Después de que el webhook confirma un pago en línea, el paciente puede abrir **Solicitar factura** desde el resultado de pago o el resumen mensual de sus citas. La solicitud se conserva por compra en MongoDB y permite descargar XML y PDF con el importe pagado y los datos fiscales capturados. Ambos archivos están marcados como documentos sin timbrar. Para emitir un CFDI válido hace falta la integración fiscal.
+
 La base local es `http://localhost:3000`. Las rutas autenticadas aceptan `Authorization: Bearer <token>` o `x-auth-token`. En las operaciones de administración, el backend comprueba el rol actual en MongoDB.
 
 | Área | Rutas principales |
