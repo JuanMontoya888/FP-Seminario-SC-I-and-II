@@ -23,6 +23,8 @@
         </a>
         @if (this.userService.userLogged()?.isAdmin) {
           <a routerLink="/registrar-procedimiento">Procedimientos</a>
+          <a routerLink="/cad-cam">Laboratorio</a>
+          <a routerLink="/administracion">Administración</a>
         }
       }
     </div>
@@ -64,6 +66,8 @@
       <li><a routerLink="/calendar" (click)="cerrarMenu()">{{ this.userService.userLogged()?.isAdmin ? 'Gestionar Citas' : 'Agendar Cita' }}</a></li>
       @if (this.userService.userLogged()?.isAdmin) {
         <li><a routerLink="/registrar-procedimiento" (click)="cerrarMenu()">Procedimientos</a></li>
+        <li><a routerLink="/cad-cam" (click)="cerrarMenu()">Laboratorio</a></li>
+        <li><a routerLink="/administracion" (click)="cerrarMenu()">Administración</a></li>
       }
     }
   </ul>
