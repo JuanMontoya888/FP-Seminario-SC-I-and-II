@@ -113,11 +113,17 @@ La plantilla [`Back-End/.env.example`](Back-End/.env.example) contiene ejemplos.
 | Google Sign-In | `GOOGLE_CLIENT_ID` | Client ID OAuth de tipo Web application. Configúralo en Render; no guardes `client_secret` para este flujo de ID token. El mismo Client ID público está en el ambiente Angular. |
 | URLs y CORS | `FRONTEND_URL`, `BACKEND_URL`, `CORS_ORIGIN` | Las dos URL se usan en enlaces de correo y retornos de pago. En despliegues, configura el origen exacto de la app para CORS. Si se deja vacío, la API acepta cualquier origen. |
 | Cobros | `MP_ACCESS_TOKEN`, `MP_NOTIFICATION_URL`, `MP_WEBHOOK_SECRET` | Para cobrar necesitas un token válido y un webhook accesible por Mercado Pago. Configura el secreto para activar la validación de firma. Usa credenciales de prueba en desarrollo. |
-| Correo | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_USER`, `EMAIL_PASS`, `CONTACT_EMAIL` | Admite Resend y SMTP. El registro por correo, la recuperación de contraseña y el envío de mensajes dependen del proveedor. El correo de contacto usa `EMAIL_USER` como respaldo. |
+| Correo | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_USER`, `EMAIL_PASS`, `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_OAUTH_REFRESH_TOKEN`, `CONTACT_EMAIL` | Admite Resend, Gmail API y SMTP. Gmail API envía por HTTPS desde una cuenta Gmail sin requerir dominio propio. El correo de contacto usa `EMAIL_USER` como respaldo. |
 | WhatsApp | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` | Twilio es opcional. El número se configura con código de país, sin el prefijo `whatsapp:`. |
 | Google Calendar | `GOOGLE_CALENDAR_KEYFILE`, `GOOGLE_CALENDAR_ID` | Integración opcional con una cuenta de servicio que tenga acceso al calendario. Si falta el archivo de credenciales, la agenda sigue funcionando. |
 
 Google Sign-In usa el mismo `GOOGLE_CLIENT_ID` público en Render y en los ambientes Angular. En Google Cloud Console, registra `https://dentaloneservice.netlify.app` como **Authorized JavaScript origin** (y `http://localhost:4200` si pruebas localmente). Este flujo de ID token no utiliza `client_secret` ni una URI de redirección. Los usuarios deben crear primero su cuenta Dental One; después pueden iniciar sesión con Google con ese mismo correo.
+
+### Enviar correo con Gmail API en Render (sin dominio propio)
+
+Gmail API envía por HTTPS, así que evita las restricciones de SMTP saliente de algunos planes de hosting. En Google Cloud Console, habilita **Gmail API**, configura la pantalla de consentimiento OAuth y crea credenciales OAuth. Autoriza la cuenta remitente con el permiso `https://www.googleapis.com/auth/gmail.send` y obtén un refresh token (por ejemplo, con OAuth 2.0 Playground usando tus propias credenciales y la URI de retorno `https://developers.google.com/oauthplayground`).
+
+En Render, configura `EMAIL_PROVIDER=gmail-api`, `EMAIL_USER` y `EMAIL_FROM` con la misma cuenta Gmail autorizada, y agrega `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET` y `GMAIL_OAUTH_REFRESH_TOKEN`. El refresh token y el secreto son privados: guárdalos solo como variables de entorno, nunca en el repositorio. La cuenta podrá enviar a otros destinatarios dentro de los límites de Google. En modo de prueba OAuth, Google puede hacer caducar los refresh tokens; para uso continuo revisa el estado de publicación de la aplicación OAuth.
 
 ## Laboratorio CAD/CAM 3D
 
@@ -221,4 +227,3 @@ Angular tiene sus propios archivos `*.spec.ts` y un objetivo Karma independiente
 | No llega el correo de verificación | Revisa el proveedor, sus credenciales, el remitente y `BACKEND_URL`. Usa la opción de reenviar la verificación después de corregir la configuración. |
 | El pago se inicia, pero la cita no se confirma | Revisa los eventos del webhook, el token de acceso, la firma y la accesibilidad de la URL desde Mercado Pago. Para pruebas locales del webhook necesitas una URL pública que reenvíe a la API. |
 | `/cad-cam` redirige al inicio | Abre la sesión con una cuenta administradora. Para revisar el laboratorio sin credenciales, usa `/cad-cam-demo` con `npm start` en el frontend. |
-| El build falla al obtener Google Fonts | El build de producción intenta incorporar fuentes remotas. Comprueba el acceso de red a Google Fonts o usa `npm run build -- --configuration development` para comprobar la compilación local. |

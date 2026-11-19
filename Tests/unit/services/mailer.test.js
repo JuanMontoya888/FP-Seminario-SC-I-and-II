@@ -6,6 +6,15 @@
 const mockSendMail = jest.fn();
 const mockCreateTransport = jest.fn(() => ({ sendMail: mockSendMail }));
 jest.mock('nodemailer', () => ({ createTransport: mockCreateTransport }), { virtual: true });
+const mockGmailSend = jest.fn();
+const mockGmailClient = { users: { messages: { send: mockGmailSend } } };
+const mockSetCredentials = jest.fn();
+const mockOAuth2 = jest.fn(() => ({ setCredentials: mockSetCredentials }));
+const mockGoogle = {
+  auth: { OAuth2: mockOAuth2 },
+  gmail: jest.fn(() => mockGmailClient)
+};
+jest.mock('googleapis', () => ({ google: mockGoogle }), { virtual: true });
 
 describe('Unit Services - Mailer', () => {
   const originalEnv = process.env;
@@ -26,6 +35,10 @@ describe('Unit Services - Mailer', () => {
     delete process.env.EMAIL_FROM;
     mockSendMail.mockReset();
     mockCreateTransport.mockClear();
+    mockGmailSend.mockReset();
+    mockOAuth2.mockClear();
+    mockSetCredentials.mockClear();
+    mockGoogle.gmail.mockClear();
   });
 
   afterAll(() => {
@@ -91,5 +104,36 @@ describe('Unit Services - Mailer', () => {
       })
     );
     expect(result.ok).toBe(false);
+  });
+
+  test('DadoOAuthGmailConfigurado_CuandoSeEnviaUnCorreo_EntoncesUsaGmailApiSinSMTP', async () => {
+    // Arrange
+    process.env.EMAIL_PROVIDER = 'gmail-api';
+    process.env.EMAIL_USER = 'clinica@gmail.com';
+    process.env.EMAIL_FROM = 'Dental One <clinica@gmail.com>';
+    process.env.GMAIL_OAUTH_CLIENT_ID = 'client-id';
+    process.env.GMAIL_OAUTH_CLIENT_SECRET = 'client-secret';
+    process.env.GMAIL_OAUTH_REFRESH_TOKEN = 'refresh-token';
+    mockGmailSend.mockResolvedValue({ data: { id: 'gmail_message_1' } });
+    const { enviarCorreoSMTP } = loadMailer();
+
+    // Act
+    const result = await enviarCorreoSMTP({ to: 'paciente@example.com', subject: 'Cita confirmada', html: '<p>Confirmada</p>' });
+
+    // Assert
+    expect(result).toEqual({ ok: true });
+    expect(mockOAuth2).toHaveBeenCalledWith('client-id', 'client-secret');
+    expect(mockSetCredentials).toHaveBeenCalledWith({ refresh_token: 'refresh-token' });
+    expect(mockGoogle.gmail).toHaveBeenCalledWith(expect.objectContaining({ version: 'v1' }));
+    expect(mockGmailSend).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 'me',
+      requestBody: { raw: expect.any(String) }
+    }));
+    const raw = mockGmailSend.mock.calls[0][0].requestBody.raw;
+    const message = Buffer.from(raw, 'base64url').toString('utf8');
+    expect(message).toContain('To: paciente@example.com');
+    expect(message).toContain('From: Dental One <clinica@gmail.com>');
+    expect(Buffer.from(message.split('\r\n\r\n').pop(), 'base64').toString('utf8')).toContain('Confirmada');
+    expect(mockCreateTransport).not.toHaveBeenCalled();
   });
 });
