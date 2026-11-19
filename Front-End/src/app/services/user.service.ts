@@ -55,6 +55,26 @@ export class UserService {
     );
   }
 
+  loginWithGoogle(idToken: string): Observable<boolean> {
+    return this.http.post<any>(`${environment.apiUrl}/api/login`, { token: idToken }).pipe(
+      tap((res: any) => {
+        if (!res?.token || !res?.user) {
+          throw new Error('Respuesta inválida del inicio de sesión con Google.');
+        }
+
+        const userInstance = User.fromJSON(res.user);
+        this.isLoggedIn.set(true);
+        this.userLogged.set(userInstance);
+        this._saveSession(userInstance, res.token);
+      }),
+      map(() => true),
+      catchError((err) => {
+        this.isLoggedIn.set(false);
+        return throwError(() => err);
+      })
+    );
+  }
+
   logout(): void {
     this.isLoggedIn.set(false);
     this.userLogged.set(null);

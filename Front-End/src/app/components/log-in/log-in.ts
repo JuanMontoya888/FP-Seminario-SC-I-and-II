@@ -8,7 +8,6 @@ import Swal from 'sweetalert2';
 import { UserService } from '../../services/user.service';
 //google sign in
 declare const google: any;
-import { HttpClient } from '@angular/common/http';
 import { AfterViewInit } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
@@ -25,14 +24,11 @@ import { environment } from '../../../environments/environment';
 export class LogIn implements AfterViewInit{
   loginForm!: FormGroup;
   showPassword = false;
-  //para el google sign in
-  private backendUrl = `${environment.apiUrl}/api/login`;
 
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
-    private userService: UserService,
-    private http: HttpClient
+    private userService: UserService
   ) { }
 
   ngOnInit(): void {
@@ -139,58 +135,84 @@ export class LogIn implements AfterViewInit{
 
   // Función de callback que Google llamará al iniciar sesión
   handleCredentialResponse = (response: any) => {
-    // 1. Recibimos el token JWT de Google 
-    const idToken = response.credential;
-    console.log("Token JWT recibido en el front", idToken);
-    
-    // 2. Enviamos el token a tu backend para verificación y login
-    this.http.post(this.backendUrl, { token: idToken }).subscribe({
-      next: (res: any) => {
-        if(res && res.token){
-          localStorage.setItem('auth_token', res.token);
-          this.userService.register(res.user);
-          
-        }
+    const idToken = response?.credential;
+    if (!idToken) {
+      Swal.fire('Error', 'Google no devolvió una credencial válida.', 'error');
+      return;
+    }
+
+    this.userService.loginWithGoogle(idToken).subscribe({
+      next: () => {
         Swal.fire({
-          title: "¡Todo listo!",
-          text: "Tu historia clínica ha sido guardada. Bienvenido.",
-          icon: "success",
-          confirmButtonText: 'Ir al Inicio'
-        }).then((result) => {
-          // Navegamos SOLO cuando el usuario cierra la alerta
-          this.router.navigate(['/']); 
-        });
+          title: '¡Bienvenido!',
+          text: 'Iniciaste sesión con Google correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Ir al inicio'
+        }).then(() => this.router.navigate(['/']));
       },
-      // en caso de error
-      error: (err) => {
-        console.error('Error al enviar el token al backend', err);
+      error: (err: any) => {
+        if (err.status === 404 && err.error?.needRegister) {
+          Swal.fire({
+            title: 'Cuenta no registrada',
+            text: 'Primero crea tu cuenta en Dental One con este correo de Google.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Ir a registro',
+            cancelButtonText: 'Cerrar'
+          }).then((result) => {
+            if (result.isConfirmed) this.router.navigate(['/register']);
+          });
+          return;
+        }
+
+        Swal.fire('Error', err.error?.msg || 'No se pudo iniciar sesión con Google.', 'error');
       }
     });
   }
-  ngAfterViewInit(): void {
-    // Check if the Google object is available
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+
+  async ngAfterViewInit(): Promise<void> {
+    try {
+      await this.loadGoogleIdentityServices();
       google.accounts.id.initialize({
-        client_id: "305375866482-j66uhnuh0t4hjk67bb7dd2js5glqn6hg.apps.googleusercontent.com",
-        context: "signin",
-        // añadimos el callback, asegurando el contexto (this)
-        callback: this.handleCredentialResponse.bind(this),
-        login_uri: `${environment.apiUrl}/api/login`,
-        auto_select: true,
+        client_id: environment.googleClientId,
+        context: 'signin',
+        callback: this.handleCredentialResponse,
+        auto_select: false,
         itp_support: true
       });
 
-      google.accounts.id.renderButton(
-        document.getElementById("google-button-container"),
-        { // Button configuration
-          type: "standard",
-          shape: "rectangular",
-          theme: "outline",
-          text: "signin_with",
-          size: "large",
-          logo_alignment: "left",
-        }
-      );
+      const buttonContainer = document.getElementById('google-button-container');
+      if (buttonContainer) {
+        google.accounts.id.renderButton(buttonContainer, {
+          type: 'standard',
+          shape: 'rectangular',
+          theme: 'outline',
+          text: 'signin_with',
+          size: 'large',
+          logo_alignment: 'left'
+        });
+      }
+    } catch (error) {
+      console.error('No se pudo inicializar Google Sign-In:', error);
+      Swal.fire('Google no disponible', 'No se pudo cargar el inicio de sesión con Google.', 'error');
     }
+  }
+
+  private loadGoogleIdentityServices(): Promise<void> {
+    if (!environment.googleClientId) {
+      return Promise.reject(new Error('Falta configurar googleClientId en el ambiente de Angular.'));
+    }
+    if (typeof google !== 'undefined' && google.accounts?.id) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('No se pudo descargar Google Identity Services.'));
+      document.head.appendChild(script);
+    });
   }
 }

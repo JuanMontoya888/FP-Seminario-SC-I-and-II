@@ -70,7 +70,7 @@ export class User {
 
         // 2. Mapeo de campos que pueden variar de nombre
         const nameVal = json.nombre || json._name || 'Usuario';
-        const idVal = json.userId || json._idUser || json.id; // Soporta varios formatos de ID
+        const idVal = json.userId || json._idUser || json.id || json._id; // Soporta varios formatos de ID
         const emailVal = json.email || json._email;
         const phoneVal = json.numcel || json._phone;
 

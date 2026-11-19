@@ -110,13 +110,14 @@ La plantilla [`Back-End/.env.example`](Back-End/.env.example) contiene ejemplos.
 | Uso | Variables | Comportamiento |
 | --- | --- | --- |
 | Arranque | `MONGODB_URI`, `JWT_SECRET`, `PORT` | La URI y el secreto son obligatorios. El puerto predeterminado es `3000`. |
+| Google Sign-In | `GOOGLE_CLIENT_ID` | Client ID OAuth de tipo Web application. Configúralo en Render; no guardes `client_secret` para este flujo de ID token. El mismo Client ID público está en el ambiente Angular. |
 | URLs y CORS | `FRONTEND_URL`, `BACKEND_URL`, `CORS_ORIGIN` | Las dos URL se usan en enlaces de correo y retornos de pago. En despliegues, configura el origen exacto de la app para CORS. Si se deja vacío, la API acepta cualquier origen. |
 | Cobros | `MP_ACCESS_TOKEN`, `MP_NOTIFICATION_URL`, `MP_WEBHOOK_SECRET` | Para cobrar necesitas un token válido y un webhook accesible por Mercado Pago. Configura el secreto para activar la validación de firma. Usa credenciales de prueba en desarrollo. |
 | Correo | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_USER`, `EMAIL_PASS`, `CONTACT_EMAIL` | Admite Resend y SMTP. El registro por correo, la recuperación de contraseña y el envío de mensajes dependen del proveedor. El correo de contacto usa `EMAIL_USER` como respaldo. |
 | WhatsApp | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` | Twilio es opcional. El número se configura con código de país, sin el prefijo `whatsapp:`. |
 | Google Calendar | `GOOGLE_CALENDAR_KEYFILE`, `GOOGLE_CALENDAR_ID` | Integración opcional con una cuenta de servicio que tenga acceso al calendario. Si falta el archivo de credenciales, la agenda sigue funcionando. |
 
-Google Sign-In usa un ID de cliente configurado en [la pantalla de acceso](Front-End/src/app/components/log-in/log-in.ts) y en [el controlador de autenticación](Back-End/controllers/auth.controller.js). Para un despliegue propio, configura el mismo ID en ambos y registra los orígenes de Angular en el cliente de Google.
+Google Sign-In usa el mismo `GOOGLE_CLIENT_ID` público en Render y en los ambientes Angular. En Google Cloud Console, registra `https://dentaloneservice.netlify.app` como **Authorized JavaScript origin** (y `http://localhost:4200` si pruebas localmente). Este flujo de ID token no utiliza `client_secret` ni una URI de redirección. Los usuarios deben crear primero su cuenta Dental One; después pueden iniciar sesión con Google con ese mismo correo.
 
 ## Laboratorio CAD/CAM 3D
 
