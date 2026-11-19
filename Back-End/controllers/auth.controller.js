@@ -8,7 +8,8 @@ const emailTemplates = require('../services/emailTemplates');
 
 // (Opcional) Si usas google-auth-library para el inicio de sesión con Google:
 const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client('305375866482-j66uhnuh0t4hjk67bb7dd2js5glqn6hg.apps.googleusercontent.com');
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client();
 
 const jwtSecret = process.env.JWT_SECRET;
 if (!jwtSecret) {
@@ -178,13 +179,25 @@ const setPatientType = async (req, res) => {
 
 const googleLogin = async (req, res) => {
     try {
+        if (!googleClientId) {
+            return res.status(503).json({ msg: 'El inicio de sesión con Google no está configurado.' });
+        }
+
+        const { token } = req.body || {};
+        if (!token) {
+            return res.status(400).json({ msg: 'Falta el token de Google.' });
+        }
+
         const ticket = await client.verifyIdToken({
-            idToken: req.body.token,
-            audience: '305375866482-j66uhnuh0t4hjk67bb7dd2js5glqn6hg.apps.googleusercontent.com'
+            idToken: token,
+            audience: googleClientId
         });
 
-        // extraemos los datos seguros
+        // Solo aceptamos cuentas de Google con correo verificado.
         const payloadG = ticket.getPayload();
+        if (!payloadG?.email || payloadG.email_verified !== true) {
+            return res.status(401).json({ msg: 'La cuenta de Google no tiene un correo verificado.' });
+        }
         const email = payloadG.email;
 
         const user = await User.findOne({ email }).select('-password');
@@ -224,8 +237,8 @@ const googleLogin = async (req, res) => {
             });
         }
     } catch (err) {
-        console.error(err);
-        res.status(401).json({ message: "Token inválido" });
+        console.error('Error al verificar el token de Google:', err.message);
+        res.status(401).json({ msg: 'Token de Google inválido o expirado.' });
     }
 };
 
