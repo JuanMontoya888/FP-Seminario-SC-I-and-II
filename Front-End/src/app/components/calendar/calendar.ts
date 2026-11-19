@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { CalendarService } from '../../services/calendar.service';
 import { Day_Cl, Month_Cl } from '../../models/calendar';
 import { UserService } from '../../services/user.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AppointmentsService } from '../../services/appointments.service';
 import { ProcedureService } from '../../services/procedure.service';
 import { Appointment } from '../../models/appointment';
@@ -20,7 +20,8 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    RouterLink
   ],
   templateUrl: './calendar.html',
   styleUrl: './calendar.css',

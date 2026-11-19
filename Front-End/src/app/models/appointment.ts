@@ -1,5 +1,8 @@
 import { USERS_ } from "./user";
 export class Appointment {
+    declare readonly _id?: string;
+    declare readonly paymentMode?: 'full' | 'partial' | 'clinic';
+    declare readonly amountExpected?: number;
     public readonly _idUser: string;
 
     // Values for knowing day of appointment

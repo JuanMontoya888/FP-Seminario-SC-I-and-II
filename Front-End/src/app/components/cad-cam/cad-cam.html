@@ -1,0 +1,71 @@
+<main class="lab">
+  <header>
+    <h1>Laboratorio</h1>
+    <p>Inspecciona un modelo STL, ajusta su geometría y explora cortes horizontales.</p>
+  </header>
+
+  <div class="file-bar">
+    <label class="open-stl">
+      <input type="file" accept=".stl" [disabled]="busy()" (change)="openFile($event)">
+      <span class="open-icon" aria-hidden="true">↑</span>
+      <span><strong>Abrir archivo STL</strong><small>ASCII o binario · hasta 24 MB</small></span>
+    </label>
+    <button type="button" [disabled]="busy()" (click)="download()">Exportar STL ajustado</button>
+  </div>
+  @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+  }
+  @if (busy()) {
+    <p role="status">Abriendo modelo…</p>
+  }
+
+  <p class="file-details" aria-live="polite">
+    <strong>{{ model().name }}</strong> · {{ mesh().length | number }} triángulos ·
+    {{ dimensions()[0] | number:'1.0-2' }} × {{ dimensions()[1] | number:'1.0-2' }} ×
+    {{ dimensions()[2] | number:'1.0-2' }} mm
+  </p>
+  <p class="note">El STL no indica unidades. El laboratorio interpreta cada unidad como 1 mm. El archivo se procesa en este navegador.</p>
+
+  <div class="panels">
+    <section>
+      <h2>Modelo 3D</h2>
+      <canvas #modelCanvas width="640" height="440" role="img" aria-label="Vista 3D en malla del modelo STL"></canvas>
+      <label>
+        Ángulo de vista <output>{{ viewAngle() }}°</output>
+        <input type="range" min="0" max="360" [value]="viewAngle()" (input)="viewAngle.set($any($event.target).valueAsNumber)">
+      </label>
+      <label>
+        Rotación del modelo en Z <output>{{ rotation() }}°</output>
+        <input type="range" min="-180" max="180" [value]="rotation()" (input)="rotation.set($any($event.target).valueAsNumber)">
+      </label>
+      <label>
+        Escala uniforme <output>{{ scale() }} %</output>
+        <input type="range" min="10" max="200" [value]="scale()" (input)="scale.set($any($event.target).valueAsNumber)">
+      </label>
+      <p class="note">La exportación aplica la escala y la rotación del modelo, centra su caja original en XY y coloca la base en Z = 0.</p>
+    </section>
+    <section>
+      <h2>Cortes por capas</h2>
+      @if (layerCount()) {
+        <canvas #sliceCanvas width="640" height="440" role="img" aria-label="Corte horizontal del modelo a la altura seleccionada"></canvas>
+        <label>
+          Altura de capa
+          <select [value]="layerHeight()" (change)="layerHeight.set(+$any($event.target).value); selectedLayer.set(1)">
+            <option value="0.05">0.05 mm</option>
+            <option value="0.1">0.10 mm</option>
+            <option value="0.2">0.20 mm</option>
+            <option value="0.3">0.30 mm</option>
+            <option value="0.5">0.50 mm</option>
+          </select>
+        </label>
+        <label>
+          Capa <output>{{ layer() | number }} de {{ layerCount() | number }}</output>
+          <input type="range" min="1" [max]="layerCount()" [value]="layer()" (input)="selectedLayer.set($any($event.target).valueAsNumber)">
+        </label>
+        <p class="note">Corte a Z = {{ sliceZ() | number:'1.2-3' }} mm.</p>
+      } @else {
+        <p>El modelo no tiene altura en el eje Z.</p>
+      }
+    </section>
+  </div>
+</main>

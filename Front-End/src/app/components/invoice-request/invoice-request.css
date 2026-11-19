@@ -1,0 +1,12 @@
+:host { display: block; background: #f3f8f9; color: #18374b; padding: clamp(1rem, 5vw, 3rem); }
+main { max-width: 42rem; margin: auto; padding: clamp(1rem, 4vw, 2rem); border-radius: .9rem; background: white; border: 1px solid #dce8ec; }
+a { color: #006c64; }
+h1 { margin: .85rem 0; }
+.notice { border-left: 4px solid #c78d25; padding: .65rem .85rem; background: #fff6e4; }
+form, label { display: grid; gap: .4rem; }
+form { gap: .9rem; }
+input, button { font: inherit; border: 1px solid #a1bac1; border-radius: .45rem; padding: .6rem .8rem; }
+button { color: white; background: #006c64; border-color: #006c64; justify-self: start; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+.actions { display: flex; gap: .65rem; flex-wrap: wrap; }
+[role=alert] { color: #9e2929; }
