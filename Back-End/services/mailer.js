@@ -1,11 +1,13 @@
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 // Opcional, pero buena práctica si lo corres localmente y dotenv no está en el index
 require('dotenv').config();
 
 // =================================================================================
-// Envío de correos con dos proveedores:
+// Envío de correos con tres proveedores:
 //  - 'resend': API HTTP de Resend (https://resend.com). Úsalo en Render gratis,
 //    que bloquea las conexiones SMTP salientes.
+//  - 'gmail-api': API HTTP de Gmail; permite usar una cuenta Gmail sin SMTP.
 //  - 'smtp'  : Gmail con Nodemailer (contraseña de aplicación), útil en local.
 // Se elige con EMAIL_PROVIDER; si no está definido se usa 'resend' cuando hay
 // RESEND_API_KEY y 'smtp' en otro caso.
@@ -28,6 +30,7 @@ const getFrom = () => process.env.EMAIL_FROM || `"Dental One" <${process.env.EMA
 // Inicializaremos el transporter de manera "lazy" (justo cuando se necesite)
 // para garantizar que process.env ya haya cargado todas sus variables.
 let transporter = null;
+let gmailClient = null;
 
 function getTransporter() {
     if (!transporter) {
@@ -82,12 +85,62 @@ async function enviarConResend({ to, subject, html }) {
     return data.id;
 }
 
+function getGmailClient() {
+    if (!gmailClient) {
+        const { GMAIL_OAUTH_CLIENT_ID, GMAIL_OAUTH_CLIENT_SECRET, GMAIL_OAUTH_REFRESH_TOKEN } = process.env;
+        const missing = [
+            ['EMAIL_USER', process.env.EMAIL_USER],
+            ['GMAIL_OAUTH_CLIENT_ID', GMAIL_OAUTH_CLIENT_ID],
+            ['GMAIL_OAUTH_CLIENT_SECRET', GMAIL_OAUTH_CLIENT_SECRET],
+            ['GMAIL_OAUTH_REFRESH_TOKEN', GMAIL_OAUTH_REFRESH_TOKEN],
+        ].filter(([, value]) => !value).map(([name]) => name);
+
+        if (missing.length) {
+            throw new Error(`Faltan variables para Gmail API: ${missing.join(', ')}.`);
+        }
+
+        const auth = new google.auth.OAuth2(GMAIL_OAUTH_CLIENT_ID, GMAIL_OAUTH_CLIENT_SECRET);
+        auth.setCredentials({ refresh_token: GMAIL_OAUTH_REFRESH_TOKEN });
+        gmailClient = google.gmail({ version: 'v1', auth });
+    }
+    return gmailClient;
+}
+
+async function enviarConGmailApi({ to, subject, html }) {
+    const safeHeader = (value) => String(value || '').replace(/[\r\n]+/g, ' ').trim();
+    const encodedSubject = `=?UTF-8?B?${Buffer.from(safeHeader(subject), 'utf8').toString('base64')}?=`;
+    const message = [
+        `From: ${safeHeader(getFrom())}`,
+        `To: ${safeHeader(to)}`,
+        `Subject: ${encodedSubject}`,
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: base64',
+        '',
+        (Buffer.from(String(html || ''), 'utf8').toString('base64').match(/.{1,76}/g) || []).join('\r\n'),
+    ].join('\r\n');
+
+    const response = await getGmailClient().users.messages.send({
+        userId: 'me',
+        requestBody: { raw: Buffer.from(message, 'utf8').toString('base64url') },
+        timeout: EMAIL_TIMEOUT_MS,
+    });
+    return response.data.id;
+}
+
 async function enviarCorreoSMTP({ to, subject, html }) {
     const provider = getProvider();
     try {
-        const id = provider === 'resend'
-            ? await enviarConResend({ to, subject, html })
-            : await enviarConSMTP({ to, subject, html });
+        let id;
+        if (provider === 'resend') {
+            id = await enviarConResend({ to, subject, html });
+        } else if (provider === 'gmail-api') {
+            id = await enviarConGmailApi({ to, subject, html });
+        } else if (provider === 'smtp') {
+            id = await enviarConSMTP({ to, subject, html });
+        } else {
+            throw new Error(`Proveedor de correo no reconocido: ${provider}.`);
+        }
         console.log(`Correo enviado (${provider}) a ${to}:`, id);
         return { ok: true };
     } catch (error) {
