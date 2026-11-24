@@ -1,9 +1,14 @@
-# Dental One
+# Dental One Blueprint
 
 Dental One es una aplicación web para una clínica dental. Reúne el sitio público, la agenda de citas, el expediente clínico, los pagos y un laboratorio 3D para revisar modelos STL. El proyecto se desarrolló para el Seminario de Sistemas Computacionales I y II.
 
 ## Contenido
 
+- [System Overview](#system-overview)
+- [Subdirectories & System Boundaries](#subdirectories--system-boundaries)
+- [Global Invariants](#global-invariants)
+- [Global Side Effects](#global-side-effects)
+- [System Verification](#system-verification)
 - [Qué incluye](#qué-incluye)
 - [Estructura del repositorio](#estructura-del-repositorio)
 - [Inicio rápido](#inicio-rápido)
@@ -15,6 +20,43 @@ Dental One es una aplicación web para una clínica dental. Reúne el sitio púb
 - [Docker y despliegue](#docker-y-despliegue)
 - [Pruebas](#pruebas)
 - [Solución de problemas](#solución-de-problemas)
+
+## System Overview
+
+Dental One is organized as three independently packaged application subsystems sharing HTTP/JSON contracts:
+
+- **Front-End (`Front-End/`)**: Angular 21 standalone TypeScript SPA serving the public website, patient onboarding and clinical records, appointment booking, Mercado Pago checkout returns, uncertified invoice request downloads, browser-only 3D CAD/CAM STL viewer/slicer, and clinic ERP operations dashboard.
+- **Back-End (`Back-End/`)**: Node.js, Express 5, and Mongoose REST API backed by MongoDB, handling authentication (JWT + Google Sign-In), clinical records, procedures, scheduling and slot blocking, Mercado Pago Checkout Pro and webhooks, clinic ERP accounting/inventory, CFDI invoice requests, and a 60-second background reservation-expiration worker.
+- **CMS (`cms/`)**: Strapi v5 headless CMS (`cms-dental`) exposing the editable `api::inicio.inicio` single type over REST (`GET /api/inicio?populate=*`), backed by SQLite by default (with PostgreSQL/MySQL client support).
+
+Supporting non-code / test directories live alongside the subsystems: `Tests/` (Jest unit and scenario test suite importing `Back-End` modules), `docker/` (Dockerfiles, Nginx config, and Compose orchestration), `docs/` (project documentation), and `.github/workflows/` (CI build and test pipeline).
+
+## Subdirectories & System Boundaries
+
+- [Back-End](./Back-End/README.md) - Express 5 REST API, MongoDB Mongoose models, server-side treatment pricing catalog, auth/admin middlewares, Mercado Pago/Google/email/WhatsApp integrations, ERP operations, and background reservation cleanup worker.
+- [Front-End](./Front-End/README.md) - Angular 21 standalone SPA containing routes, guards, JWT interceptor, domain models, API/CMS services, and all 25 UI feature components.
+- [cms](./cms/README.md) - Strapi v5 headless CMS configuration, lifecycle hooks, `api::inicio.inicio` REST API, and generated TypeScript schema declarations.
+
+## Global Invariants
+
+- **Server-side treatment and pricing authority**: `Back-End/config/treatments.js` (`TREATMENTS`, `PARTIAL_PAYMENT_RATE = 0.5`, `amountForMode`) is the authoritative source for treatment duration, assigned specialist, and online checkout amounts; `Front-End` loads treatments from `GET /api/treatments` and overwrites receipt amounts from server responses (`Scheduling.payOnline`, `PagoExitoso.applyServerAmounts`).
+- **Authentication and database-verified RBAC**: Protected Express routes validate JWT tokens via `authMiddleware` (`Authorization: Bearer` or `x-auth-token`), and admin routes (`/api/admin/*`, `/api/procedures`, `/api/admin/operations/*`) re-verify `User.role === 'admin'` against MongoDB via `adminMiddleware`. On the client, `tokenInterceptor` attaches `auth_token` to outbound requests except `/api/inicio`, `UserService` enforces a 1-hour client session TTL (`SESSION_LIMIT_HOURS = 1`), and `authGuard` / `adminOnly` gate client routes.
+- **Payment confirmation and reservation lifecycle**: Online checkouts hold slots for `RESERVATION_MINUTES = 15`. Appointment confirmation (`Confirmed` / `Completed`) is driven exclusively by Mercado Pago webhook/SDK verification on the backend; `PagoExitoso` never trusts redirect query parameters as confirmation and polls `GET /api/user/appointment/:id` before enabling receipts or invoice requests. `Back-End/index.js` drops any legacy `expiresAt_1` TTL index and relies on a 60-second `setInterval` worker to mark expired unpaid appointments `'Canceled'` without deleting records. New patients must complete an online payment before `canPayAtClinic` allows `Pending_Clinic_Payment` bookings.
+- **Uncertified invoice requests and ERP accounting integrity**: `InvoiceRequest` records are immutable per appointment (`$setOnInsert`), eligible only for confirmed/completed online payments (`full`/`partial`, `amountExpected > 0`), and explicitly marked uncertified (`SIN_TIMBRAR`). ERP amounts in `/api/admin/operations` are stored as integer cents, dates are validated in `America/Mexico_City`, payments and stock lot movements enforce UUID `requestKey` idempotency, and archived CFDI XML files are served strictly as `application/octet-stream` downloads.
+- **Client-side CAD/CAM processing boundary**: STL uploads (`.stl`, up to 24 MB and 250,000 triangles) are parsed, transformed, sliced, and exported wholly in the browser without backend storage or transmission.
+
+## Global Side Effects
+
+- **MongoDB persistence and background job**: `Back-End` connects to `MONGODB_URI` (exiting with status `1` if unset or unreachable), reads/writes collections for users, clinical records, appointments, blocked slots, procedures, invoice requests, and 9 ERP models, and runs a 60-second `setInterval` reservation cleanup job (`Back-End/index.js`).
+- **CMS persistence**: `cms` persists Strapi content and admin data in SQLite (`cms/.tmp/data.db` by default) or configured PostgreSQL/MySQL and writes uploaded media under `cms/public/uploads/`.
+- **External backend integrations**: `Back-End` performs outbound network calls to Mercado Pago Checkout Pro / Payment APIs, Google OAuth2 ID-token verification, optional Google Calendar API, multi-provider email services (Resend HTTPS, Gmail API, or Nodemailer SMTP), and optional Twilio WhatsApp API.
+- **Browser storage, downloads, and third-party assets**: `Front-End` reads/writes `localStorage` keys (`auth_token`, `infLog`, `cita`, `citaPagoInfo`), triggers client-side file downloads (`.pdf`, `.xlsx`, `.xml`, `.stl`), and loads external browser resources (Google Identity Services script, OpenStreetMap tiles, embedded Google Maps iframe, Google Fonts, and Font Awesome CDN).
+
+## System Verification
+
+- Run: `npm --prefix Tests test` (Back-End unit and scenario Jest suite)
+- Run: `npm --prefix Front-End test` (Front-End Angular Karma/Jasmine unit test suite)
+- Run: `npm --prefix cms run build` (Strapi CMS TypeScript and admin panel build check)
 
 ## Qué incluye
 
@@ -168,11 +210,11 @@ La base local es `http://localhost:3000`. Las rutas autenticadas aceptan `Author
 | Estado | `GET /health` |
 | Cuenta | `POST /api/register`, `POST /api/user/login`, `POST /api/login` (Google), `GET /api/user/profile`, `POST /api/user/patient-type` |
 | Verificación y recuperación | `GET /api/verify-email/:token`, `POST /api/resend-verification`, `POST /api/forgot-password`, `POST /api/reset-password/:token` |
-| Expediente | `POST /api/register/clinicalRecord`, `GET /api/get/patientDetails`, `GET /api/get/histo` |
-| Agenda | `GET /api/treatments`, `GET /api/availability`, `POST /api/register/appointment`, `GET /api/user/appointment` |
-| Administración | `GET /api/admin/appointments`, `PATCH /api/admin/appointments/:id/cancel`, `POST` y `DELETE /api/admin/block-slot` y `/api/admin/block-range` |
+| Expediente | `POST /api/register/patientDetails`, `POST /api/register/histo`, `POST /api/register/clinicalRecord`, `GET /api/get/patientDetails`, `GET /api/get/histo` |
+| Agenda | `GET /api/treatments`, `GET /api/availability`, `POST /api/register/appointment`, `GET /api/user/appointment`, `GET /api/user/appointment/:id` |
+| Administración | `GET /api/admin/appointments`, `PATCH /api/admin/appointments/:id/cancel`, `POST` y `DELETE /api/admin/block-slot` y `/api/admin/block-range`, `/api/admin/operations/*` |
 | Procedimientos | `POST /api/procedures`, `GET /api/user/procedures`, `GET /api/admin/patients`, `GET /api/admin/procedures/:patientId` |
-| Pagos y contacto | `POST /mercado-pago/proccesPay`, `POST /mercado-pago/webhook`, `POST /api/contact` |
+| Pagos y factura | `POST /mercado-pago/proccesPay`, `POST /mercado-pago/webhook`, `GET` y `POST /api/user/invoice-request/:id`, `POST /api/contact` |
 
 Para ver parámetros y validaciones, consulta [las rutas](Back-End/routes/) y [los controladores](Back-End/controllers/). `proccesPay` es la ortografía del endpoint en el código.
 
