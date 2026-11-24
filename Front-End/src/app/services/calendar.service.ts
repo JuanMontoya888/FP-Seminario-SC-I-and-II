@@ -143,6 +143,11 @@ export class CalendarService {
         );
     }
 
+    /** Obtiene el catálogo oficial de tratamientos y especialistas desde el backend. */
+    getTreatments(): Observable<Array<{ reason: string; duration: number; assignDoctor: string; price: number }>> {
+        return this.http.get<Array<{ reason: string; duration: number; assignDoctor: string; price: number }>>(`${this.apiBase}/treatments`);
+    }
+
     /** ¿Está bloqueada esa fecha + hora? */
     isBlocked(date: string, hour: string): boolean {
         return this.blockedSlots.some(b => b.date === date && b.hour === hour);
