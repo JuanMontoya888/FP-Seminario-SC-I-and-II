@@ -70,9 +70,11 @@ export class HistoClinica implements OnInit {
     }
 
     const formData = this.histoForm.value;
-    
+    const { tratamientoMedicoActual, ...rest } = formData;
+
     const formValues = {
-      ...formData, // Copia todos los campos de texto directo
+      ...rest, // Copia todos los campos de texto directo
+      tratamiendoMedicoActual: tratamientoMedicoActual,
       fiebreReumatica: formData.fiebreReumatica === 'si',
       enfermedadesCardiovasculares: formData.enfermedadesCardiovasculares === 'si',
       mareos: formData.mareos === 'si',
@@ -81,6 +83,11 @@ export class HistoClinica implements OnInit {
       vih: formData.vih === 'si',
       artritis: formData.artritis === 'si',
       gastritis: formData.gastritis === 'si',
+      renales: formData.renales === 'si',
+      anemia: formData.anemia === 'si',
+      sangradoAnormal: formData.sangradoAnormal === 'si',
+      moretones: formData.moretones === 'si',
+      transfusiones: formData.transfusiones === 'si',
       problemaHormonal: formData.problemaHormonal === 'si'
     };
 
@@ -108,7 +115,7 @@ export class HistoClinica implements OnInit {
         if (error.status === 401) {
           // Si falla el token, lo mandamos al login real
           Swal.fire('Sesión Expirada', 'Por favor inicia sesión nuevamente', 'error');
-          this.router.navigate(['/login']); // O la ruta de tu login
+          this.router.navigate(['/log-in']);
         } else {
           Swal.fire('Error', 'No se pudo guardar la historia clínica', 'error');
         }

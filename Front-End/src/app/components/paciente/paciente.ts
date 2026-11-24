@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { ProcedureService } from '../../services/procedure.service';
 import { Procedure } from '../../models/procedure';
 
@@ -23,8 +22,7 @@ export class Paciente implements OnInit {
   constructor(
     private router: Router,
     private procedureService: ProcedureService,
-    private cdr: ChangeDetectorRef,
-    private http: HttpClient
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -76,6 +74,6 @@ export class Paciente implements OnInit {
   }
 
   navigate(): void {
-    this.router.navigate(['/formulario']);
+    this.router.navigate(['/expediente']);
   }
 }
