@@ -4,7 +4,7 @@ const Appointment = require('./models/scheduling');
 
 async function check() {
     try {
-        const dbURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dental-one';
+        const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Dental-One';
         await mongoose.connect(dbURI);
 
         const apps = await Appointment.find().sort({ createdAt: -1 }).limit(10);
