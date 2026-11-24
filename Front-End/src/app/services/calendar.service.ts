@@ -115,10 +115,12 @@ export class CalendarService {
         if (isAdmin) {
             return forkJoin([this.http.get<any[]>(this.adminUrl), availability$]).pipe(
                 map(([appts, avail]) => {
-                    this.appointmentsUser = appts.map(appt => ({
-                        ...appt,
-                        dateTime: this.corregirFecha(appt.dateTime, appt.hour)
-                    }));
+                    this.appointmentsUser = (appts || [])
+                        .filter(appt => appt.status !== 'Canceled')
+                        .map(appt => ({
+                            ...appt,
+                            dateTime: this.corregirFecha(appt.dateTime, appt.hour)
+                        }));
                     this.blockedSlots = avail?.blocked || [];
                     return this.appointmentsUser;
                 })
