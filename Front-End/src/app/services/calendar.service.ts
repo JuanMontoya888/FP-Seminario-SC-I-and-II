@@ -115,10 +115,12 @@ export class CalendarService {
         if (isAdmin) {
             return forkJoin([this.http.get<any[]>(this.adminUrl), availability$]).pipe(
                 map(([appts, avail]) => {
-                    this.appointmentsUser = appts.map(appt => ({
-                        ...appt,
-                        dateTime: this.corregirFecha(appt.dateTime, appt.hour)
-                    }));
+                    this.appointmentsUser = (appts || [])
+                        .filter(appt => appt.status !== 'Canceled')
+                        .map(appt => ({
+                            ...appt,
+                            dateTime: this.corregirFecha(appt.dateTime, appt.hour)
+                        }));
                     this.blockedSlots = avail?.blocked || [];
                     return this.appointmentsUser;
                 })
@@ -141,6 +143,11 @@ export class CalendarService {
                 return this.appointmentsUser;
             })
         );
+    }
+
+    /** Obtiene el catálogo oficial de tratamientos y especialistas desde el backend. */
+    getTreatments(): Observable<Array<{ reason: string; duration: number; assignDoctor: string; price: number }>> {
+        return this.http.get<Array<{ reason: string; duration: number; assignDoctor: string; price: number }>>(`${this.apiBase}/treatments`);
     }
 
     /** ¿Está bloqueada esa fecha + hora? */

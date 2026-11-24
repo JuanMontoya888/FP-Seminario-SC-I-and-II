@@ -1,4 +1,13 @@
 import { USERS_ } from "./user";
+export type AppointmentStatus =
+    | 'Scheduled'
+    | 'Confirmed'
+    | 'Canceled'
+    | 'Completed'
+    | 'Payment_Pending'
+    | 'Payment_Failed'
+    | 'Pending_Clinic_Payment';
+
 export class Appointment {
     declare readonly _id?: string;
     declare readonly paymentMode?: 'full' | 'partial' | 'clinic';
@@ -14,7 +23,7 @@ export class Appointment {
     private _patientId!: string;
     private _contactNumber!: string | null; // maybe null
     private _reason!: string;
-    private _status!: 'Scheduled' | 'Confirmed' | 'Canceled' | 'Completed';
+    private _status!: AppointmentStatus;
     private _notes!: string;
     private _providerName!: string;
     private _roomId!: string;
@@ -28,7 +37,7 @@ export class Appointment {
         contactNumber?: string | null,
         providerName?: string,
         roomId?: string,
-        status?: 'Scheduled' | 'Confirmed' | 'Canceled' | 'Completed',
+        status?: AppointmentStatus,
         notes?: string,
         idUser?: string
     ) {
@@ -42,7 +51,7 @@ export class Appointment {
         this.roomId = roomId ?? '';
         this.status = status ?? 'Scheduled';
         this.notes = notes ?? '';
-        this._idUser = idUser ?? '3b4623dd-91c9-4637-9a3f-a7e5a2177b78';
+        this._idUser = idUser ?? '';
     }
 
     // --- Getters ---
@@ -55,7 +64,7 @@ export class Appointment {
     get providerName(): string { return this._providerName; }
     get roomId(): string { return this._roomId; }
     get reason(): string { return this._reason; }
-    get status(): 'Scheduled' | 'Confirmed' | 'Canceled' | 'Completed' { return this._status; }
+    get status(): AppointmentStatus { return this._status; }
     get notes(): string { return this._notes; }
 
     // --- Setters ---
@@ -91,7 +100,7 @@ export class Appointment {
     set providerName(value: string) { this._providerName = value.trim(); }
     set roomId(value: string) { this._roomId = value.trim(); }
     set reason(value: string) { this._reason = value.trim(); }
-    set status(value: 'Scheduled' | 'Confirmed' | 'Canceled' | 'Completed') { this._status = value; }
+    set status(value: AppointmentStatus) { this._status = value; }
     set notes(value: string) { this._notes = value; }
 
 

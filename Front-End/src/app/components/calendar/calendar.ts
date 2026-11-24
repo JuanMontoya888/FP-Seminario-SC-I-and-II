@@ -40,6 +40,8 @@ export class Calendar implements OnInit {
   // Filtros
   filterDoctor: string = '';
   filterStatus: string = '';
+  availableDoctors: string[] = [];
+  private catalogDoctors: string[] = [];
 
   // --- MODAL DE PROCEDIMIENTO (solo admin) ---
   showProcedureModal = false;
@@ -71,6 +73,19 @@ export class Calendar implements OnInit {
     // 2. Determinar si es Admin
     const user = this.userService.userLogged();
     this.isAdmin = user?.isAdmin || false;
+
+    if (this.isAdmin) {
+      this.calendarService.getTreatments().subscribe({
+        next: (treatments) => {
+          this.catalogDoctors = Array.from(
+            new Set((treatments || []).map(t => t.assignDoctor).filter(Boolean))
+          );
+          this.updateAvailableDoctors();
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    }
 
     // 3. Cargar citas + horas bloqueadas desde el backend
     this.reloadCalendar();
@@ -112,12 +127,22 @@ export class Calendar implements OnInit {
       d => d.dayNumber !== '' && Number(d.dayNumber) === targetDayNum
     ) || this.currentMonthCal.daysInMonth.find(d => d.dayNumber !== '');
 
-    // 3. Establecer semana y horas (8:00 a 15:30)
+    // 3. Establecer semana y horas (8:00 a 16:00)
     this.periodSelected = svc.getWeek(targetDayObj!);
-    this.sethoursArray(8, 15.5);
+    this.sethoursArray(targetDayObj!.startDay, targetDayObj!.endDay);
 
-    // 4. Citas del periodo
+    // 4. Actualizar especialistas disponibles y citas del periodo
+    this.updateAvailableDoctors();
     this.applyFilters();
+  }
+
+  private updateAvailableDoctors(): void {
+    const appointmentDoctors = (this.calendarService.appointmentsUser || [])
+      .map(a => a.providerName)
+      .filter((name): name is string => Boolean(name && name.trim()));
+
+    this.availableDoctors = Array.from(new Set([...this.catalogDoctors, ...appointmentDoctors]))
+      .sort((a, b) => a.localeCompare(b));
   }
 
   /** Devuelve true si la columna es fin de semana o fecha anterior a hoy */

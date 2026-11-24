@@ -154,7 +154,6 @@ export class FormularioInicial {
       estatura: formData.estatura,
       peso: formData.peso,
       nacimiento:formData.nacimiento,
-      recomendado: formData.recomendado,
       genero: formData.genero
     };
 

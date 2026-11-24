@@ -50,7 +50,7 @@ export class ContactUs {
         confirmButtonText: 'Ir al Login',
         cancelButtonText: 'Cancelar'
       }).then(res => {
-        if (res.isConfirmed) this.router.navigate(['/login']);
+        if (res.isConfirmed) this.router.navigate(['/log-in']);
       });
       return;
     }

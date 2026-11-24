@@ -138,17 +138,20 @@
                     <label for="doctorFilter">Especialista</label>
                     <select id="doctorFilter" [(ngModel)]="filterDoctor" (change)="applyFilters()">
                         <option value="">Todos</option>
-                        <option value="Dra. Lopez">Dra. Lopez</option>
-                        <option value="Dr. Juan">Dr. Juan</option>
-                        <option value="Dra. Martinez">Dra. Martinez</option>
+                        @for (doctor of availableDoctors; track doctor) {
+                        <option [value]="doctor">{{ doctor }}</option>
+                        }
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="statusFilter">Estado</label>
                     <select id="statusFilter" [(ngModel)]="filterStatus" (change)="applyFilters()">
                         <option value="">Todos</option>
-                        <option value="Scheduled">Programada</option>
-                        <option value="Confirmed">Confirmada</option>
+                        <option value="Scheduled">Agendada</option>
+                        <option value="Confirmed">Pagada</option>
+                        <option value="Payment_Pending">Pago pendiente</option>
+                        <option value="Pending_Clinic_Payment">Pago en clínica</option>
+                        <option value="Payment_Failed">Pago fallido</option>
                         <option value="Completed">Completada</option>
                         <option value="Canceled">Cancelada</option>
                     </select>

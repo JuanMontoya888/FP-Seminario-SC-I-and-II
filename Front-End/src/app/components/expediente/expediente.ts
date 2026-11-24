@@ -125,7 +125,7 @@ export class Expediente implements OnInit {
     });
 
     // CDONE-49: Notas de evolución del paciente (procedimientos con descripción de doctor)
-    this.http.get<any[]>(`${API}/procedures/my`).subscribe({
+    this.http.get<any[]>(`${API}/user/procedures`).subscribe({
       next: (d) => { this.evoluciones = d || []; this.loadingEvoluciones = false; this.cdr.detectChanges(); },
       error: () => { this.loadingEvoluciones = false; this.cdr.detectChanges(); }
     });

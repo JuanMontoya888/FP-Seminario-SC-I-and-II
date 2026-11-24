@@ -18,6 +18,11 @@ const medicalHistorySchema = new Schema({
     vih: { type: Boolean, required: true },
     artritis: { type: Boolean, required: true },
     gastritis: { type: Boolean, required: true },
+    renales: { type: Boolean, required: false },
+    anemia: { type: Boolean, required: false },
+    sangradoAnormal: { type: Boolean, required: false },
+    moretones: { type: Boolean, required: false },
+    transfusiones: { type: Boolean, required: false },
     presionArterial: {
         type: String, required: true
     },

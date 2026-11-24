@@ -19,7 +19,7 @@ const templates = {
             <div style="${styles.body}">
                 <h2 style="font-weight: 400;">Bienvenido, ${nombre}</h2>
                 <p>Gracias por confiar en Dental One. Tu cuenta ha sido creada exitosamente y ahora puedes gestionar tus citas y revisar tu historial clínico desde nuestro portal.</p>
-                <a href="https://dentalone.mx/login" style="${styles.button}">ACCEDER A MI CUENTA</a>
+                <a href="${(process.env.FRONTEND_URL || 'https://dentalone.mx').replace(/\/$/, '')}/log-in" style="${styles.button}">ACCEDER A MI CUENTA</a>
             </div>
             <div style="${styles.footer}">
                 <p>Este es un mensaje automático. No es necesario responder.</p>
