@@ -10,6 +10,17 @@ const sinCamposProtegidos = (datos = {}) => {
     return resto;
 };
 
+const normalizarHistorial = (datos = {}) => {
+    const limpio = sinCamposProtegidos(datos);
+    if (limpio.tratamientoMedicoActual !== undefined) {
+        if (limpio.tratamiendoMedicoActual === undefined) {
+            limpio.tratamiendoMedicoActual = limpio.tratamientoMedicoActual;
+        }
+        delete limpio.tratamientoMedicoActual;
+    }
+    return limpio;
+};
+
 const upsertPatientDetails = async (req, res) => {
     try {
         const {
@@ -83,7 +94,7 @@ const upsertMedicalHistory = async (req, res) => {
         // Ejecutar upsert usando spread operator para capturar todos los campos
         const patientHisto = await MedicalHistory.findOneAndUpdate(
             { user: userId },
-            { ...sinCamposProtegidos(req.body), user: userId },
+            { ...normalizarHistorial(req.body), user: userId },
             {
                 new: true,
                 upsert: true,
@@ -155,7 +166,7 @@ const saveCompleteClinicalRecord = async (req, res) => {
         if (mData) {
             updatedHistory = await MedicalHistory.findOneAndUpdate(
                 { user: userId },
-                { ...sinCamposProtegidos(mData), user: userId },
+                { ...normalizarHistorial(mData), user: userId },
                 { new: true, upsert: true, runValidators: true, ...sessionOpt }
             );
         }
