@@ -156,7 +156,7 @@ const createAppointment = async (req, res) => {
 
         // Enviar notificación por WhatsApp (CDONE-37, 38, 39, 40)
         if (contactNumber) {
-            const magicLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/mi-cuenta`;
+            const magicLink = `${(process.env.FRONTEND_URL || 'http://localhost:4200').replace(/\/$/, '')}/paciente`;
             
             // Sin await (fire-and-forget): Twilio no frena la respuesta
             Promise.resolve(whatsappService.sendAppointmentReminder(contactNumber, {
